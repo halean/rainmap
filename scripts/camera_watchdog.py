@@ -19,10 +19,15 @@ Design notes (learned the hard way):
 import csv
 import json
 import math
+import sys
 import time
 from pathlib import Path
 
 import requests
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from app.log_setup import get_logger
 
 REPO = Path(__file__).resolve().parents[1]
 SAMPLE_CAMERAS_PATH = REPO / "data" / "derived" / "sample_cameras.json"
@@ -40,6 +45,8 @@ CHECK_TIMEOUT = 25
 CHECK_INTERVAL_SEC = 20 * 60   # health-check cadence
 STRIKE_THRESHOLD = 3            # consecutive failed cycles before replacing (~1hr at 20min cadence)
 APP_BASE_URL = "http://127.0.0.1:8000"
+
+log = get_logger("watchdog")
 
 session = requests.Session()
 session.headers.update({"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"})
@@ -90,7 +97,7 @@ def restart_fetch_job():
     try:
         session.post(f"{APP_BASE_URL}/api/jobs/stop", timeout=10)
     except Exception as e:
-        print(f"  stop job failed (may not have been running): {e}")
+        log.info("stop job failed (may not have been running): %s", e)
     for _ in range(60):
         try:
             status = session.get(f"{APP_BASE_URL}/api/status", timeout=10).json()
@@ -101,9 +108,9 @@ def restart_fetch_job():
         time.sleep(2)
     try:
         session.post(f"{APP_BASE_URL}/api/jobs/start", timeout=10)
-        print("  fetch job restarted with updated camera list")
+        log.info("fetch job restarted with updated camera list")
     except Exception as e:
-        print(f"  failed to restart fetch job: {e}")
+        log.error("failed to restart fetch job: %s", e)
 
 
 def find_replacement(current_cameras, blocklist):
@@ -118,23 +125,23 @@ def find_replacement(current_cameras, blocklist):
             if d > best_d:
                 best_d, best = d, c
         pool = [c for c in pool if c["camera_id"] != best["camera_id"]]
-        print(f"  trying replacement {best['camera_id']} (min-dist {best_d:.1f}km)...", end=" ")
+        log.info("trying replacement %s (min-dist %.1fkm)", best["camera_id"], best_d)
         if is_live(best["camera_id"]):
-            print("LIVE")
+            log.info("  -> live, keeping %s", best["camera_id"])
             return {
                 "camera_id": best["camera_id"], "title": best.get("title", ""),
                 "district": best.get("district") or "", "display_name": best.get("display_name", ""),
                 "lat": best["lat"], "lon": best["lon"], "image_path": None,
             }
-        print("dead, blocklisting")
+        log.info("  -> dead, blocklisting %s", best["camera_id"])
         blocklist.append(best["camera_id"])
         time.sleep(0.3)
     return None
 
 
 def main():
-    print(f"Camera watchdog: checking {SAMPLE_CAMERAS_PATH.name} every {CHECK_INTERVAL_SEC}s, "
-          f"replacing after {STRIKE_THRESHOLD} consecutive failed checks")
+    log.info("watchdog: checking %s every %ds, replacing after %d consecutive failed checks",
+             SAMPLE_CAMERAS_PATH.name, CHECK_INTERVAL_SEC, STRIKE_THRESHOLD)
 
     while True:
         cameras = load_json(SAMPLE_CAMERAS_PATH, [])
@@ -153,7 +160,7 @@ def main():
                 strikes[cid] = 0
             else:
                 strikes[cid] = strikes.get(cid, 0) + 1
-                print(f"  {cid} ({cam.get('district','')}) failed check, strikes={strikes[cid]}")
+                log.warning("%s (%s) failed check, strikes=%d", cid, cam.get("district", ""), strikes[cid])
                 if strikes[cid] >= STRIKE_THRESHOLD:
                     dead_this_round.append(cid)
             time.sleep(0.3)
@@ -161,7 +168,7 @@ def main():
         save_json(STRIKES_PATH, strikes)
 
         if dead_this_round:
-            print(f"Confirmed dead (>= {STRIKE_THRESHOLD} consecutive strikes): {dead_this_round}")
+            log.warning("confirmed dead (>= %d consecutive strikes): %s", STRIKE_THRESHOLD, dead_this_round)
             for dead_id in dead_this_round:
                 cameras = [c for c in cameras if c["camera_id"] != dead_id]
                 blocklist.append(dead_id)
@@ -169,10 +176,10 @@ def main():
 
                 replacement = find_replacement(cameras, blocklist)
                 if replacement is None:
-                    print(f"  WARNING: no live replacement found for {dead_id}, sample shrinks by one")
+                    log.error("no live replacement found for %s, sample shrinks by one", dead_id)
                     continue
                 cameras.append(replacement)
-                print(f"  replaced {dead_id} -> {replacement['camera_id']} ({replacement['district']})")
+                log.warning("replaced %s -> %s (%s)", dead_id, replacement["camera_id"], replacement["district"])
 
             # drop stale rain_sample/annotator_state rows for cameras no longer in the set
             # (rain_annotator.py also does this on its own reload, but do it here too so
