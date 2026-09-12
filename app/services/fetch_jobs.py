@@ -158,7 +158,13 @@ class FetchJobManager:
                     if rec:
                         rec.result_summary = f"Running sweep {sweep_no}..."
 
-                for cam_id in camera_ids:
+                # Pace the pass across SWEEP_INTERVAL_SEC instead of running flat out.
+                sweep_started = time.monotonic()
+                slot_sec = (
+                    config.SWEEP_INTERVAL_SEC / len(camera_ids) if camera_ids else 0.0
+                )
+
+                for cam_index, cam_id in enumerate(camera_ids):
                     with self.state.lock:
                         if self.state.stop_event.is_set():
                             self.state.status = "stopped"
@@ -206,7 +212,14 @@ class FetchJobManager:
                                 f"(online {self.state.online}, offline {self.state.offline}, failed {self.state.failed})"
                             )
 
-                    time.sleep(config.FETCH_DELAY_SEC)
+                    # Hold this camera's slot in the paced window. If the source site is
+                    # already slow enough that we've overrun the slot, don't wait at all --
+                    # never make a bad day worse by adding delay on top of it.
+                    next_slot_at = sweep_started + (cam_index + 1) * slot_sec
+                    remaining = next_slot_at - time.monotonic()
+                    # Wait on the stop event rather than sleeping, so a stop request is
+                    # honoured immediately instead of sitting out the pacing delay.
+                    self.state.stop_event.wait(max(config.FETCH_DELAY_SEC, remaining))
 
                 with self.state.lock:
                     self.state.current_camera_id = None

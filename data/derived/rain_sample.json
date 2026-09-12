@@ -5,12 +5,12 @@
     "district": "",
     "location_text": "Lê Văn Sỹ - Trần Quang Diệu",
     "rain": "No",
-    "justification": "The road is wet and reflective, but traffic is moving normally without rain gear and the air is clear.",
+    "justification": "The air is clear with high visibility and no motorbike riders are wearing rain gear or seeking shelter.",
     "approx": false,
     "lat": 10.7878115903301,
     "lon": 106.677889823914,
-    "image_url": "/media/data/raw/662b872d1afb9c00172dd36a/2026/09/12/20260912_154536.jpg",
-    "updated_at": "2026-09-12T15:46:23.050781+00:00"
+    "image_url": "/media/data/raw/662b872d1afb9c00172dd36a/2026/09/12/20260912_205614.jpg",
+    "updated_at": "2026-09-12T20:56:35.036010+00:00"
   },
   {
     "camera_id": "6792f1008c5ed4001b27f41f",
@@ -18,12 +18,12 @@
     "district": "",
     "location_text": "Quốc Lộ 22 - Võ Văn Điều",
     "rain": "No",
-    "justification": "While the asphalt is wet and reflective, the air is clear and there is no visible rain falling.",
+    "justification": "While the road surface is wet and reflective, the air is clear, visibility is high, and there are no signs of active precipitation falling.",
     "approx": false,
     "lat": 10.9882952554727,
     "lon": 106.452713012695,
-    "image_url": "/media/data/raw/6792f1008c5ed4001b27f41f/2026/09/12/20260912_154615.jpg",
-    "updated_at": "2026-09-12T15:46:39.003850+00:00"
+    "image_url": "/media/data/raw/6792f1008c5ed4001b27f41f/2026/09/12/20260912_205622.jpg",
+    "updated_at": "2026-09-12T20:56:50.448332+00:00"
   },
   {
     "camera_id": "6792f3cf8c5ed4001b27f61e",
@@ -31,12 +31,12 @@
     "district": "",
     "location_text": "Tỉnh Lộ 8 - Cầu Phú Cường",
     "rain": "No",
-    "justification": "The road is wet and reflective, but traffic is flowing normally and no one is using rain gear or seeking cover.",
+    "justification": "Motorcyclists are riding normally without rain gear, and the overall visibility is clear.",
     "approx": false,
     "lat": 10.9771309811361,
     "lon": 106.643643379211,
-    "image_url": "/media/data/raw/6792f3cf8c5ed4001b27f61e/2026/09/12/20260912_154616.jpg",
-    "updated_at": "2026-09-12T15:46:54.557327+00:00"
+    "image_url": "/media/data/raw/6792f3cf8c5ed4001b27f61e/2026/09/12/20260912_204436.jpg",
+    "updated_at": "2026-09-12T20:45:10.077152+00:00"
   },
   {
     "camera_id": "6792ef4f8c5ed4001b27f2c0",
@@ -44,12 +44,12 @@
     "district": "",
     "location_text": "Quốc Lộ 1 - Ba Làng",
     "rain": "No",
-    "justification": "While the road surface is wet and reflective, traffic is moving normally and there are no visible rain streaks or lens distortions indicative of active precipitation.",
+    "justification": "The road surface is wet and reflective, but visibility is clear and there is no evidence of falling rain or people seeking cover.",
     "approx": false,
     "lat": 10.6562217600296,
     "lon": 106.5558385849,
-    "image_url": "/media/data/raw/6792ef4f8c5ed4001b27f2c0/2026/09/12/20260912_154651.jpg",
-    "updated_at": "2026-09-12T15:47:12.838849+00:00"
+    "image_url": "/media/data/raw/6792ef4f8c5ed4001b27f2c0/2026/09/12/20260912_204507.jpg",
+    "updated_at": "2026-09-12T20:45:25.632903+00:00"
   },
   {
     "camera_id": "6792f16e8c5ed4001b27f482",
@@ -57,12 +57,12 @@
     "district": "",
     "location_text": "Cao tốc LT-DG - Trạm thu phí Long Phước",
     "rain": "No",
-    "justification": "The air is clear, there is no spray coming from the moving vehicles, and the road surface lacks the intense reflections of active rain.",
+    "justification": "The road surface is matte without reflections and visibility is clear, with no signs of falling rain or distortion on the camera lens.",
     "approx": false,
     "lat": 10.7858829057319,
     "lon": 106.850624084473,
-    "image_url": "/media/data/raw/6792f16e8c5ed4001b27f482/2026/09/12/20260912_154652.jpg",
-    "updated_at": "2026-09-12T15:47:29.930311+00:00"
+    "image_url": "/media/data/raw/6792f16e8c5ed4001b27f482/2026/09/12/20260912_204508.jpg",
+    "updated_at": "2026-09-12T20:45:41.984363+00:00"
   },
   {
     "camera_id": "68188e8d6dfb4b0018f9038b",
@@ -70,12 +70,12 @@
     "district": "",
     "location_text": "Thanh Niên - gần trung tâm kiểm định giống cây",
     "rain": "No",
-    "justification": "The image is too blurry and dark to confidently identify falling rain, and there are no people or vehicles exhibiting rain-avoidance behavior.",
+    "justification": "While the air appears hazy and the road shows some glare, there are no visible rain streaks or indicators of active precipitation.",
     "approx": false,
     "lat": 10.8462459116556,
     "lon": 106.52880191803,
-    "image_url": "/media/data/raw/68188e8d6dfb4b0018f9038b/2026/09/12/20260912_154652.jpg",
-    "updated_at": "2026-09-12T15:47:48.429622+00:00"
+    "image_url": "/media/data/raw/68188e8d6dfb4b0018f9038b/2026/09/12/20260912_204541.jpg",
+    "updated_at": "2026-09-12T20:45:57.461042+00:00"
   },
   {
     "camera_id": "6792f9c88c5ed4001b27fb3d",
@@ -83,12 +83,12 @@
     "district": "",
     "location_text": "Quốc Lộ 1K - Đường GS1",
     "rain": "No",
-    "justification": "While the road is wet and reflective, the air is clear and most motorbike riders are not wearing rain gear, indicating it is not currently raining.",
+    "justification": "Motorbikes are riding normally without rain gear and the air is clear with no visible precipitation or strong wet-road reflections.",
     "approx": false,
     "lat": 10.8880966294513,
     "lon": 106.776037216187,
-    "image_url": "/media/data/raw/6792f9c88c5ed4001b27fb3d/2026/09/12/20260912_154739.jpg",
-    "updated_at": "2026-09-12T15:48:08.128395+00:00"
+    "image_url": "/media/data/raw/6792f9c88c5ed4001b27fb3d/2026/09/12/20260912_204542.jpg",
+    "updated_at": "2026-09-12T20:46:12.190840+00:00"
   },
   {
     "camera_id": "63bd1f21bfd3d90017ec3d04",
@@ -96,12 +96,12 @@
     "district": "",
     "location_text": "Huỳnh Tấn Phát - Phạm Hữu Lầu",
     "rain": "No",
-    "justification": "The road is wet and reflective, but motorbike riders are moving normally without ponchos and there are no visible rain streaks in the air.",
+    "justification": "While the road surface is wet and reflective, the air is clear, there are no drops on the camera lens, and the motorcyclist is not wearing rain gear.",
     "approx": false,
     "lat": 10.7052043577961,
     "lon": 106.737660169601,
-    "image_url": "/media/data/raw/63bd1f21bfd3d90017ec3d04/2026/09/12/20260912_154740.jpg",
-    "updated_at": "2026-09-12T15:48:24.904447+00:00"
+    "image_url": "/media/data/raw/63bd1f21bfd3d90017ec3d04/2026/09/12/20260912_204543.jpg",
+    "updated_at": "2026-09-12T20:46:31.172021+00:00"
   },
   {
     "camera_id": "6792f03d8c5ed4001b27f378",
@@ -109,12 +109,12 @@
     "district": "",
     "location_text": "Quốc Lộ 50 - Cổng chào Long An",
     "rain": "No",
-    "justification": "While the road surface is wet and reflective, people are gathered outside the shops without cover and visibility is clear, indicating it is not currently raining.",
+    "justification": "The road is wet and reflective, but the air is clear and there are no visual indicators of active rainfall or people reacting to it.",
     "approx": false,
     "lat": 10.6424723207925,
     "lon": 106.657032966614,
-    "image_url": "/media/data/raw/6792f03d8c5ed4001b27f378/2026/09/12/20260912_154742.jpg",
-    "updated_at": "2026-09-12T15:48:38.955327+00:00"
+    "image_url": "/media/data/raw/6792f03d8c5ed4001b27f378/2026/09/12/20260912_204615.jpg",
+    "updated_at": "2026-09-12T20:46:49.576720+00:00"
   },
   {
     "camera_id": "6818901a6dfb4b0018f9058a",
@@ -122,12 +122,12 @@
     "district": "",
     "location_text": "Tỉnh Lộ 10 - cầu Tân Tạo",
     "rain": "No",
-    "justification": "The road surface is wet and reflective, but there is no evidence of active precipitation such as rain-streaks or riders using rain gear.",
+    "justification": "The road is reflective and wet, but the single motorcyclist is moving normally without rain gear and there are no visible rain streaks or lens droplets.",
     "approx": false,
     "lat": 10.7601026888897,
     "lon": 106.574045419693,
-    "image_url": "/media/data/raw/6818901a6dfb4b0018f9058a/2026/09/12/20260912_154829.jpg",
-    "updated_at": "2026-09-12T15:48:54.174600+00:00"
+    "image_url": "/media/data/raw/6818901a6dfb4b0018f9058a/2026/09/12/20260912_204616.jpg",
+    "updated_at": "2026-09-12T20:47:04.865896+00:00"
   },
   {
     "camera_id": "5a6065c58576340017d06615",
@@ -135,12 +135,12 @@
     "district": "",
     "location_text": "Tô Ngọc Vân - TX25",
     "rain": "No",
-    "justification": "The road is very wet and reflective, but motorbike riders are moving normally without rain gear and there is no visible precipitation.",
+    "justification": "The road surface is wet and reflective, but there are no visible rain streaks or people taking cover to indicate active rainfall.",
     "approx": false,
     "lat": 10.8797100979598,
     "lon": 106.677986383438,
-    "image_url": "/media/data/raw/5a6065c58576340017d06615/2026/09/12/20260912_154830.jpg",
-    "updated_at": "2026-09-12T15:49:07.910852+00:00"
+    "image_url": "/media/data/raw/5a6065c58576340017d06615/2026/09/12/20260912_204650.jpg",
+    "updated_at": "2026-09-12T20:47:21.999303+00:00"
   },
   {
     "camera_id": "6623f1996f998a001b252805",
@@ -148,12 +148,12 @@
     "district": "",
     "location_text": "Mai Chí Thọ - Xa Lộ Hà Nội (3)",
     "rain": "No",
-    "justification": "The road is wet and reflective, but traffic is moving normally and there is no visible precipitation or atmospheric blur.",
+    "justification": "While the road surface is wet, visibility is clear and the lone motorbike is moving normally without rain gear.",
     "approx": false,
     "lat": 10.809194919668,
     "lon": 106.756038665771,
-    "image_url": "/media/data/raw/6623f1996f998a001b252805/2026/09/12/20260912_154832.jpg",
-    "updated_at": "2026-09-12T15:49:21.093758+00:00"
+    "image_url": "/media/data/raw/6623f1996f998a001b252805/2026/09/12/20260912_204651.jpg",
+    "updated_at": "2026-09-12T20:47:36.576318+00:00"
   },
   {
     "camera_id": "5a6061fd8576340017d06613",
@@ -161,12 +161,12 @@
     "district": "",
     "location_text": "Quang Trung - Trưng Nữ Vương",
     "rain": "No",
-    "justification": "Motorbike riders and pedestrians are uncovered and moving normally despite the damp appearance of the road.",
+    "justification": "The road is wet and reflective, but the motorbike rider is not wearing rain gear and there is no visible precipitation in the air or on the camera lens.",
     "approx": false,
     "lat": 10.8885285926454,
     "lon": 106.596522331238,
-    "image_url": "/media/data/raw/5a6061fd8576340017d06613/2026/09/12/20260912_154912.jpg",
-    "updated_at": "2026-09-12T15:49:36.391448+00:00"
+    "image_url": "/media/data/raw/5a6061fd8576340017d06613/2026/09/12/20260912_204723.jpg",
+    "updated_at": "2026-09-12T20:47:54.409977+00:00"
   },
   {
     "camera_id": "6818863c6dfb4b0018f8f235",
@@ -174,12 +174,12 @@
     "district": "",
     "location_text": "Trần Đại Nghĩa - Mai Bá Hương",
     "rain": "No",
-    "justification": "The road is wet and highly reflective, but there are no visible rain streaks or people seeking cover to indicate that rain is currently falling.",
+    "justification": "The street is empty and while the air is hazy and the road is wet, there are no visible streaks of rain or behavioral cues to indicate active precipitation.",
     "approx": false,
     "lat": 10.7650143803183,
     "lon": 106.498975753784,
-    "image_url": "/media/data/raw/6818863c6dfb4b0018f8f235/2026/09/12/20260912_154913.jpg",
-    "updated_at": "2026-09-12T15:49:55.762254+00:00"
+    "image_url": "/media/data/raw/6818863c6dfb4b0018f8f235/2026/09/12/20260912_204724.jpg",
+    "updated_at": "2026-09-12T20:48:17.571713+00:00"
   },
   {
     "camera_id": "58e49783d9d6200011e0b9ce",
@@ -187,12 +187,12 @@
     "district": "Quận 12",
     "location_text": "Trường Chinh - Phan Văn Hớn 2 (HM-Q12)",
     "rain": "No",
-    "justification": "Motorbikes are moving normally without rain gear and there is no visible precipitation in the air despite the wet road surface.",
+    "justification": "While the road is wet and reflective, traffic is flowing normally and there are no visual signs of rain falling or riders using rain gear.",
     "approx": false,
     "lat": 10.8274733494884,
     "lon": 106.624760627747,
-    "image_url": "/media/data/raw/58e49783d9d6200011e0b9ce/2026/09/12/20260912_154948.jpg",
-    "updated_at": "2026-09-12T15:50:12.355970+00:00"
+    "image_url": "/media/data/raw/58e49783d9d6200011e0b9ce/2026/09/12/20260912_204755.jpg",
+    "updated_at": "2026-09-12T20:48:35.617618+00:00"
   },
   {
     "camera_id": "63b54a9ebfd3d90017ea7911",
@@ -200,12 +200,12 @@
     "district": "",
     "location_text": "Nguyễn Xiển - Nguyễn Văn Tăng",
     "rain": "No",
-    "justification": "Motorbikes are moving normally and riders are not wearing rain gear, indicating that the wet pavement is from a previous rain.",
+    "justification": "Motorbike riders are moving normally without rain gear, and the air is clear with no visible precipitation.",
     "approx": false,
     "lat": 10.8428107736029,
     "lon": 106.828694343567,
-    "image_url": "/media/data/raw/63b54a9ebfd3d90017ea7911/2026/09/12/20260912_154948.jpg",
-    "updated_at": "2026-09-12T15:50:27.099306+00:00"
+    "image_url": "/media/data/raw/63b54a9ebfd3d90017ea7911/2026/09/12/20260912_204827.jpg",
+    "updated_at": "2026-09-12T20:48:49.618995+00:00"
   },
   {
     "camera_id": "662a89211afb9c00172d2636",
@@ -213,12 +213,12 @@
     "district": "",
     "location_text": "Quốc Lộ 1 - Dương Đình Cúc",
     "rain": "No",
-    "justification": "The road is wet and reflective, but traffic is flowing normally and riders are not wearing rain ponchos or seeking cover.",
+    "justification": "The road is wet and reflective, but the few riders are moving normally without rain gear and there is no visible rain falling in the air.",
     "approx": false,
     "lat": 10.705952846726,
     "lon": 106.597981452942,
-    "image_url": "/media/data/raw/662a89211afb9c00172d2636/2026/09/12/20260912_155023.jpg",
-    "updated_at": "2026-09-12T15:50:43.114508+00:00"
+    "image_url": "/media/data/raw/662a89211afb9c00172d2636/2026/09/12/20260912_204828.jpg",
+    "updated_at": "2026-09-12T20:49:03.985480+00:00"
   },
   {
     "camera_id": "583f926761cfea0012cf68f1",
@@ -226,12 +226,12 @@
     "district": "Quận 2",
     "location_text": "Nguyễn Thị Định - Cổng A Cảng Cát Lái",
     "rain": "No",
-    "justification": "While the road surface is wet and reflective, traffic is moving normally and there is no atmospheric blur or haze indicating active precipitation.",
+    "justification": "The air is clear with no visible rain streaks, and the road lacks the strong, shimmering reflections typical of active rainfall.",
     "approx": false,
     "lat": 10.7599709364081,
     "lon": 106.786578297615,
-    "image_url": "/media/data/raw/583f926761cfea0012cf68f1/2026/09/12/20260912_155023.jpg",
-    "updated_at": "2026-09-12T15:50:58.468770+00:00"
+    "image_url": "/media/data/raw/583f926761cfea0012cf68f1/2026/09/12/20260912_204903.jpg",
+    "updated_at": "2026-09-12T20:49:21.973873+00:00"
   },
   {
     "camera_id": "665861d864f11e00173c73a9",
@@ -239,12 +239,12 @@
     "district": "",
     "location_text": "Huỳnh Tấn Phát - Cầu Tân Thuận 1",
     "rain": "No",
-    "justification": "Motorbikes are moving normally without rain gear and the air is clear, despite the road surface appearing wet.",
+    "justification": "The road surface appears dry without significant reflections, and the lone motorcyclist is not wearing a raincoat.",
     "approx": false,
     "lat": 10.7554702370632,
     "lon": 106.723374724388,
-    "image_url": "/media/data/raw/665861d864f11e00173c73a9/2026/09/12/20260912_155024.jpg",
-    "updated_at": "2026-09-12T15:51:12.815706+00:00"
+    "image_url": "/media/data/raw/665861d864f11e00173c73a9/2026/09/12/20260912_204903.jpg",
+    "updated_at": "2026-09-12T20:49:34.668408+00:00"
   },
   {
     "camera_id": "6623f0b46f998a001b2527c3",
@@ -252,12 +252,12 @@
     "district": "",
     "location_text": "Hòa Bình - Lũy Bán Bích",
     "rain": "No",
-    "justification": "Motorbike riders are not wearing rain gear and traffic is flowing normally, despite the road surface being wet from previous rain.",
+    "justification": "The air is clear, visibility is high, and there is no evidence of people using rain gear or precipitation falling on the camera lens.",
     "approx": false,
     "lat": 10.7704213643614,
     "lon": 106.631401777267,
-    "image_url": "/media/data/raw/6623f0b46f998a001b2527c3/2026/09/12/20260912_155104.jpg",
-    "updated_at": "2026-09-12T15:51:25.982247+00:00"
+    "image_url": "/media/data/raw/6623f0b46f998a001b2527c3/2026/09/12/20260912_204904.jpg",
+    "updated_at": "2026-09-12T20:49:50.675489+00:00"
   },
   {
     "camera_id": "63b3c59fbfd3d90017e9ace8",
@@ -265,12 +265,12 @@
     "district": "",
     "location_text": "Vĩnh Lộc - Quách Điêu",
     "rain": "No",
-    "justification": "The street is wet and reflective, but riders are moving normally without rain gear and there is no visible precipitation in the air.",
+    "justification": "The ground is wet and reflective, but the motorbike rider is not wearing any rain gear and is moving normally, suggesting it is not currently raining.",
     "approx": false,
     "lat": 10.8125250596398,
     "lon": 106.577596664429,
-    "image_url": "/media/data/raw/63b3c59fbfd3d90017e9ace8/2026/09/12/20260912_155106.jpg",
-    "updated_at": "2026-09-12T15:51:36.882471+00:00"
+    "image_url": "/media/data/raw/63b3c59fbfd3d90017e9ace8/2026/09/12/20260912_204936.jpg",
+    "updated_at": "2026-09-12T20:50:08.898817+00:00"
   },
   {
     "camera_id": "5a824f975058170011f6eab8",
@@ -278,12 +278,12 @@
     "district": "",
     "location_text": "Nguyễn Oanh - Phan Văn Trị (2)",
     "rain": "No",
-    "justification": "While the road surface is wet and reflective, motorbike riders are moving normally without rain gear and the air is clear.",
+    "justification": "The road surface lacks reflections and the air is clear with no visible precipitation or rain-induced blur.",
     "approx": false,
     "lat": 10.8310719980749,
     "lon": 106.676913499832,
-    "image_url": "/media/data/raw/5a824f975058170011f6eab8/2026/09/12/20260912_155107.jpg",
-    "updated_at": "2026-09-12T15:51:49.818476+00:00"
+    "image_url": "/media/data/raw/5a824f975058170011f6eab8/2026/09/12/20260912_205007.jpg",
+    "updated_at": "2026-09-12T20:50:23.479132+00:00"
   },
   {
     "camera_id": "63b54bcdbfd3d90017ea7a82",
@@ -291,12 +291,12 @@
     "district": "",
     "location_text": "Tỉnh lộ 43 - KCX Linh Trung 2",
     "rain": "No",
-    "justification": "Motorbike riders are moving normally without rain gear and there is no visible precipitation or blurring in the light beams.",
+    "justification": "The road surface is wet with reflections, but the air is clear and the lone motorbike rider is moving normally without rain gear.",
     "approx": false,
     "lat": 10.8960825794088,
     "lon": 106.718090772629,
-    "image_url": "/media/data/raw/63b54bcdbfd3d90017ea7a82/2026/09/12/20260912_155108.jpg",
-    "updated_at": "2026-09-12T15:52:03.464517+00:00"
+    "image_url": "/media/data/raw/63b54bcdbfd3d90017ea7a82/2026/09/12/20260912_205008.jpg",
+    "updated_at": "2026-09-12T20:50:36.913281+00:00"
   },
   {
     "camera_id": "5ad0679598d8fc001102e274",
@@ -304,12 +304,12 @@
     "district": "",
     "location_text": "Lê Văn Việt - Man Thiện",
     "rain": "No",
-    "justification": "Motorcyclists are riding normally without any rain gear and the air is clear, despite the wet appearance of the asphalt.",
+    "justification": "The air is clear, the road surface shows no significant wet reflections, and the lone motorist is moving normally without any rain gear.",
     "approx": false,
     "lat": 10.8452343413582,
     "lon": 106.786707043648,
-    "image_url": "/media/data/raw/5ad0679598d8fc001102e274/2026/09/12/20260912_155151.jpg",
-    "updated_at": "2026-09-12T15:52:17.531420+00:00"
+    "image_url": "/media/data/raw/5ad0679598d8fc001102e274/2026/09/12/20260912_205009.jpg",
+    "updated_at": "2026-09-12T20:50:50.684968+00:00"
   },
   {
     "camera_id": "66b1c426779f74001867415e",
@@ -317,12 +317,12 @@
     "district": "",
     "location_text": "Điện Biên Phủ - Nguyễn Gia Trí",
     "rain": "No",
-    "justification": "The road surface is wet and reflective, but traffic is moving normally and riders are not wearing rain gear, indicating it is not currently raining.",
+    "justification": "The road is wet and reflective, but visibility is clear and there are no active rain streaks or riders seeking cover.",
     "approx": false,
     "lat": 10.8010801833774,
     "lon": 106.715161800385,
-    "image_url": "/media/data/raw/66b1c426779f74001867415e/2026/09/12/20260912_154013.jpg",
-    "updated_at": "2026-09-12T15:40:42.419512+00:00"
+    "image_url": "/media/data/raw/66b1c426779f74001867415e/2026/09/12/20260912_205042.jpg",
+    "updated_at": "2026-09-12T20:51:04.326714+00:00"
   },
   {
     "camera_id": "6623ef2b6f998a001b252753",
@@ -330,12 +330,12 @@
     "district": "",
     "location_text": "Phan Văn Hớn - Trần Văn Mười",
     "rain": "No",
-    "justification": "While the road surface appears wet, traffic is moving normally and there are no signs of active precipitation on the camera lens or in the air.",
+    "justification": "While the street appears wet, the air is clear and there are no visible signs of active precipitation or people reacting to rain.",
     "approx": false,
     "lat": 10.8498285289366,
     "lon": 106.587703227997,
-    "image_url": "/media/data/raw/6623ef2b6f998a001b252753/2026/09/12/20260912_154014.jpg",
-    "updated_at": "2026-09-12T15:40:57.977267+00:00"
+    "image_url": "/media/data/raw/6623ef2b6f998a001b252753/2026/09/12/20260912_205042.jpg",
+    "updated_at": "2026-09-12T20:51:21.789716+00:00"
   },
   {
     "camera_id": "63b548c3bfd3d90017ea77c0",
@@ -343,25 +343,25 @@
     "district": "",
     "location_text": "Nguyễn Duy Trinh - Nguyễn Thị Tư",
     "rain": "No",
-    "justification": "The road is wet and reflective, but traffic is moving normally and there are no visible signs of active precipitation or riders wearing rain gear.",
+    "justification": "The road surface is reflective and appears wet, but there are no visible rain streaks, splashes, or atmospheric haze to indicate it is currently falling.",
     "approx": false,
     "lat": 10.792733368728,
     "lon": 106.806946992874,
-    "image_url": "/media/data/raw/63b548c3bfd3d90017ea77c0/2026/09/12/20260912_154053.jpg",
-    "updated_at": "2026-09-12T15:41:17.182358+00:00"
+    "image_url": "/media/data/raw/63b548c3bfd3d90017ea77c0/2026/09/12/20260912_205043.jpg",
+    "updated_at": "2026-09-12T20:51:36.724874+00:00"
   },
   {
     "camera_id": "681887836dfb4b0018f8f3d1",
     "title": "TTH 435",
     "district": "",
     "location_text": "Trần Đại Nghĩa - Kênh B",
-    "rain": "Light",
-    "justification": "The pronounced halos around the streetlights and a general hazy quality to the air suggest light rain is currently falling.",
+    "rain": "No",
+    "justification": "The road is wet with reflections, but the overall visibility is clear and there are no active signs of falling rain or riders seeking cover.",
     "approx": false,
     "lat": 10.7445238765742,
     "lon": 106.539101600647,
-    "image_url": "/media/data/raw/681887836dfb4b0018f8f3d1/2026/09/12/20260912_154054.jpg",
-    "updated_at": "2026-09-12T15:41:48.159381+00:00"
+    "image_url": "/media/data/raw/681887836dfb4b0018f8f3d1/2026/09/12/20260912_205044.jpg",
+    "updated_at": "2026-09-12T20:51:59.171173+00:00"
   },
   {
     "camera_id": "662a881a1afb9c00172d2559",
@@ -369,12 +369,12 @@
     "district": "",
     "location_text": "Kinh Dương Vương - Tên Lửa",
     "rain": "No",
-    "justification": "While the road surface is wet and reflective, the motorbike riders are not wearing rain gear and traffic is flowing normally.",
+    "justification": "The road is wet and reflective, but there are no visible rain streaks on the camera lens or signs of active precipitation.",
     "approx": false,
     "lat": 10.7380517925754,
     "lon": 106.61497592926,
-    "image_url": "/media/data/raw/662a881a1afb9c00172d2559/2026/09/12/20260912_154135.jpg",
-    "updated_at": "2026-09-12T15:42:01.793726+00:00"
+    "image_url": "/media/data/raw/662a881a1afb9c00172d2559/2026/09/12/20260912_205044.jpg",
+    "updated_at": "2026-09-12T20:52:14.664004+00:00"
   },
   {
     "camera_id": "5b632a79fd4edb0019c7dc0f",
@@ -382,12 +382,12 @@
     "district": "",
     "location_text": "Nguyễn Tri Phương - Trần Hưng Đạo",
     "rain": "No",
-    "justification": "Motorbikes are moving normally and riders are not wearing rain gear, despite the reflective road surface.",
+    "justification": "While the road is wet, the riders are uncovered and moving normally through clear air.",
     "approx": false,
     "lat": 10.7524240581789,
     "lon": 106.669510602951,
-    "image_url": "/media/data/raw/5b632a79fd4edb0019c7dc0f/2026/09/12/20260912_154137.jpg",
-    "updated_at": "2026-09-12T15:42:14.950789+00:00"
+    "image_url": "/media/data/raw/5b632a79fd4edb0019c7dc0f/2026/09/12/20260912_205045.jpg",
+    "updated_at": "2026-09-12T20:52:28.027751+00:00"
   },
   {
     "camera_id": "6792efe48c5ed4001b27f336",
@@ -395,12 +395,12 @@
     "district": "",
     "location_text": "Xa Lộ Hà Nội - Cổng ĐH An ninh",
     "rain": "No",
-    "justification": "While the road is wet and highly reflective, there are no visible streaks of rain in the air or droplets on the camera lens.",
+    "justification": "The road surface is wet and reflective, but visibility is clear and there are no signs of active precipitation in the air or on the camera lens.",
     "approx": false,
     "lat": 10.8735359428243,
     "lon": 106.808030605316,
-    "image_url": "/media/data/raw/6792efe48c5ed4001b27f336/2026/09/12/20260912_154137.jpg",
-    "updated_at": "2026-09-12T15:42:31.410012+00:00"
+    "image_url": "/media/data/raw/6792efe48c5ed4001b27f336/2026/09/12/20260912_205046.jpg",
+    "updated_at": "2026-09-12T20:52:41.954413+00:00"
   },
   {
     "camera_id": "68188d586dfb4b0018f9018d",
@@ -408,25 +408,25 @@
     "district": "",
     "location_text": "Thanh Niên - Phạm Văn Hai",
     "rain": "No",
-    "justification": "The frame is too blurred and dark to confidently identify falling rain or rider behavior, and road reflections are not reliable indicators.",
+    "justification": "The image is too dark and blurry to reliably detect rain, and there are no obvious signals like reduced visibility or people seeking cover.",
     "approx": false,
     "lat": 10.8118084503619,
     "lon": 106.519918441772,
-    "image_url": "/media/data/raw/68188d586dfb4b0018f9018d/2026/09/12/20260912_154216.jpg",
-    "updated_at": "2026-09-12T15:42:58.292907+00:00"
+    "image_url": "/media/data/raw/68188d586dfb4b0018f9018d/2026/09/12/20260912_205047.jpg",
+    "updated_at": "2026-09-12T20:52:54.547882+00:00"
   },
   {
     "camera_id": "5d8cd98d766c88001718895a",
     "title": "TTH 155",
     "district": "",
     "location_text": "Phạm Văn Đồng - Tô Ngọc Vân (hướng đi Bình Dương)",
-    "rain": "Light",
-    "justification": "The significant diffusion and halos around all light sources suggest rain on the camera lens, while the continuing traffic indicates it is not a heavy downpour.",
+    "rain": "No",
+    "justification": "The image is too blurred and dark to confidently identify falling rain, and traffic continues to move without any visible sign of riders seeking cover.",
     "approx": false,
     "lat": 10.8533952979021,
     "lon": 106.751462817192,
-    "image_url": "/media/data/raw/5d8cd98d766c88001718895a/2026/09/12/20260912_154218.jpg",
-    "updated_at": "2026-09-12T15:43:21.689749+00:00"
+    "image_url": "/media/data/raw/5d8cd98d766c88001718895a/2026/09/12/20260912_205048.jpg",
+    "updated_at": "2026-09-12T20:53:30.394439+00:00"
   },
   {
     "camera_id": "589b4379b3bf7600110283c9",
@@ -434,12 +434,12 @@
     "district": "Huyện Củ Chi",
     "location_text": "QL 22 - Giáp Hải",
     "rain": "No",
-    "justification": "The road is very wet and reflective, but the air is clear and traffic is moving normally with no signs of active rain falling.",
+    "justification": "The air is clear, visibility is high, and the few vehicles present are moving normally without any sign of rain gear or spray.",
     "approx": false,
     "lat": 10.9713380309812,
     "lon": 106.481675505638,
-    "image_url": "/media/data/raw/589b4379b3bf7600110283c9/2026/09/12/20260912_154309.jpg",
-    "updated_at": "2026-09-12T15:43:37.314050+00:00"
+    "image_url": "/media/data/raw/589b4379b3bf7600110283c9/2026/09/12/20260912_205048.jpg",
+    "updated_at": "2026-09-12T20:53:46.265039+00:00"
   },
   {
     "camera_id": "6623f51a6f998a001b252900",
@@ -447,12 +447,12 @@
     "district": "",
     "location_text": "Quốc Lộ 13 - Nguyễn Thị Nhung",
     "rain": "No",
-    "justification": "The road is wet and reflective, but the air is clear, traffic is moving normally, and no riders are wearing rain gear.",
+    "justification": "The road is wet, but the air is clear and there are no signs of active precipitation or people seeking cover.",
     "approx": false,
     "lat": 10.8403450366927,
     "lon": 106.716363430023,
-    "image_url": "/media/data/raw/6623f51a6f998a001b252900/2026/09/12/20260912_154313.jpg",
-    "updated_at": "2026-09-12T15:43:54.063354+00:00"
+    "image_url": "/media/data/raw/6623f51a6f998a001b252900/2026/09/12/20260912_205049.jpg",
+    "updated_at": "2026-09-12T20:54:03.485049+00:00"
   },
   {
     "camera_id": "662a89f51afb9c00172d26ef",
@@ -460,12 +460,12 @@
     "district": "",
     "location_text": "Nguyễn Văn Linh - Trịnh Quang Nghị 2",
     "rain": "No",
-    "justification": "The road is wet and reflective, but traffic is moving normally and there is no visible rain falling in the air or distorting the camera lens.",
+    "justification": "The road is very wet with strong reflections, but the clear air and normal movement of the few motorbikes indicate that it is not currently raining.",
     "approx": false,
     "lat": 10.7024001433989,
     "lon": 106.634652614593,
-    "image_url": "/media/data/raw/662a89f51afb9c00172d26ef/2026/09/12/20260912_154314.jpg",
-    "updated_at": "2026-09-12T15:44:08.221599+00:00"
+    "image_url": "/media/data/raw/662a89f51afb9c00172d26ef/2026/09/12/20260912_205051.jpg",
+    "updated_at": "2026-09-12T20:54:17.293379+00:00"
   },
   {
     "camera_id": "5a825b7d5058170011f6ead4",
@@ -473,12 +473,12 @@
     "district": "",
     "location_text": "Nguyễn Văn Linh - Nguyễn Hữu Thọ (3)",
     "rain": "No",
-    "justification": "Traffic is moving normally and visibility is clear, with no signs of riders wearing rain gear or rain falling through the light.",
+    "justification": "The air is clear, visibility is high, and there are no active reflections or indicators of falling rain on the road or lens.",
     "approx": false,
     "lat": 10.7282010989927,
     "lon": 106.700441837311,
-    "image_url": "/media/data/raw/5a825b7d5058170011f6ead4/2026/09/12/20260912_154356.jpg",
-    "updated_at": "2026-09-12T15:44:23.954777+00:00"
+    "image_url": "/media/data/raw/5a825b7d5058170011f6ead4/2026/09/12/20260912_205051.jpg",
+    "updated_at": "2026-09-12T20:54:31.173969+00:00"
   },
   {
     "camera_id": "58ad6214bd82540010390be2",
@@ -486,12 +486,12 @@
     "district": "Quận Tân Bình",
     "location_text": "Cộng Hòa - Hoàng Hoa Thám",
     "rain": "No",
-    "justification": "While the road is wet and reflective, the motorbikes are moving normally and riders are not wearing rain gear, suggesting it is not currently raining.",
+    "justification": "While the asphalt is wet and reflective, visibility is clear and the few riders on the road are moving normally without rain gear.",
     "approx": false,
     "lat": 10.8013120360293,
     "lon": 106.647366285324,
-    "image_url": "/media/data/raw/58ad6214bd82540010390be2/2026/09/12/20260912_154357.jpg",
-    "updated_at": "2026-09-12T15:44:37.408877+00:00"
+    "image_url": "/media/data/raw/58ad6214bd82540010390be2/2026/09/12/20260912_205052.jpg",
+    "updated_at": "2026-09-12T20:54:43.936038+00:00"
   },
   {
     "camera_id": "68188bb96dfb4b0018f8fdbf",
@@ -499,12 +499,12 @@
     "district": "",
     "location_text": "Vĩnh Lộc - Trần Hải Phụng",
     "rain": "No",
-    "justification": "The road is wet and reflective, but the air is clear and traffic is moving normally without any signs of active precipitation.",
+    "justification": "The road is wet and reflective, but the air is clear and there is no active precipitation visible on the lens or in the scene.",
     "approx": false,
     "lat": 10.7860515343869,
     "lon": 106.55412197113,
-    "image_url": "/media/data/raw/68188bb96dfb4b0018f8fdbf/2026/09/12/20260912_154359.jpg",
-    "updated_at": "2026-09-12T15:44:53.384230+00:00"
+    "image_url": "/media/data/raw/68188bb96dfb4b0018f8fdbf/2026/09/12/20260912_205053.jpg",
+    "updated_at": "2026-09-12T20:54:59.097478+00:00"
   },
   {
     "camera_id": "662b5c141afb9c00172d93d7",
@@ -512,11 +512,11 @@
     "district": "",
     "location_text": "Tân Kỳ Tân Quý - Bình Long",
     "rain": "No",
-    "justification": "While the road is wet and reflective, motorbike riders are moving normally without rain gear and there is no visible precipitation in the air.",
+    "justification": "A pedestrian is standing uncovered on the sidewalk and visibility is clear, indicating no active rainfall despite the reflective road surface.",
     "approx": false,
     "lat": 10.7965800987319,
     "lon": 106.613742113113,
-    "image_url": "/media/data/raw/662b5c141afb9c00172d93d7/2026/09/12/20260912_154438.jpg",
-    "updated_at": "2026-09-12T15:45:06.114307+00:00"
+    "image_url": "/media/data/raw/662b5c141afb9c00172d93d7/2026/09/12/20260912_205054.jpg",
+    "updated_at": "2026-09-12T20:55:16.562882+00:00"
   }
 ]
