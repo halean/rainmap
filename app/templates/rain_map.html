@@ -55,6 +55,7 @@
       .legend-box .sw { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.2); }
       .legend-box .title { font-weight: 600; margin-bottom: 4px; }
       .legend-box .note { color: var(--muted); font-size: 11px; margin-top: 4px; max-width: 180px; }
+      .legend-box .muted-note { color: var(--muted); font-size: 10.5px; }
       .legend-box .toggle-row {
         display: flex; align-items: center; gap: 6px;
         margin-top: 8px; padding-top: 8px; border-top: 1px solid #eef2f7;
@@ -118,6 +119,7 @@
     <header>
       <h1>HCMC Rain Map</h1>
       <span class="sub">Live traffic-camera frames &middot; rain intensity via Gemma vision &middot; real OpenStreetMap tiles</span>
+      <span class="sub" id="rainSummary" style="font-weight:600;"></span>
       <span class="sub" id="lastUpdated" style="font-style:italic;"></span>
       <a class="back" href="https://github.com/halean/rainmap" target="_blank" rel="noopener">Source &#8599;</a>
     </header>
@@ -128,7 +130,9 @@
     </div>
 
     <script>
-      const RAIN_COLORS = { No: "#0ca30c", Light: "#fab219", Medium: "#ec835a", Heavy: "#d03b3b" };
+      // Colour is reserved for actual precipitation. "No rain" gets no colour of its own:
+      // it is fully transparent on the radar field and a neutral marker on the map.
+      const RAIN_COLORS = { No: "#94a3b8", Light: "#fab219", Medium: "#ec835a", Heavy: "#d03b3b" };
 
       const map = L.map("map", { scrollWheelZoom: true }).setView([10.78, 106.68], 11);
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -186,9 +190,14 @@
         legendBoxEl = L.DomUtil.create("div", "legend-box", wrap);
         let rows = `<button class="legend-close" title="Hide legend">&times;</button><div class="title">Rain intensity</div>`;
         for (const [label, color] of Object.entries(RAIN_COLORS)) {
-          rows += `<div class="row"><span class="sw" style="background:${color}"></span>${label}</div>`;
+          // "No" is shown hollow: it has no colour on the radar, only a neutral pin
+          const swatch = label === "No"
+            ? `<span class="sw" style="background:transparent; border:1px dashed ${color};"></span>`
+            : `<span class="sw" style="background:${color}"></span>`;
+          const suffix = label === "No" ? ` <span class="muted-note">(not shown)</span>` : "";
+          rows += `<div class="row">${swatch}${label}${suffix}</div>`;
         }
-        rows += `<div class="note">Color field is a radar-style interpolation between sampled cameras &mdash; not a per-point boundary. Click a pin for the live frame.</div>`;
+        rows += `<div class="note">Only rain is coloured &mdash; dry areas stay clear. The field is a radar-style interpolation between sampled cameras, not a per-point boundary. Click a pin for the live frame.</div>`;
         rows += `<label class="toggle-row"><input type="checkbox" id="realRadarToggle" /> Real weather radar (RainViewer)</label>`;
         legendBoxEl.innerHTML = rows;
         legendBoxEl.querySelector(".legend-close").addEventListener("click", () => setLegendVisible(false));
@@ -230,16 +239,21 @@
       const markerIndex = {};
 
       const RAIN_SCORE = { No: 0, Light: 1, Medium: 2, Heavy: 3 };
-      const COLOR_STOPS = [[12, 163, 12], [250, 178, 25], [236, 131, 90], [208, 59, 59]]; // No -> Light -> Medium -> Heavy
+
+      // Precipitation-only ramp: Light -> Medium -> Heavy. There is deliberately no stop for
+      // "No rain" -- dry ground is drawn as nothing at all, the way radar shows no echo.
+      const PRECIP_STOPS = [[250, 178, 25], [236, 131, 90], [208, 59, 59]];
 
       const BAND_STEP = 0.4; // posterize into discrete radar-style bands instead of a smooth gradient
 
       function scoreToRGB(s) {
-        s = Math.max(0, Math.min(3, s));
+        s = Math.max(RAIN_SCORE.Light, Math.min(RAIN_SCORE.Heavy, s));
         s = Math.round(s / BAND_STEP) * BAND_STEP;
-        const i = Math.min(2, Math.floor(s));
-        const f = s - i;
-        const a = COLOR_STOPS[i], b = COLOR_STOPS[i + 1];
+        s = Math.max(RAIN_SCORE.Light, Math.min(RAIN_SCORE.Heavy, s));
+        const t = s - RAIN_SCORE.Light; // 0 at Light .. 2 at Heavy
+        const i = Math.min(PRECIP_STOPS.length - 2, Math.floor(t));
+        const f = t - i;
+        const a = PRECIP_STOPS[i], b = PRECIP_STOPS[i + 1];
         return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
       }
 
@@ -284,14 +298,18 @@
               scoreSum += w * RAIN_SCORE[p.rain];
             }
             const idx = (gy * GRID + gx) * 4;
-            if (wSum < 0.05) {
+            const score = wSum > 0 ? scoreSum / wSum : 0;
+            // Opacity carries rain intensity, not just camera proximity: dry areas vanish
+            // entirely (like real radar showing no echo) instead of washing the map in colour.
+            const intensity = Math.min(1, score / RAIN_SCORE.Light);
+            if (wSum < 0.05 || intensity <= 0) {
               img.data[idx + 3] = 0;
             } else {
-              const [r, g, b] = scoreToRGB(scoreSum / wSum);
+              const [r, g, b] = scoreToRGB(score);
               img.data[idx] = r;
               img.data[idx + 1] = g;
               img.data[idx + 2] = b;
-              img.data[idx + 3] = Math.round(Math.min(wSum, 1) * 215);
+              img.data[idx + 3] = Math.round(Math.min(wSum, 1) * intensity * 215);
             }
           }
         }
@@ -355,6 +373,14 @@
           markerIndex[p.camera_id] = { marker, point: p };
           if (p.camera_id === openId) marker.openPopup();
         });
+
+        // An all-dry city renders an empty field by design, so say so explicitly --
+        // otherwise a blank map is indistinguishable from a failed load.
+        const counts = points.reduce((acc, p) => ((acc[p.rain] = (acc[p.rain] || 0) + 1), acc), {});
+        const wet = ["Light", "Medium", "Heavy"].filter((k) => counts[k]);
+        document.getElementById("rainSummary").textContent = wet.length
+          ? "· " + wet.map((k) => `${counts[k]} ${k.toLowerCase()}`).join(", ") + ` of ${points.length} cameras`
+          : `· no rain at any of ${points.length} cameras`;
 
         document.getElementById("lastUpdated").textContent =
           "· refreshed " + new Date().toLocaleTimeString();
