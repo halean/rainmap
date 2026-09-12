@@ -93,6 +93,23 @@ def load_json(path: Path, default):
     return default
 
 
+def captured_at_from(image_path: Path) -> str | None:
+    """Capture time of a frame, from the filename the fetcher stamps it with.
+
+    src/fetch/check.py names files with datetime.now() on a UTC host, so the stem
+    is a UTC wall-clock time; tag it as such rather than leaving it naive, so the
+    map can render it in whatever timezone the viewer is in.
+    """
+    m = re.match(r"^(\d{8})_(\d{6})", image_path.stem)
+    if not m:
+        return None
+    try:
+        dt = datetime.strptime(f"{m.group(1)}_{m.group(2)}", "%Y%m%d_%H%M%S")
+    except ValueError:
+        return None
+    return dt.replace(tzinfo=timezone.utc).isoformat()
+
+
 def append_history(rec: dict) -> None:
     write_header = not HISTORY_PATH.exists()
     try:
@@ -202,7 +219,8 @@ def main():
                     rec["rain"] = result.get("rain", rec.get("rain", "No"))
                     rec["justification"] = result.get("justification", "")
                     rec["image_url"] = f"/media/{img_path.as_posix().lstrip('./')}"
-                    rec["updated_at"] = datetime.now(timezone.utc).isoformat()
+                    rec["captured_at"] = captured_at_from(img_path)  # when the frame was taken
+                    rec["updated_at"] = datetime.now(timezone.utc).isoformat()  # when Gemma read it
                     records[cam_id] = rec
                     state[cam_id] = str(img_path)
                     changed += 1

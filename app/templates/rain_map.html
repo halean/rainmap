@@ -227,6 +227,15 @@
       };
       legend.addTo(map);
 
+      // When the frame was taken -- not when Gemma read it, which can be 10+ min later.
+      // Prefers the field the annotator writes; falls back to the fetcher's filename
+      // stamp (UTC) so records written before that field existed still show a time.
+      function capturedAt(p) {
+        if (p.captured_at) return p.captured_at;
+        const m = (p.image_url || "").match(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})\.\w+$/);
+        return m ? `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z` : null;
+      }
+
       function openLightbox(url, caption) {
         document.getElementById("lightboxImg").src = url;
         document.getElementById("lightboxCaption").textContent = caption;
@@ -370,7 +379,7 @@
               <div class="just">${p.justification}</div>
               ${imgHtml}
               ${p.approx ? '<div class="approx-note">Approximate location (district centroid)</div>' : ""}
-              ${p.updated_at ? `<div class="approx-note">Updated ${new Date(p.updated_at).toLocaleTimeString()}</div>` : ""}
+              ${capturedAt(p) ? `<div class="approx-note">Frame captured ${new Date(capturedAt(p)).toLocaleTimeString()}</div>` : ""}
             </div>
           `);
 
