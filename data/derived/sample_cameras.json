@@ -1,0 +1,362 @@
+[
+  {
+    "camera_id": "662b872d1afb9c00172dd36a",
+    "title": "TTH 407",
+    "district": "",
+    "display_name": "Lê Văn Sỹ - Trần Quang Diệu",
+    "lat": 10.7878115903301,
+    "lon": 106.677889823914,
+    "image_path": "data/raw/662b872d1afb9c00172dd36a/2026/09/12/20260912_140952.jpg"
+  },
+  {
+    "camera_id": "6792f1008c5ed4001b27f41f",
+    "title": "TTH 0004",
+    "district": "",
+    "display_name": "Quốc Lộ 22 - Võ Văn Điều",
+    "lat": 10.9882952554727,
+    "lon": 106.452713012695,
+    "image_path": "data/raw/6792f1008c5ed4001b27f41f/2026/09/12/20260912_140955.jpg"
+  },
+  {
+    "camera_id": "6792f3cf8c5ed4001b27f61e",
+    "title": "TTH 0010",
+    "district": "",
+    "display_name": "Tỉnh Lộ 8 - Cầu Phú Cường",
+    "lat": 10.9771309811361,
+    "lon": 106.643643379211,
+    "image_path": "data/raw/6792f3cf8c5ed4001b27f61e/2026/09/12/20260912_140959.jpg"
+  },
+  {
+    "camera_id": "6792ef4f8c5ed4001b27f2c0",
+    "title": "TTH 0001",
+    "district": "",
+    "display_name": "Quốc Lộ 1 - Ba Làng",
+    "lat": 10.6562217600296,
+    "lon": 106.5558385849,
+    "image_path": "data/raw/6792ef4f8c5ed4001b27f2c0/2026/09/12/20260912_141003.jpg"
+  },
+  {
+    "camera_id": "6792f16e8c5ed4001b27f482",
+    "title": "TTH 0005",
+    "district": "",
+    "display_name": "Cao tốc LT-DG - Trạm thu phí Long Phước",
+    "lat": 10.7858829057319,
+    "lon": 106.850624084473,
+    "image_path": "data/raw/6792f16e8c5ed4001b27f482/2026/09/12/20260912_140134.jpg"
+  },
+  {
+    "camera_id": "68188e8d6dfb4b0018f9038b",
+    "title": "TTH 455",
+    "district": "",
+    "display_name": "Thanh Niên - gần trung tâm kiểm định giống cây",
+    "lat": 10.8462459116556,
+    "lon": 106.52880191803,
+    "image_path": "data/raw/68188e8d6dfb4b0018f9038b/2026/09/12/20260912_141039.jpg"
+  },
+  {
+    "camera_id": "6792f9c88c5ed4001b27fb3d",
+    "title": "TTH 0008",
+    "district": "",
+    "display_name": "Quốc Lộ 1K - Đường GS1",
+    "lat": 10.8880966294513,
+    "lon": 106.776037216187,
+    "image_path": "data/raw/6792f9c88c5ed4001b27fb3d/2026/09/12/20260912_141048.jpg"
+  },
+  {
+    "camera_id": "63bd1f21bfd3d90017ec3d04",
+    "title": "TTH 245",
+    "district": "",
+    "display_name": "Huỳnh Tấn Phát - Phạm Hữu Lầu",
+    "lat": 10.7052043577961,
+    "lon": 106.737660169601,
+    "image_path": "data/raw/63bd1f21bfd3d90017ec3d04/2026/09/12/20260912_141114.jpg"
+  },
+  {
+    "camera_id": "6792f03d8c5ed4001b27f378",
+    "title": "TTH 0003",
+    "district": "",
+    "display_name": "Quốc Lộ 50 - Cổng chào Long An",
+    "lat": 10.6424723207925,
+    "lon": 106.657032966614,
+    "image_path": "data/raw/6792f03d8c5ed4001b27f378/2026/09/12/20260912_140147.jpg"
+  },
+  {
+    "camera_id": "6818901a6dfb4b0018f9058a",
+    "title": "TTH 456",
+    "district": "",
+    "display_name": "Tỉnh Lộ 10 - cầu Tân Tạo",
+    "lat": 10.7601026888897,
+    "lon": 106.574045419693,
+    "image_path": "data/raw/6818901a6dfb4b0018f9058a/2026/09/12/20260912_122810.jpg"
+  },
+  {
+    "camera_id": "5a6065c58576340017d06615",
+    "title": "TTH 21.84",
+    "district": "",
+    "display_name": "Tô Ngọc Vân - TX25",
+    "lat": 10.8797100979598,
+    "lon": 106.677986383438,
+    "image_path": "data/raw/5a6065c58576340017d06615/2026/09/12/20260912_141207.jpg"
+  },
+  {
+    "camera_id": "6623f1996f998a001b252805",
+    "title": "TTH 294",
+    "district": "",
+    "display_name": "Mai Chí Thọ - Xa Lộ Hà Nội (3)",
+    "lat": 10.809194919668,
+    "lon": 106.756038665771,
+    "image_path": "data/raw/6623f1996f998a001b252805/2026/09/12/20260912_141215.jpg"
+  },
+  {
+    "camera_id": "5a6061fd8576340017d06613",
+    "title": "TTH 21.83",
+    "district": "",
+    "display_name": "Quang Trung - Trưng Nữ Vương",
+    "lat": 10.8885285926454,
+    "lon": 106.596522331238,
+    "image_path": "data/raw/5a6061fd8576340017d06613/2026/09/12/20260912_140230.jpg"
+  },
+  {
+    "camera_id": "6818863c6dfb4b0018f8f235",
+    "title": "TTH 431",
+    "district": "",
+    "display_name": "Trần Đại Nghĩa - Mai Bá Hương",
+    "lat": 10.7650143803183,
+    "lon": 106.498975753784,
+    "image_path": "data/raw/6818863c6dfb4b0018f8f235/2026/09/12/20260912_141239.jpg"
+  },
+  {
+    "camera_id": "58e49783d9d6200011e0b9ce",
+    "title": "TTH 28.10",
+    "district": "Quận 12",
+    "display_name": "Trường Chinh - Phan Văn Hớn 2 (HM-Q12)",
+    "lat": 10.8274733494884,
+    "lon": 106.624760627747,
+    "image_path": "data/raw/58e49783d9d6200011e0b9ce/2026/09/12/20260912_140352.jpg"
+  },
+  {
+    "camera_id": "63b54a9ebfd3d90017ea7911",
+    "title": "TTH 219",
+    "district": "",
+    "display_name": "Nguyễn Xiển - Nguyễn Văn Tăng",
+    "lat": 10.8428107736029,
+    "lon": 106.828694343567,
+    "image_path": "data/raw/63b54a9ebfd3d90017ea7911/2026/09/12/20260912_141319.jpg"
+  },
+  {
+    "camera_id": "662a89211afb9c00172d2636",
+    "title": "TTH 312",
+    "district": "",
+    "display_name": "Quốc Lộ 1 - Dương Đình Cúc",
+    "lat": 10.705952846726,
+    "lon": 106.597981452942,
+    "image_path": "data/raw/662a89211afb9c00172d2636/2026/09/12/20260912_141330.jpg"
+  },
+  {
+    "camera_id": "583f926761cfea0012cf68f1",
+    "title": "TTH 22.9",
+    "district": "Quận 2",
+    "display_name": "Nguyễn Thị Định - Cổng A Cảng Cát Lái",
+    "lat": 10.7599709364081,
+    "lon": 106.786578297615,
+    "image_path": "data/raw/583f926761cfea0012cf68f1/2026/09/12/20260912_141343.jpg"
+  },
+  {
+    "camera_id": "665861d864f11e00173c73a9",
+    "title": "TTH 309",
+    "district": "",
+    "display_name": "Huỳnh Tấn Phát - Cầu Tân Thuận 1",
+    "lat": 10.7554702370632,
+    "lon": 106.723374724388,
+    "image_path": "data/raw/665861d864f11e00173c73a9/2026/09/12/20260912_141355.jpg"
+  },
+  {
+    "camera_id": "6623f0b46f998a001b2527c3",
+    "title": "TTH 291",
+    "district": "",
+    "display_name": "Hòa Bình - Lũy Bán Bích",
+    "lat": 10.7704213643614,
+    "lon": 106.631401777267,
+    "image_path": "data/raw/6623f0b46f998a001b2527c3/2026/09/12/20260912_141431.jpg"
+  },
+  {
+    "camera_id": "63b3c59fbfd3d90017e9ace8",
+    "title": "TTH 207",
+    "district": "",
+    "display_name": "Vĩnh Lộc - Quách Điêu",
+    "lat": 10.8125250596398,
+    "lon": 106.577596664429,
+    "image_path": "data/raw/63b3c59fbfd3d90017e9ace8/2026/09/12/20260912_141457.jpg"
+  },
+  {
+    "camera_id": "5a824f975058170011f6eab8",
+    "title": "TTH 116.2",
+    "district": "",
+    "display_name": "Nguyễn Oanh - Phan Văn Trị (2)",
+    "lat": 10.8310719980749,
+    "lon": 106.676913499832,
+    "image_path": "data/raw/5a824f975058170011f6eab8/2026/09/12/20260912_141500.jpg"
+  },
+  {
+    "camera_id": "63b54bcdbfd3d90017ea7a82",
+    "title": "TTH 222",
+    "district": "",
+    "display_name": "Tỉnh lộ 43 - KCX Linh Trung 2",
+    "lat": 10.8960825794088,
+    "lon": 106.718090772629,
+    "image_path": "data/raw/63b54bcdbfd3d90017ea7a82/2026/09/12/20260912_120857.jpg"
+  },
+  {
+    "camera_id": "5ad0679598d8fc001102e274",
+    "title": "TTH 105.3",
+    "district": "",
+    "display_name": "Lê Văn Việt - Man Thiện",
+    "lat": 10.8452343413582,
+    "lon": 106.786707043648,
+    "image_path": "data/raw/5ad0679598d8fc001102e274/2026/09/12/20260912_140616.jpg"
+  },
+  {
+    "camera_id": "66b1c426779f74001867415e",
+    "title": "TTH 419",
+    "district": "",
+    "display_name": "Điện Biên Phủ - Nguyễn Gia Trí",
+    "lat": 10.8010801833774,
+    "lon": 106.715161800385,
+    "image_path": "data/raw/66b1c426779f74001867415e/2026/09/12/20260912_132719.jpg"
+  },
+  {
+    "camera_id": "6623ef2b6f998a001b252753",
+    "title": "TTH 286",
+    "district": "",
+    "display_name": "Phan Văn Hớn - Trần Văn Mười",
+    "lat": 10.8498285289366,
+    "lon": 106.587703227997,
+    "image_path": "data/raw/6623ef2b6f998a001b252753/2026/09/12/20260912_140658.jpg"
+  },
+  {
+    "camera_id": "63b548c3bfd3d90017ea77c0",
+    "title": "TTH 210",
+    "district": "",
+    "display_name": "Nguyễn Duy Trinh - Nguyễn Thị Tư",
+    "lat": 10.792733368728,
+    "lon": 106.806946992874,
+    "image_path": "data/raw/63b548c3bfd3d90017ea77c0/2026/09/12/20260912_140659.jpg"
+  },
+  {
+    "camera_id": "681887836dfb4b0018f8f3d1",
+    "title": "TTH 435",
+    "district": "",
+    "display_name": "Trần Đại Nghĩa - Kênh B",
+    "lat": 10.7445238765742,
+    "lon": 106.539101600647,
+    "image_path": "data/raw/681887836dfb4b0018f8f3d1/2026/09/12/20260912_122534.jpg"
+  },
+  {
+    "camera_id": "662a881a1afb9c00172d2559",
+    "title": "TTH 308",
+    "district": "",
+    "display_name": "Kinh Dương Vương - Tên Lửa",
+    "lat": 10.7380517925754,
+    "lon": 106.61497592926,
+    "image_path": "data/raw/662a881a1afb9c00172d2559/2026/09/12/20260912_140853.jpg"
+  },
+  {
+    "camera_id": "5b632a79fd4edb0019c7dc0f",
+    "title": "TTH 133",
+    "district": "",
+    "display_name": "Nguyễn Tri Phương - Trần Hưng Đạo",
+    "lat": 10.7524240581789,
+    "lon": 106.669510602951,
+    "image_path": "data/raw/5b632a79fd4edb0019c7dc0f/2026/09/12/20260912_120850.jpg"
+  },
+  {
+    "camera_id": "6792efe48c5ed4001b27f336",
+    "title": "TTH 0002",
+    "district": "",
+    "display_name": "Xa Lộ Hà Nội - Cổng ĐH An ninh",
+    "lat": 10.8735359428243,
+    "lon": 106.808030605316,
+    "image_path": "data/raw/6792efe48c5ed4001b27f336/2026/09/12/20260912_140928.jpg"
+  },
+  {
+    "camera_id": "68188d586dfb4b0018f9018d",
+    "title": "TTH 453",
+    "district": "",
+    "display_name": "Thanh Niên - Phạm Văn Hai",
+    "lat": 10.8118084503619,
+    "lon": 106.519918441772,
+    "image_path": "data/raw/68188d586dfb4b0018f9018d/2026/09/12/20260912_140930.jpg"
+  },
+  {
+    "camera_id": "5d8cd98d766c88001718895a",
+    "title": "TTH 155",
+    "district": "",
+    "display_name": "Phạm Văn Đồng - Tô Ngọc Vân (hướng đi Bình Dương)",
+    "lat": 10.8533952979021,
+    "lon": 106.751462817192,
+    "image_path": "data/raw/5d8cd98d766c88001718895a/2026/09/12/20260912_140945.jpg"
+  },
+  {
+    "camera_id": "589b4379b3bf7600110283c9",
+    "title": "TTH 47.5",
+    "district": "Huyện Củ Chi",
+    "display_name": "QL 22 - Giáp Hải",
+    "lat": 10.9713380309812,
+    "lon": 106.481675505638,
+    "image_path": "data/raw/589b4379b3bf7600110283c9/2026/09/12/20260912_140948.jpg"
+  },
+  {
+    "camera_id": "6623f51a6f998a001b252900",
+    "title": "TTH 301",
+    "district": "",
+    "display_name": "Quốc Lộ 13 - Nguyễn Thị Nhung",
+    "lat": 10.8403450366927,
+    "lon": 106.716363430023,
+    "image_path": "data/raw/6623f51a6f998a001b252900/2026/09/12/20260912_121845.jpg"
+  },
+  {
+    "camera_id": "662a89f51afb9c00172d26ef",
+    "title": "TTH 314.2",
+    "district": "",
+    "display_name": "Nguyễn Văn Linh - Trịnh Quang Nghị 2",
+    "lat": 10.7024001433989,
+    "lon": 106.634652614593,
+    "image_path": "data/raw/662a89f51afb9c00172d26ef/2026/09/12/20260912_130413.jpg"
+  },
+  {
+    "camera_id": "5a825b7d5058170011f6ead4",
+    "title": "TTH 117.3",
+    "district": "",
+    "display_name": "Nguyễn Văn Linh - Nguyễn Hữu Thọ (3)",
+    "lat": 10.7282010989927,
+    "lon": 106.700441837311,
+    "image_path": "data/raw/5a825b7d5058170011f6ead4/2026/09/12/20260912_125048.jpg"
+  },
+  {
+    "camera_id": "58ad6214bd82540010390be2",
+    "title": "TTH 38.8",
+    "district": "Quận Tân Bình",
+    "display_name": "Cộng Hòa - Hoàng Hoa Thám",
+    "lat": 10.8013120360293,
+    "lon": 106.647366285324,
+    "image_path": "data/raw/58ad6214bd82540010390be2/2026/09/12/20260912_125734.jpg"
+  },
+  {
+    "camera_id": "68188bb96dfb4b0018f8fdbf",
+    "title": "TTH 446",
+    "district": "",
+    "display_name": "Vĩnh Lộc - Trần Hải Phụng",
+    "lat": 10.7860515343869,
+    "lon": 106.55412197113,
+    "image_path": "data/raw/68188bb96dfb4b0018f8fdbf/2026/09/12/20260912_122503.jpg"
+  },
+  {
+    "camera_id": "662b5c141afb9c00172d93d7",
+    "title": "TTH 372",
+    "district": "",
+    "display_name": "Tân Kỳ Tân Quý - Bình Long",
+    "lat": 10.7965800987319,
+    "lon": 106.613742113113,
+    "image_path": "data/raw/662b5c141afb9c00172d93d7/2026/09/12/20260912_130841.jpg"
+  }
+]

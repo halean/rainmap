@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HCMC Rain Map</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --card: #ffffff;
+        --ink: #0f172a;
+        --muted: #475569;
+        --border: #dbe4ee;
+        --accent: #0369a1;
+        --rain-no: #0ca30c;
+        --rain-light: #fab219;
+        --rain-medium: #ec835a;
+        --rain-heavy: #d03b3b;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+      }
+      header {
+        padding: 14px 20px;
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      header h1 { font-size: 19px; margin: 0; }
+      header .sub { color: var(--muted); font-size: 13px; }
+      header a.back { margin-left: auto; font-size: 13px; color: var(--accent); text-decoration: none; }
+      header a.back:hover { text-decoration: underline; }
+
+      #map { position: absolute; top: 58px; bottom: 0; left: 0; right: 0; }
+
+      .legend-box {
+        position: relative;
+        background: var(--card);
+        padding: 10px 30px 10px 12px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(15,23,42,0.18);
+        font-size: 12.5px;
+        line-height: 1.9;
+      }
+      .legend-box .row { display: flex; align-items: center; gap: 8px; }
+      .legend-box .sw { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.2); }
+      .legend-box .title { font-weight: 600; margin-bottom: 4px; }
+      .legend-box .note { color: var(--muted); font-size: 11px; margin-top: 4px; max-width: 180px; }
+      .legend-box .toggle-row {
+        display: flex; align-items: center; gap: 6px;
+        margin-top: 8px; padding-top: 8px; border-top: 1px solid #eef2f7;
+        font-size: 11.5px; color: var(--ink); cursor: pointer;
+      }
+      .legend-box .toggle-row input { cursor: pointer; }
+      .legend-close {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 20px;
+        height: 20px;
+        border: none;
+        border-radius: 5px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .legend-close:hover { background: #eef2f7; color: var(--ink); }
+      .legend-reopen {
+        display: none;
+        width: 34px;
+        height: 34px;
+        border: none;
+        border-radius: 8px;
+        background: var(--card);
+        box-shadow: 0 2px 10px rgba(15,23,42,0.18);
+        color: var(--muted);
+        font-size: 16px;
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+      }
+      .legend-reopen.show { display: flex; }
+      .legend-reopen:hover { color: var(--ink); }
+
+      .popup-card { font-size: 13px; min-width: 210px; }
+      .popup-card .district { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+      .popup-card .loc { font-weight: 600; margin: 2px 0 6px; font-size: 13.5px; }
+      .popup-card .badge {
+        display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px;
+        border-radius: 20px; color: #fff; margin-bottom: 6px;
+      }
+      .popup-card .just { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+      .popup-card img { width: 100%; border-radius: 6px; display: block; cursor: zoom-in; }
+      .popup-card .approx-note { font-size: 10.5px; color: var(--muted); font-style: italic; margin-top: 4px; }
+
+      .lightbox {
+        display: none;
+        position: fixed; inset: 0; background: rgba(0,0,0,0.82);
+        z-index: 5000; align-items: center; justify-content: center; padding: 24px;
+      }
+      .lightbox.show { display: flex; }
+      .lightbox img { max-width: 100%; max-height: 100%; border-radius: 6px; }
+      .lightbox .caption { position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; color: #fff; font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>HCMC Rain Map</h1>
+      <span class="sub">Live traffic-camera frames &middot; rain intensity via Gemma vision &middot; real OpenStreetMap tiles</span>
+      <span class="sub" id="lastUpdated" style="font-style:italic;"></span>
+      <a class="back" href="https://github.com/halean/rainmap" target="_blank" rel="noopener">Source &#8599;</a>
+    </header>
+    <div id="map"></div>
+    <div class="lightbox" id="lightbox" onclick="this.classList.remove('show')">
+      <img id="lightboxImg" src="" alt="camera frame" />
+      <div class="caption" id="lightboxCaption"></div>
+    </div>
+
+    <script>
+      const RAIN_COLORS = { No: "#0ca30c", Light: "#fab219", Medium: "#ec835a", Heavy: "#d03b3b" };
+
+      const map = L.map("map", { scrollWheelZoom: true }).setView([10.78, 106.68], 11);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      // dedicated pane so camera pins always sit above the radar color field, regardless of add order
+      map.createPane("pinsPane");
+      map.getPane("pinsPane").style.zIndex = 650;
+
+      // real-world precipitation radar (RainViewer), sits above basemap tiles but below our camera-based field
+      map.createPane("realRadarPane");
+      map.getPane("realRadarPane").style.zIndex = 350;
+      map.getPane("realRadarPane").style.opacity = 0.75;
+
+      let realRadarLayer = null;
+      let realRadarLoaded = false;
+
+      function ensureRealRadarLayer(cb) {
+        if (realRadarLoaded) return cb();
+        fetch("https://api.rainviewer.com/public/weather-maps.json")
+          .then((r) => r.json())
+          .then((data) => {
+            const frames = data.radar.past;
+            const latest = frames[frames.length - 1];
+            const url = `${data.host}${latest.path}/256/{z}/{x}/{y}/2/1_1.png`;
+            realRadarLayer = L.tileLayer(url, {
+              pane: "realRadarPane",
+              maxNativeZoom: 7,
+              maxZoom: 19,
+              tileSize: 256,
+              attribution: "Radar &copy; <a href=\"https://www.rainviewer.com\">RainViewer</a>",
+            });
+            realRadarLoaded = true;
+            cb();
+          })
+          .catch((e) => console.error("RainViewer load failed", e));
+      }
+
+      const LEGEND_HIDDEN_KEY = "hcmcRainMap.legendHidden";
+      let legendBoxEl, reopenBtnEl;
+
+      function setLegendVisible(visible) {
+        if (legendBoxEl) legendBoxEl.style.display = visible ? "" : "none";
+        if (reopenBtnEl) reopenBtnEl.classList.toggle("show", !visible);
+        try { localStorage.setItem(LEGEND_HIDDEN_KEY, visible ? "0" : "1"); } catch (e) {}
+      }
+
+      const legend = L.control({ position: "topright" });
+      legend.onAdd = function () {
+        const wrap = L.DomUtil.create("div");
+        L.DomEvent.disableClickPropagation(wrap);
+
+        legendBoxEl = L.DomUtil.create("div", "legend-box", wrap);
+        let rows = `<button class="legend-close" title="Hide legend">&times;</button><div class="title">Rain intensity</div>`;
+        for (const [label, color] of Object.entries(RAIN_COLORS)) {
+          rows += `<div class="row"><span class="sw" style="background:${color}"></span>${label}</div>`;
+        }
+        rows += `<div class="note">Color field is a radar-style interpolation between sampled cameras &mdash; not a per-point boundary. Click a pin for the live frame.</div>`;
+        rows += `<label class="toggle-row"><input type="checkbox" id="realRadarToggle" /> Real weather radar (RainViewer)</label>`;
+        legendBoxEl.innerHTML = rows;
+        legendBoxEl.querySelector(".legend-close").addEventListener("click", () => setLegendVisible(false));
+        legendBoxEl.querySelector("#realRadarToggle").addEventListener("change", (e) => {
+          if (e.target.checked) {
+            ensureRealRadarLayer(() => realRadarLayer.addTo(map));
+          } else if (realRadarLayer) {
+            map.removeLayer(realRadarLayer);
+          }
+        });
+
+        reopenBtnEl = L.DomUtil.create("button", "legend-reopen", wrap);
+        reopenBtnEl.title = "Show legend";
+        reopenBtnEl.textContent = "ℹ";
+        reopenBtnEl.addEventListener("click", () => setLegendVisible(true));
+
+        let hidden = false;
+        try { hidden = localStorage.getItem(LEGEND_HIDDEN_KEY) === "1"; } catch (e) {}
+        setLegendVisible(!hidden);
+
+        return wrap;
+      };
+      legend.addTo(map);
+
+      function openLightbox(url, caption) {
+        document.getElementById("lightboxImg").src = url;
+        document.getElementById("lightboxCaption").textContent = caption;
+        document.getElementById("lightbox").classList.add("show");
+      }
+
+      const liveLayer = L.layerGroup().addTo(map);
+      const openPopupCamId = () => {
+        // remember which popup (if any) is open, keyed by camera_id, so a refresh doesn't yank it shut
+        for (const [camId, layers] of Object.entries(markerIndex)) {
+          if (layers.marker.isPopupOpen()) return camId;
+        }
+        return null;
+      };
+      const markerIndex = {};
+
+      const RAIN_SCORE = { No: 0, Light: 1, Medium: 2, Heavy: 3 };
+      const COLOR_STOPS = [[12, 163, 12], [250, 178, 25], [236, 131, 90], [208, 59, 59]]; // No -> Light -> Medium -> Heavy
+
+      const BAND_STEP = 0.4; // posterize into discrete radar-style bands instead of a smooth gradient
+
+      function scoreToRGB(s) {
+        s = Math.max(0, Math.min(3, s));
+        s = Math.round(s / BAND_STEP) * BAND_STEP;
+        const i = Math.min(2, Math.floor(s));
+        const f = s - i;
+        const a = COLOR_STOPS[i], b = COLOR_STOPS[i + 1];
+        return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+      }
+
+      let radarOverlay = null;
+
+      function renderRadar(points) {
+        const withCoords = points.filter((p) => p.lat != null && p.lon != null);
+        if (!withCoords.length) return;
+
+        const PAD_DEG = 0.06; // ~6-7km padding so the field fades out past the outermost cameras
+        const latMin = Math.min(...withCoords.map((p) => p.lat)) - PAD_DEG;
+        const latMax = Math.max(...withCoords.map((p) => p.lat)) + PAD_DEG;
+        const lonMin = Math.min(...withCoords.map((p) => p.lon)) - PAD_DEG;
+        const lonMax = Math.max(...withCoords.map((p) => p.lon)) + PAD_DEG;
+        const lat0 = (latMin + latMax) / 2;
+        const kmPerDegLat = 110.57;
+        const kmPerDegLon = 111.32 * Math.cos((lat0 * Math.PI) / 180);
+
+        // radar-style: broad overlapping blobs (~4km influence radius) that merge into contiguous bands
+        const SIGMA_KM = 4.0;
+        const CUTOFF_KM = SIGMA_KM * 2.8;
+
+        const GRID = 180;
+        const off = document.createElement("canvas");
+        off.width = GRID;
+        off.height = GRID;
+        const octx = off.getContext("2d");
+        const img = octx.createImageData(GRID, GRID);
+
+        for (let gy = 0; gy < GRID; gy++) {
+          const lat = latMax - ((gy + 0.5) / GRID) * (latMax - latMin); // row 0 = north
+          for (let gx = 0; gx < GRID; gx++) {
+            const lon = lonMin + ((gx + 0.5) / GRID) * (lonMax - lonMin);
+            let wSum = 0, scoreSum = 0;
+            for (const p of withCoords) {
+              const dxKm = (lon - p.lon) * kmPerDegLon;
+              const dyKm = (lat - p.lat) * kmPerDegLat;
+              const distKm = Math.sqrt(dxKm * dxKm + dyKm * dyKm);
+              if (distKm > CUTOFF_KM) continue;
+              const w = Math.exp(-(distKm * distKm) / (2 * SIGMA_KM * SIGMA_KM));
+              wSum += w;
+              scoreSum += w * RAIN_SCORE[p.rain];
+            }
+            const idx = (gy * GRID + gx) * 4;
+            if (wSum < 0.05) {
+              img.data[idx + 3] = 0;
+            } else {
+              const [r, g, b] = scoreToRGB(scoreSum / wSum);
+              img.data[idx] = r;
+              img.data[idx + 1] = g;
+              img.data[idx + 2] = b;
+              img.data[idx + 3] = Math.round(Math.min(wSum, 1) * 215);
+            }
+          }
+        }
+        octx.putImageData(img, 0, 0);
+
+        // upscale with smoothing for a soft, blended radar look
+        const big = document.createElement("canvas");
+        big.width = GRID * 3;
+        big.height = GRID * 3;
+        const bctx = big.getContext("2d");
+        bctx.imageSmoothingEnabled = true;
+        bctx.imageSmoothingQuality = "high";
+        bctx.drawImage(off, 0, 0, big.width, big.height);
+
+        const bounds = [[latMin, lonMin], [latMax, lonMax]];
+        const url = big.toDataURL();
+        if (radarOverlay) {
+          radarOverlay.setUrl(url);
+          radarOverlay.setBounds(bounds);
+        } else {
+          radarOverlay = L.imageOverlay(url, bounds, { opacity: 1, interactive: false }).addTo(map);
+        }
+      }
+
+      function render(points) {
+        const openId = openPopupCamId();
+        liveLayer.clearLayers();
+        for (const key in markerIndex) delete markerIndex[key];
+
+        renderRadar(points);
+
+        points.forEach((p) => {
+          const color = RAIN_COLORS[p.rain] || "#888";
+
+          const marker = L.circleMarker([p.lat, p.lon], {
+            pane: "pinsPane",
+            radius: 13,
+            color: "#fff",
+            weight: 2.5,
+            fillColor: color,
+            fillOpacity: 1,
+          });
+
+          const imgHtml = p.image_url
+            ? `<img src="${p.image_url}?t=${Date.now()}" alt="${p.location_text}" onclick="openLightbox('${p.image_url}', '${p.location_text.replace(/'/g, "\\'")} — ${p.district.replace(/'/g, "\\'")}')" />`
+            : "";
+
+          marker.bindPopup(`
+            <div class="popup-card">
+              <div class="district">${p.district}</div>
+              <div class="loc">${p.location_text}</div>
+              <span class="badge" style="background:${color}">${p.rain} rain</span>
+              <div class="just">${p.justification}</div>
+              ${imgHtml}
+              ${p.approx ? '<div class="approx-note">Approximate location (district centroid)</div>' : ""}
+              ${p.updated_at ? `<div class="approx-note">Updated ${new Date(p.updated_at).toLocaleTimeString()}</div>` : ""}
+            </div>
+          `);
+
+          marker.addTo(liveLayer);
+          markerIndex[p.camera_id] = { marker, point: p };
+          if (p.camera_id === openId) marker.openPopup();
+        });
+
+        document.getElementById("lastUpdated").textContent =
+          "· refreshed " + new Date().toLocaleTimeString();
+      }
+
+      function poll() {
+        fetch("/api/rain-map")
+          .then((r) => r.json())
+          .then(render)
+          .catch((e) => console.error("rain-map poll failed", e));
+      }
+
+      poll();
+      setInterval(poll, 45000);
+    </script>
+  </body>
+</html>
