@@ -140,16 +140,27 @@ def build_prompt(captured_at_iso: str | None) -> str:
     hour = local.hour
     is_dark = hour < 6 or hour >= 18
 
-    if hour < 5:
-        phase = "the middle of the night, when the roads are normally near-empty"
-    elif hour < 7:
-        phase = "just before or around dawn, when mist and low cloud are common here"
-    elif hour < 17:
-        phase = "daytime, when traffic is normally heavy"
-    elif hour < 19:
-        phase = "dusk, when the light is failing and headlights are coming on"
-    else:
+    # Boundaries follow HCMC's actual day: near the equator, so sunrise is ~05:45 and
+    # sunset ~17:55 year-round, and the city stirs early -- 05:00 is people heading out,
+    # not the dead of night. Getting this wrong matters, because the dawn window is
+    # exactly when mist is most likely to be mistaken for rain.
+    if hour < 4:
+        phase = "the middle of the night, when the roads are genuinely quiet"
+    elif hour < 6:
+        phase = (
+            "dawn -- before sunrise, but the city is already stirring and traffic is "
+            "picking up. Mist, low cloud and damp haze are common at this hour"
+        )
+    elif hour < 9:
+        phase = "early morning, with the sun up and traffic building toward rush hour"
+    elif hour < 16:
+        phase = "the middle of the day, when traffic is normally heavy"
+    elif hour < 18:
+        phase = "late afternoon, with the light starting to go"
+    elif hour < 22:
         phase = "evening, when the roads are lit but still busy"
+    else:
+        phase = "late evening, with traffic thinning out"
 
     when = (
         f"This frame was captured at {local.strftime('%H:%M')} local time in Ho Chi Minh City "
