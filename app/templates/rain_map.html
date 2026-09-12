@@ -348,7 +348,11 @@
         }
       }
 
-      function render(points) {
+      function render(allPoints) {
+        // Drop rows without coordinates up front. L.circleMarker([null,null]) throws,
+        // and poll() swallows that into console.error -- so a single malformed record
+        // used to abort the whole render: markers frozen, clock stuck, silently.
+        const points = allPoints.filter((p) => p.lat != null && p.lon != null);
         const openId = openPopupCamId();
         liveLayer.clearLayers();
         for (const key in markerIndex) delete markerIndex[key];

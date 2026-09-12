@@ -47,6 +47,10 @@ TARGET_DAILY_BUDGET = int(os.getenv("TARGET_DAILY_BUDGET", "10000"))  # under a 
 # over quota). Raise workers only together with a matching budget check.
 ANNOTATE_WORKERS = int(os.getenv("ANNOTATE_WORKERS", "2"))
 
+# Ignore frames older than a few sweep laps. Matters for cameras rotated back into
+# the set, which still have stale images on disk from their previous stint.
+MAX_FRAME_AGE_SEC = int(os.getenv("MAX_FRAME_AGE_SEC", "900"))
+
 ICT = timezone(timedelta(hours=7))  # Vietnam has no DST
 
 # Time of day changes what the same visual evidence means, and getting this wrong is
@@ -268,11 +272,25 @@ def main():
             if state.get(cam_id) == str(img_path):
                 continue  # no new frame since last check
 
+            # A camera rotated back into the set still has old frames on disk, and its
+            # state entry was pruned when it left -- so without this it would be graded
+            # on a days-old image and the map would show that as current.
+            captured = captured_at_from(img_path)
+            if captured:
+                frame_age = (datetime.now(timezone.utc) - datetime.fromisoformat(captured)).total_seconds()
+                if frame_age > MAX_FRAME_AGE_SEC:
+                    continue
+
+            # lat/lon must be carried onto the record: the map drops any row without
+            # them, so a newly-added camera would otherwise never draw a pin.
             rec = records.get(cam_id, {
                 "camera_id": cam_id,
                 "title": cam.get("title", ""),
                 "district": cam.get("district", ""),
             })
+            if rec.get("lat") is None:
+                rec["lat"], rec["lon"] = cam.get("lat"), cam.get("lon")
+                rec.setdefault("approx", False)
 
             last_updated = rec.get("updated_at")
             if last_updated:

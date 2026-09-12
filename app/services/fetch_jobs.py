@@ -121,6 +121,23 @@ class FetchJobManager:
                 self.state.offline = 0
                 self.state.failed = 0
 
+            # The watchdog rewrites this CSV whenever it rotates or replaces a camera.
+            # Re-reading it at each lap boundary lets those changes take effect without
+            # a job restart, which would otherwise truncate a lap mid-flight and skew
+            # coverage toward whichever cameras sit early in the list.
+            def refresh_camera_ids():
+                nonlocal camera_ids
+                try:
+                    latest = load_camera_ids(cameras_csv)
+                except Exception as e:
+                    print(f"camera list reload failed, keeping previous: {e}")
+                    return
+                if latest and latest != camera_ids:
+                    print(f"camera list changed: {len(camera_ids)} -> {len(latest)}")
+                    camera_ids = latest
+                    with self.state.lock:
+                        self.state.total_cameras = len(camera_ids)
+
             session = requests.Session()
             session.headers.update(
                 {
@@ -149,6 +166,9 @@ class FetchJobManager:
                             )
                         return
 
+                refresh_camera_ids()
+
+                with self.state.lock:
                     sweep_no += 1
                     self.state.processed = 0
                     self.state.online = 0

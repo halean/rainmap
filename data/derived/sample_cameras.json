@@ -261,15 +261,6 @@
     "image_path": "data/raw/662a881a1afb9c00172d2559/2026/09/12/20260912_140853.jpg"
   },
   {
-    "camera_id": "5b632a79fd4edb0019c7dc0f",
-    "title": "TTH 133",
-    "district": "",
-    "display_name": "Nguyễn Tri Phương - Trần Hưng Đạo",
-    "lat": 10.7524240581789,
-    "lon": 106.669510602951,
-    "image_path": "data/raw/5b632a79fd4edb0019c7dc0f/2026/09/12/20260912_120850.jpg"
-  },
-  {
     "camera_id": "6792efe48c5ed4001b27f336",
     "title": "TTH 0002",
     "district": "",
@@ -312,7 +303,9 @@
     "display_name": "Quốc Lộ 13 - Nguyễn Thị Nhung",
     "lat": 10.8403450366927,
     "lon": 106.716363430023,
-    "image_path": "data/raw/6623f51a6f998a001b252900/2026/09/12/20260912_121845.jpg"
+    "image_path": "data/raw/6623f51a6f998a001b252900/2026/09/12/20260912_121845.jpg",
+    "retiring_since": "2026-09-12T23:03:20.559489+00:00",
+    "replaced_by": "62da3e390637a10017d706ff"
   },
   {
     "camera_id": "662a89f51afb9c00172d26ef",
@@ -358,5 +351,24 @@
     "lat": 10.7965800987319,
     "lon": 106.613742113113,
     "image_path": "data/raw/662b5c141afb9c00172d93d7/2026/09/12/20260912_130841.jpg"
+  },
+  {
+    "camera_id": "662b50571afb9c00172d87df",
+    "title": "TTH 341",
+    "district": "",
+    "display_name": "Quốc Lộ 50 - Bùi Minh Trực",
+    "lat": 10.7375142028136,
+    "lon": 106.656239032745,
+    "image_path": null
+  },
+  {
+    "camera_id": "62da3e390637a10017d706ff",
+    "title": "TTH 268.1",
+    "district": "",
+    "display_name": "Quốc Lộ 13 - Đinh Thị Thi 1",
+    "lat": 10.8444440496827,
+    "lon": 106.718230247498,
+    "image_path": null,
+    "slot": 33
   }
 ]

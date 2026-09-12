@@ -1,0 +1,242 @@
+[
+  {
+    "slot": 0,
+    "anchor_lat": 10.7878115903301,
+    "anchor_lon": 106.677889823914,
+    "camera_id": "662b872d1afb9c00172dd36a"
+  },
+  {
+    "slot": 1,
+    "anchor_lat": 10.9882952554727,
+    "anchor_lon": 106.452713012695,
+    "camera_id": "6792f1008c5ed4001b27f41f"
+  },
+  {
+    "slot": 2,
+    "anchor_lat": 10.9771309811361,
+    "anchor_lon": 106.643643379211,
+    "camera_id": "6792f3cf8c5ed4001b27f61e"
+  },
+  {
+    "slot": 3,
+    "anchor_lat": 10.6562217600296,
+    "anchor_lon": 106.5558385849,
+    "camera_id": "6792ef4f8c5ed4001b27f2c0"
+  },
+  {
+    "slot": 4,
+    "anchor_lat": 10.7858829057319,
+    "anchor_lon": 106.850624084473,
+    "camera_id": "6792f16e8c5ed4001b27f482"
+  },
+  {
+    "slot": 5,
+    "anchor_lat": 10.8462459116556,
+    "anchor_lon": 106.52880191803,
+    "camera_id": "68188e8d6dfb4b0018f9038b"
+  },
+  {
+    "slot": 6,
+    "anchor_lat": 10.8880966294513,
+    "anchor_lon": 106.776037216187,
+    "camera_id": "6792f9c88c5ed4001b27fb3d"
+  },
+  {
+    "slot": 7,
+    "anchor_lat": 10.7052043577961,
+    "anchor_lon": 106.737660169601,
+    "camera_id": "63bd1f21bfd3d90017ec3d04"
+  },
+  {
+    "slot": 8,
+    "anchor_lat": 10.6424723207925,
+    "anchor_lon": 106.657032966614,
+    "camera_id": "6792f03d8c5ed4001b27f378"
+  },
+  {
+    "slot": 9,
+    "anchor_lat": 10.7601026888897,
+    "anchor_lon": 106.574045419693,
+    "camera_id": "6818901a6dfb4b0018f9058a"
+  },
+  {
+    "slot": 10,
+    "anchor_lat": 10.8797100979598,
+    "anchor_lon": 106.677986383438,
+    "camera_id": "5a6065c58576340017d06615"
+  },
+  {
+    "slot": 11,
+    "anchor_lat": 10.809194919668,
+    "anchor_lon": 106.756038665771,
+    "camera_id": "6623f1996f998a001b252805"
+  },
+  {
+    "slot": 12,
+    "anchor_lat": 10.8885285926454,
+    "anchor_lon": 106.596522331238,
+    "camera_id": "5a6061fd8576340017d06613"
+  },
+  {
+    "slot": 13,
+    "anchor_lat": 10.7650143803183,
+    "anchor_lon": 106.498975753784,
+    "camera_id": "6818863c6dfb4b0018f8f235"
+  },
+  {
+    "slot": 14,
+    "anchor_lat": 10.8274733494884,
+    "anchor_lon": 106.624760627747,
+    "camera_id": "58e49783d9d6200011e0b9ce"
+  },
+  {
+    "slot": 15,
+    "anchor_lat": 10.8428107736029,
+    "anchor_lon": 106.828694343567,
+    "camera_id": "63b54a9ebfd3d90017ea7911"
+  },
+  {
+    "slot": 16,
+    "anchor_lat": 10.705952846726,
+    "anchor_lon": 106.597981452942,
+    "camera_id": "662a89211afb9c00172d2636"
+  },
+  {
+    "slot": 17,
+    "anchor_lat": 10.7599709364081,
+    "anchor_lon": 106.786578297615,
+    "camera_id": "583f926761cfea0012cf68f1"
+  },
+  {
+    "slot": 18,
+    "anchor_lat": 10.7554702370632,
+    "anchor_lon": 106.723374724388,
+    "camera_id": "665861d864f11e00173c73a9"
+  },
+  {
+    "slot": 19,
+    "anchor_lat": 10.7704213643614,
+    "anchor_lon": 106.631401777267,
+    "camera_id": "6623f0b46f998a001b2527c3"
+  },
+  {
+    "slot": 20,
+    "anchor_lat": 10.8125250596398,
+    "anchor_lon": 106.577596664429,
+    "camera_id": "63b3c59fbfd3d90017e9ace8"
+  },
+  {
+    "slot": 21,
+    "anchor_lat": 10.8310719980749,
+    "anchor_lon": 106.676913499832,
+    "camera_id": "5a824f975058170011f6eab8"
+  },
+  {
+    "slot": 22,
+    "anchor_lat": 10.8960825794088,
+    "anchor_lon": 106.718090772629,
+    "camera_id": "63b54bcdbfd3d90017ea7a82"
+  },
+  {
+    "slot": 23,
+    "anchor_lat": 10.8452343413582,
+    "anchor_lon": 106.786707043648,
+    "camera_id": "5ad0679598d8fc001102e274"
+  },
+  {
+    "slot": 24,
+    "anchor_lat": 10.8010801833774,
+    "anchor_lon": 106.715161800385,
+    "camera_id": "66b1c426779f74001867415e"
+  },
+  {
+    "slot": 25,
+    "anchor_lat": 10.8498285289366,
+    "anchor_lon": 106.587703227997,
+    "camera_id": "6623ef2b6f998a001b252753"
+  },
+  {
+    "slot": 26,
+    "anchor_lat": 10.792733368728,
+    "anchor_lon": 106.806946992874,
+    "camera_id": "63b548c3bfd3d90017ea77c0"
+  },
+  {
+    "slot": 27,
+    "anchor_lat": 10.7445238765742,
+    "anchor_lon": 106.539101600647,
+    "camera_id": "681887836dfb4b0018f8f3d1"
+  },
+  {
+    "slot": 28,
+    "anchor_lat": 10.7380517925754,
+    "anchor_lon": 106.61497592926,
+    "camera_id": "662a881a1afb9c00172d2559"
+  },
+  {
+    "slot": 29,
+    "anchor_lat": 10.8735359428243,
+    "anchor_lon": 106.808030605316,
+    "camera_id": "6792efe48c5ed4001b27f336"
+  },
+  {
+    "slot": 30,
+    "anchor_lat": 10.8118084503619,
+    "anchor_lon": 106.519918441772,
+    "camera_id": "68188d586dfb4b0018f9018d"
+  },
+  {
+    "slot": 31,
+    "anchor_lat": 10.8533952979021,
+    "anchor_lon": 106.751462817192,
+    "camera_id": "5d8cd98d766c88001718895a"
+  },
+  {
+    "slot": 32,
+    "anchor_lat": 10.9713380309812,
+    "anchor_lon": 106.481675505638,
+    "camera_id": "589b4379b3bf7600110283c9"
+  },
+  {
+    "slot": 33,
+    "anchor_lat": 10.8403450366927,
+    "anchor_lon": 106.716363430023,
+    "camera_id": "6623f51a6f998a001b252900"
+  },
+  {
+    "slot": 34,
+    "anchor_lat": 10.7024001433989,
+    "anchor_lon": 106.634652614593,
+    "camera_id": "662a89f51afb9c00172d26ef"
+  },
+  {
+    "slot": 35,
+    "anchor_lat": 10.7282010989927,
+    "anchor_lon": 106.700441837311,
+    "camera_id": "5a825b7d5058170011f6ead4"
+  },
+  {
+    "slot": 36,
+    "anchor_lat": 10.8013120360293,
+    "anchor_lon": 106.647366285324,
+    "camera_id": "58ad6214bd82540010390be2"
+  },
+  {
+    "slot": 37,
+    "anchor_lat": 10.7860515343869,
+    "anchor_lon": 106.55412197113,
+    "camera_id": "68188bb96dfb4b0018f8fdbf"
+  },
+  {
+    "slot": 38,
+    "anchor_lat": 10.7965800987319,
+    "anchor_lon": 106.613742113113,
+    "camera_id": "662b5c141afb9c00172d93d7"
+  },
+  {
+    "slot": 39,
+    "anchor_lat": 10.7375142028136,
+    "anchor_lon": 106.656239032745,
+    "camera_id": "662b50571afb9c00172d87df"
+  }
+]
