@@ -1,8 +1,10 @@
 import csv
 import json
+import os
 import re
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -35,7 +37,15 @@ POLL_SECONDS = 60
 # so image freshness alone can't be trusted to bound API volume. Derive a
 # per-camera cooldown from a fixed daily budget so the cap holds even if the
 # watchdog changes how many cameras are being sampled.
-TARGET_DAILY_BUDGET = 10000  # comfortably under a 14k/day quota
+TARGET_DAILY_BUDGET = int(os.getenv("TARGET_DAILY_BUDGET", "10000"))  # under a 14k/day quota
+
+# Gemma calls run concurrently because each one is ~18s of waiting on the network.
+# Two workers halve the cycle (11.9 -> 6.0 min per camera) at ~9,650 calls/day, 69%
+# of quota. The budget cooldown above is the backstop: it doesn't bind at today's
+# latency, but if Gemma gets faster than ~17s/call it pins usage at the budget
+# rather than letting throughput run away (2 workers at 12s would be 14,400/day,
+# over quota). Raise workers only together with a matching budget check.
+ANNOTATE_WORKERS = int(os.getenv("ANNOTATE_WORKERS", "2"))
 
 PROMPT = (
     "This is one frame from a public traffic camera on a street in Ho Chi Minh City, Vietnam. "
@@ -117,10 +127,10 @@ def main():
     cameras = load_json(SAMPLE_CAMERAS_PATH, [])
     startup_interval = 86400 * max(len(cameras), 1) / TARGET_DAILY_BUDGET
     log.info(
-        "watching %d sample cameras, polling every %ds, per-camera cooldown %.0fs "
-        "(budget %d/day), history -> %s",
-        len(cameras), POLL_SECONDS, startup_interval, TARGET_DAILY_BUDGET,
-        HISTORY_PATH.relative_to(REPO),
+        "watching %d sample cameras, %d concurrent worker(s), polling every %ds, "
+        "per-camera cooldown %.0fs (budget %d/day), history -> %s",
+        len(cameras), ANNOTATE_WORKERS, POLL_SECONDS, startup_interval,
+        TARGET_DAILY_BUDGET, HISTORY_PATH.relative_to(REPO),
     )
 
     while True:
@@ -141,15 +151,17 @@ def main():
             OUTPUT_PATH.write_text(json.dumps(list(records.values()), ensure_ascii=False, indent=2))
             STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2))
 
-        changed = 0
+        # Phase 1 -- pick what's due, single-threaded. Selecting up front means two
+        # workers can never be handed the same camera, and the cooldown is evaluated
+        # exactly once per camera per pass.
+        due = []
         for cam in cameras:
             cam_id = cam["camera_id"]
             latest = svc.latest_images_for_camera(cam_id, limit=1)
             if not latest:
                 continue
             img_path = latest[0]
-            img_key = str(img_path)
-            if state.get(cam_id) == img_key:
+            if state.get(cam_id) == str(img_path):
                 continue  # no new frame since last check
 
             rec = records.get(cam_id, {
@@ -164,31 +176,45 @@ def main():
                 if age < min_reannotate_interval_sec:
                     continue  # rate-limit Gemma usage; state stays unset so we retry once cooldown passes
 
+            due.append((cam, rec, img_path))
+
+        # Phase 2 -- run the Gemma calls concurrently. Workers are pure: they only do
+        # the network call and hand back a result. All mutation of records/state and
+        # every file write stays on this thread, so none of it needs locking.
+        def call_gemma(item):
+            cam, rec, img_path = item
             started = time.monotonic()
             try:
-                result = annotate(svc, img_path)
+                return item, annotate(svc, img_path), time.monotonic() - started, None
             except Exception as e:
-                log.warning("[%s] annotate failed: %s", cam_id, e)
-                continue
-            elapsed = time.monotonic() - started
+                return item, None, time.monotonic() - started, e
 
-            rec["location_text"] = display_names.get(cam_id) or cam.get("display_name") or rec.get("location_text", "")
-            rec["rain"] = result.get("rain", rec.get("rain", "No"))
-            rec["justification"] = result.get("justification", "")
-            rec["image_url"] = f"/media/{img_path.as_posix().lstrip('./')}"
-            rec["updated_at"] = datetime.now(timezone.utc).isoformat()
-            records[cam_id] = rec
-            state[cam_id] = img_key
-            changed += 1
-            log.info(
-                "[%s] %s -> %s (%s, %.1fs) %s",
-                cam_id, rec["location_text"] or cam.get("district", ""), rec["rain"],
-                img_path.name, elapsed, rec["justification"],
-            )
+        changed = 0
+        if due:
+            with ThreadPoolExecutor(max_workers=ANNOTATE_WORKERS) as pool:
+                for (cam, rec, img_path), result, elapsed, err in pool.map(call_gemma, due):
+                    cam_id = cam["camera_id"]
+                    if err is not None:
+                        log.warning("[%s] annotate failed after %.1fs: %s", cam_id, elapsed, err)
+                        continue
 
-            append_history(rec)
-            OUTPUT_PATH.write_text(json.dumps(list(records.values()), ensure_ascii=False, indent=2))
-            STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2))
+                    rec["location_text"] = display_names.get(cam_id) or cam.get("display_name") or rec.get("location_text", "")
+                    rec["rain"] = result.get("rain", rec.get("rain", "No"))
+                    rec["justification"] = result.get("justification", "")
+                    rec["image_url"] = f"/media/{img_path.as_posix().lstrip('./')}"
+                    rec["updated_at"] = datetime.now(timezone.utc).isoformat()
+                    records[cam_id] = rec
+                    state[cam_id] = str(img_path)
+                    changed += 1
+                    log.info(
+                        "[%s] %s -> %s (%s, %.1fs) %s",
+                        cam_id, rec["location_text"] or cam.get("district", ""), rec["rain"],
+                        img_path.name, elapsed, rec["justification"],
+                    )
+
+                    append_history(rec)
+                    OUTPUT_PATH.write_text(json.dumps(list(records.values()), ensure_ascii=False, indent=2))
+                    STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2))
 
         if changed:
             log.info("pass complete: %d camera(s) re-annotated", changed)
