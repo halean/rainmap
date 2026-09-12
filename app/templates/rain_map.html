@@ -37,6 +37,9 @@
       }
       header h1 { font-size: 19px; margin: 0; }
       header .sub { color: var(--muted); font-size: 13px; }
+      /* keep attribution links subdued in the header -- discoverable on hover, not shouty */
+      header .sub a { color: inherit; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 2px; }
+      header .sub a:hover { color: var(--accent); text-decoration-color: currentColor; }
       header a.back { margin-left: auto; font-size: 13px; color: var(--accent); text-decoration: none; }
       header a.back:hover { text-decoration: underline; }
 
@@ -118,7 +121,9 @@
   <body>
     <header>
       <h1>HCMC Rain Map</h1>
-      <span class="sub">Live traffic-camera frames &middot; rain intensity via Gemma vision &middot; real OpenStreetMap tiles</span>
+      <span class="sub"><a href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Live traffic-camera frames</a>
+        &middot; rain intensity via <a href="https://deepmind.google/models/gemma/gemma-4/" target="_blank" rel="noopener">Gemma vision</a>
+        &middot; real <a href="https://www.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a> tiles</span>
       <span class="sub" id="rainSummary" style="font-weight:600;"></span>
       <span class="sub" id="lastUpdated" style="font-style:italic;"></span>
       <a class="back" href="https://github.com/halean/rainmap" target="_blank" rel="noopener">Source &#8599;</a>
