@@ -108,6 +108,32 @@
       .popup-card img { width: 100%; border-radius: 6px; display: block; cursor: zoom-in; }
       .popup-card .approx-note { font-size: 10.5px; color: var(--muted); font-style: italic; margin-top: 4px; }
 
+      .popup-card .frame-slider { position: relative; }
+      .popup-card .frame-nav {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .popup-card .frame-nav.show { display: flex; }
+      .popup-card .frame-nav button {
+        border: 1px solid var(--border);
+        background: #fff;
+        border-radius: 5px;
+        width: 24px;
+        height: 22px;
+        line-height: 1;
+        cursor: pointer;
+        color: var(--ink);
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+      .popup-card .frame-nav button:disabled { opacity: 0.35; cursor: default; }
+      .popup-card .frame-nav button:not(:disabled):hover { background: #eef2f7; }
+      .popup-card .frame-counter { font-size: 11px; color: var(--muted); }
+      .popup-card .frame-caption { font-size: 10.5px; color: var(--muted); margin-top: 3px; }
+
       .lightbox {
         display: none;
         position: fixed; inset: 0; background: rgba(0,0,0,0.82);
@@ -242,6 +268,78 @@
         document.getElementById("lightbox").classList.add("show");
       }
 
+      function openLightboxFor(camId) {
+        const state = markerIndex[camId];
+        if (!state) return;
+        const p = state.point;
+        const frame = (state.history && state.history[state.idx]) || { image_url: p.image_url, captured_at: capturedAt(p) };
+        if (!frame.image_url) return;
+        const when = frame.captured_at ? new Date(frame.captured_at).toLocaleString() : "";
+        openLightbox(frame.image_url, `${p.location_text} — ${p.district}${when ? " · " + when : ""}`);
+      }
+
+      // History is fetched once per camera, on first popup open, and cached on the
+      // marker's state (history/idx) so neither the frames nor the slide position
+      // are lost when a poll rebuilds every marker.
+      function renderFrame(camId) {
+        const state = markerIndex[camId];
+        if (!state || !state.history || !state.history.length) return;
+        const el = state.marker.getPopup() && state.marker.getPopup().getElement();
+        if (!el) return;
+        const frame = state.history[state.idx];
+        const img = el.querySelector(".frame-img");
+        const counter = el.querySelector(".frame-counter");
+        const caption = el.querySelector(".frame-caption");
+        const nav = el.querySelector(".frame-nav");
+        const prevBtn = el.querySelector(".frame-prev");
+        const nextBtn = el.querySelector(".frame-next");
+        const badge = el.querySelector(".badge");
+        const just = el.querySelector(".just");
+        if (img && frame.image_url) img.src = frame.image_url;
+        // The verdict and the reasoning belong to the frame being viewed, not to the
+        // live reading -- otherwise sliding back shows an old frame under a fresh call.
+        if (badge && frame.rain) {
+          badge.textContent = `${frame.rain} rain`;
+          badge.style.background = RAIN_COLORS[frame.rain] || "#888";
+        }
+        if (just && frame.justification) just.textContent = frame.justification;
+        // idx 0 is the newest frame, so count down from the total instead of up from 1 --
+        // the newest frame reads as e.g. "12/12", oldest as "1/12".
+        if (counter) counter.textContent = `${state.history.length - state.idx} / ${state.history.length}`;
+        if (caption) caption.textContent = frame.captured_at ? new Date(frame.captured_at).toLocaleString() : "";
+        if (nav) nav.classList.toggle("show", state.history.length > 1);
+        if (prevBtn) prevBtn.disabled = state.idx >= state.history.length - 1;
+        if (nextBtn) nextBtn.disabled = state.idx <= 0;
+      }
+
+      function slideFrame(camId, delta) {
+        const state = markerIndex[camId];
+        if (!state || !state.history) return;
+        const newIdx = state.idx + delta;
+        if (newIdx < 0 || newIdx >= state.history.length) return;
+        state.idx = newIdx;
+        renderFrame(camId);
+      }
+
+      function loadCameraHistory(camId) {
+        const state = markerIndex[camId];
+        if (!state) return;
+        if (state.history) {
+          renderFrame(camId);
+          return;
+        }
+        fetch(`/api/rain-map/rain-history?camera_id=${encodeURIComponent(camId)}`)
+          .then((r) => r.json())
+          .then((history) => {
+            const cur = markerIndex[camId];
+            if (!cur || !history || !history.length) return;
+            cur.history = history;
+            cur.idx = 0;
+            renderFrame(camId);
+          })
+          .catch((e) => console.error("camera history load failed", e));
+      }
+
       const liveLayer = L.layerGroup().addTo(map);
       const openPopupCamId = () => {
         // remember which popup (if any) is open, keyed by camera_id, so a refresh doesn't yank it shut
@@ -354,6 +452,13 @@
         // used to abort the whole render: markers frozen, clock stuck, silently.
         const points = allPoints.filter((p) => p.lat != null && p.lon != null);
         const openId = openPopupCamId();
+        // Carry the fetched history and slide position across poll-driven re-renders
+        // (the marker itself gets rebuilt every poll, so this can't live on the marker).
+        const prevState = {};
+        for (const key in markerIndex) {
+          const s = markerIndex[key];
+          if (s.history) prevState[key] = { history: s.history, idx: s.idx };
+        }
         liveLayer.clearLayers();
         for (const key in markerIndex) delete markerIndex[key];
 
@@ -372,7 +477,15 @@
           });
 
           const imgHtml = p.image_url
-            ? `<img src="${p.image_url}?t=${Date.now()}" alt="${p.location_text}" onclick="openLightbox('${p.image_url}', '${p.location_text.replace(/'/g, "\\'")} — ${p.district.replace(/'/g, "\\'")}')" />`
+            ? `<div class="frame-slider">
+                 <img class="frame-img" src="${p.image_url}?t=${Date.now()}" alt="${p.location_text}" onclick="openLightboxFor('${p.camera_id}')" />
+                 <div class="frame-nav">
+                   <button class="frame-prev" onclick="slideFrame('${p.camera_id}', 1)" title="Older frame">&#8249;</button>
+                   <span class="frame-counter"></span>
+                   <button class="frame-next" onclick="slideFrame('${p.camera_id}', -1)" title="Newer frame">&#8250;</button>
+                 </div>
+                 <div class="frame-caption"></div>
+               </div>`
             : "";
 
           marker.bindPopup(`
@@ -383,12 +496,15 @@
               <div class="just">${p.justification}</div>
               ${imgHtml}
               ${p.approx ? '<div class="approx-note">Approximate location (district centroid)</div>' : ""}
-              ${capturedAt(p) ? `<div class="approx-note">Frame captured ${new Date(capturedAt(p)).toLocaleTimeString()}</div>` : ""}
+              ${capturedAt(p) ? `<div class="approx-note">Last frame captured ${new Date(capturedAt(p)).toLocaleTimeString()}</div>` : ""}
             </div>
           `);
 
           marker.addTo(liveLayer);
-          markerIndex[p.camera_id] = { marker, point: p };
+          markerIndex[p.camera_id] = { marker, point: p, ...(prevState[p.camera_id] || {}) };
+          if (p.image_url) {
+            marker.on("popupopen", () => loadCameraHistory(p.camera_id));
+          }
           if (p.camera_id === openId) marker.openPopup();
         });
 

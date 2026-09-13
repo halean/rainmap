@@ -1,4 +1,7 @@
+import csv
 import json
+import re
+from collections import deque
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -8,6 +11,38 @@ from fastapi.templating import Jinja2Templates
 from app.services.fetch_jobs import FetchJobManager
 
 RAIN_SAMPLE_PATH = Path("data/derived/rain_sample.json")
+RAIN_HISTORY_PATH = Path("data/derived/rain_history.csv")
+IMAGE_STAMP_RE = re.compile(r"^(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})")
+HISTORY_PER_CAMERA = 12
+
+
+def _camera_history(camera_id: str, limit: int) -> list[dict]:
+    """Most-recent-first annotation history for one camera, read from the
+    append-only rain_history.csv log (oldest-first on disk)."""
+    if not RAIN_HISTORY_PATH.exists():
+        return []
+    recent: deque[dict] = deque(maxlen=limit)
+    with RAIN_HISTORY_PATH.open(newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            if row.get("camera_id") != camera_id:
+                continue
+            image = row.get("image", "")
+            m = IMAGE_STAMP_RE.match(image)
+            image_url = None
+            captured_at = None
+            if m:
+                y, mo, d, h, mi, s = m.groups()
+                image_url = f"/media/data/raw/{camera_id}/{y}/{mo}/{d}/{image}"
+                captured_at = f"{y}-{mo}-{d}T{h}:{mi}:{s}Z"
+            recent.append(
+                {
+                    "captured_at": captured_at,
+                    "rain": row.get("rain"),
+                    "justification": row.get("justification"),
+                    "image_url": image_url,
+                }
+            )
+    return list(reversed(recent))
 
 
 def register_routes(
@@ -29,6 +64,11 @@ def register_routes(
         if not RAIN_SAMPLE_PATH.exists():
             return []
         return json.loads(RAIN_SAMPLE_PATH.read_text())
+
+    @app.get("/api/rain-map/rain-history")
+    def rain_history(camera_id: str, limit: int = HISTORY_PER_CAMERA) -> list[dict]:
+        limit = max(1, min(limit, 50))
+        return _camera_history(camera_id, limit)
 
     @app.get("/api/status")
     def get_status() -> dict:
