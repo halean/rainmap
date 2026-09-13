@@ -148,14 +148,32 @@ NO_BULLET_PAIR = (
     "is right.\n\n"
 )
 
-TAIL_CLOSE = (
+TAIL_WARN = (
     "An empty street, poor visibility, or a murky-looking image are NOT by themselves reasons to "
     "answer Heavy. Only visible falling water justifies that.\n\n"
+)
 
+# The justification is published under the photo on the map. Readers see one
+# street scene and know nothing about how many frames were compared, so wording
+# like "the road is wet in both frames" describes our method and reads as a
+# non-sequitur to them. Compare across the frames as much as you like -- just
+# report the conclusion as a statement about the street.
+PAIR_JUSTIFY_RULE = (
+    "Your justification is published beneath a single photo of this street, for readers who "
+    "never see the earlier frame and know nothing about how this was worked out. So write it "
+    "about the street itself, describing the conditions you settled on. Do NOT mention frames, "
+    "images, comparisons, or what things looked like earlier -- no 'in both frames', no 'in the "
+    "first/second frame', no 'between the frames'. This is a rule about wording only: decide the "
+    "verdict first, on the evidence, and then describe it without reference to how you looked.\n\n"
+)
+
+TAIL_SCHEMA = (
     "Respond with STRICT JSON only, no markdown fences, no extra text, matching this schema: "
     '{"rain": "<one of: No, Light, Medium, Heavy>", '
     '"justification": "<one short sentence giving the overall read of the scene that decided it>"}'
 )
+
+TAIL_CLOSE = TAIL_WARN + TAIL_SCHEMA
 
 PROMPT_TAIL = TAIL_OPEN + NO_BULLET_SINGLE + TAIL_CLOSE
 
@@ -175,7 +193,13 @@ def build_prompt(captured_at_iso: str | None, two_frame: bool = False) -> str:
     earlier frame", which is worse than useless if only one image goes with it.
     """
     pre = TWO_FRAME_PRE if two_frame else ""
-    tail = TAIL_OPEN + (NO_BULLET_PAIR if two_frame else NO_BULLET_SINGLE) + TAIL_CLOSE
+    tail = (
+        TAIL_OPEN
+        + (NO_BULLET_PAIR if two_frame else NO_BULLET_SINGLE)
+        + TAIL_WARN
+        + (PAIR_JUSTIFY_RULE if two_frame else "")
+        + TAIL_SCHEMA
+    )
     if not captured_at_iso:
         return pre + PROMPT_HEAD + tail
 
