@@ -17,6 +17,10 @@ with a real-radar (RainViewer) comparison layer.
   sampled cameras directly against the traffic-camera site and swaps out
   any that fail consistently (3+ consecutive checks) for a live
   replacement, picked to preserve spatial spacing across the city.
+- **`scripts/vrain_poller.py`** -- records nearby VRAIN rain-gauge readings
+  (vrain.vn) every 10 minutes into `data/derived/vrain_history.csv`. Pure
+  collection: nothing reads it yet. Intended as measured ground truth to score
+  the vision model's readings against later -- see `NOTES.md`.
 - **`data/derived/`** -- small JSON/CSV state: camera coordinates (fetched
   from the traffic system's own coordinate API), the current 40-camera
   sample, and the live rain readings.
@@ -38,6 +42,7 @@ cp .env.example .env   # fill in GOOGLE_API_KEY
 uvicorn app.main:app --host 127.0.0.1 --port 8000 &
 python scripts/rain_annotator.py &
 python scripts/camera_watchdog.py &
+python scripts/vrain_poller.py &
 curl -X POST http://127.0.0.1:8000/api/jobs/start
 ```
 
