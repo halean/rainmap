@@ -24,6 +24,14 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemma-3-27b-it")
 GOOGLE_API_TIMEOUT_SEC = float(os.getenv("GOOGLE_API_TIMEOUT_SEC", "90"))
 
+# Pinned to 0 deliberately. Left at the model default, a borderline frame is close
+# to a coin flip -- the same prompt on the same two frames returned Medium, Medium,
+# Medium, No, No across five runs, while temperature=0 returned the same verdict
+# five times out of five. Two costs of not pinning it: a camera's reading could
+# change between passes with nothing in the world having changed, and prompt A/B
+# results were swamped by sampling noise (see NOTES.md).
+GOOGLE_TEMPERATURE = float(os.getenv("GOOGLE_TEMPERATURE", "0"))
+
 COLLAGE_ROOT = Path(os.getenv("COLLAGE_ROOT", "data/derived/collages"))
 COLLAGE_CELL_W = int(os.getenv("COLLAGE_CELL_W", "512"))
 COLLAGE_CELL_H = int(os.getenv("COLLAGE_CELL_H", "288"))

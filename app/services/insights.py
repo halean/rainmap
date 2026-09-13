@@ -68,6 +68,7 @@ class InsightsService:
                     contents=contents,
                     config=google_types.GenerateContentConfig(
                         media_resolution=google_types.MediaResolution.MEDIA_RESOLUTION_HIGH,
+                        temperature=config.GOOGLE_TEMPERATURE,
                     ),
                 )
                 text = getattr(response, "text", None)
@@ -83,7 +84,12 @@ class InsightsService:
             encoded = base64.b64encode(img.read_bytes()).decode("utf-8")
             parts.append({"inline_data": {"mime_type": mime, "data": encoded}})
 
-        body = {"contents": [{"role": "user", "parts": parts}]}
+        # Mirror the SDK path's temperature: the fallback must not classify
+        # differently from the primary path just because the SDK was unavailable.
+        body = {
+            "contents": [{"role": "user", "parts": parts}],
+            "generationConfig": {"temperature": config.GOOGLE_TEMPERATURE},
+        }
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{config.GOOGLE_MODEL}:generateContent?key={config.GOOGLE_API_KEY}"
