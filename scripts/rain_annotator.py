@@ -10,6 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from app.atomic_write import write_json_atomic
 from app.log_setup import get_logger
 from app.services.insights import InsightsService
 
@@ -340,8 +341,8 @@ def main():
             state.pop(cid, None)
         if dropped:
             log.info("pruned %d camera(s) no longer in the sample set: %s", len(dropped), dropped)
-            OUTPUT_PATH.write_text(json.dumps(list(records.values()), ensure_ascii=False, indent=2))
-            STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2))
+            write_json_atomic(OUTPUT_PATH, list(records.values()))
+            write_json_atomic(STATE_PATH, state)
 
         # Phase 1 -- pick what's due, single-threaded. Selecting up front means two
         # workers can never be handed the same camera, and the cooldown is evaluated
@@ -422,8 +423,8 @@ def main():
                     )
 
                     append_history(rec)
-                    OUTPUT_PATH.write_text(json.dumps(list(records.values()), ensure_ascii=False, indent=2))
-                    STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2))
+                    write_json_atomic(OUTPUT_PATH, list(records.values()))
+                    write_json_atomic(STATE_PATH, state)
 
         if changed:
             log.info("pass complete: %d camera(s) re-annotated", changed)

@@ -30,6 +30,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from app.atomic_write import write_json_atomic
 from app.log_setup import get_logger
 
 REPO = Path(__file__).resolve().parents[1]
@@ -107,10 +108,12 @@ def load_json_strict(path: Path, default):
 
 def save_json(path: Path, data):
     """Atomic write: the annotator reads these files concurrently, and a partial
-    write would be parsed as corrupt (or worse, as valid-but-truncated)."""
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2))
-    os.replace(tmp, path)
+    write would be parsed as corrupt (or worse, as valid-but-truncated).
+
+    Shared with the annotator, which writes the same two files -- one copy so the
+    two cannot drift apart on a correctness detail.
+    """
+    write_json_atomic(path, data)
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
