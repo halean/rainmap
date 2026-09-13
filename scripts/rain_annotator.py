@@ -51,6 +51,14 @@ ANNOTATE_WORKERS = int(os.getenv("ANNOTATE_WORKERS", "2"))
 # the set, which still have stale images on disk from their previous stint.
 MAX_FRAME_AGE_SEC = int(os.getenv("MAX_FRAME_AGE_SEC", "900"))
 
+# The previous frame is sent as context so a dry->wet change can be read as rain.
+# It is only admissible if it is recent: "the road was dry in the earlier frame"
+# means nothing if that frame is from yesterday, and a camera coming back from an
+# outage is exactly the case that would otherwise invent a downpour out of a gap.
+# Frames land ~5 min apart, so this tolerates jitter and a single missed sweep.
+PAIR_ENABLED = os.getenv("PAIR_ENABLED", "1") == "1"
+PAIR_MAX_GAP_SEC = int(os.getenv("PAIR_MAX_GAP_SEC", "780"))  # 13 min
+
 ICT = timezone(timedelta(hours=7))  # Vietnam has no DST
 
 # Time of day changes what the same visual evidence means, and getting this wrong is
@@ -108,7 +116,7 @@ PROMPT_HEAD = (
     "entire image reads, not just what can be seen inside it.\n\n"
 )
 
-PROMPT_TAIL = (
+TAIL_OPEN = (
     # Anchored on visible falling water rather than on an empty street or poor
     # visibility: those are satisfied by any quiet, dark or misty hour, and reading
     # them as rain is precisely how a 5am fog frame got called a downpour.
@@ -119,9 +127,28 @@ PROMPT_TAIL = (
     "- 'Medium': steady rain that the people out there have clearly committed to, with fall "
     "visible against a dark background or in the light.\n"
     "- 'Light': drizzle people put up with, which plenty do not bother covering up for.\n"
+)
+
+# Two definitions of 'No', because they are only correct for their own input.
+# Single-frame has no way to know the road was dry ten minutes ago, so it can only
+# rule on what is falling now. Given the previous frame, refusing to use the
+# dry->wet change throws away the strongest evidence in the pair: measured on the
+# labelled set, single-frame missed BOTH rain frames and two-frame without this
+# bullet still missed 3 of 9, while with it 8 of 9 land (NOTES.md).
+NO_BULLET_SINGLE = (
     "- 'No': nothing is falling right now -- however wet the ground is, however dark, hazy or "
     "empty the scene looks.\n\n"
+)
+NO_BULLET_PAIR = (
+    "- 'No': nothing is falling now and nothing shows it was falling moments ago. But if the "
+    "earlier frame shows a dry road and this one shows a wet one, water fell in between -- that "
+    "is rain, not 'No', even if you cannot see it falling. Pick the intensity the change implies: "
+    "a road that went from dry to fully soaked in five minutes means it came down hard. A road "
+    "already wet in BOTH frames is not evidence of new rain -- that is the aftermath, and 'No' "
+    "is right.\n\n"
+)
 
+TAIL_CLOSE = (
     "An empty street, poor visibility, or a murky-looking image are NOT by themselves reasons to "
     "answer Heavy. Only visible falling water justifies that.\n\n"
 
@@ -130,15 +157,27 @@ PROMPT_TAIL = (
     '"justification": "<one short sentence giving the overall read of the scene that decided it>"}'
 )
 
+PROMPT_TAIL = TAIL_OPEN + NO_BULLET_SINGLE + TAIL_CLOSE
 
-def build_prompt(captured_at_iso: str | None) -> str:
+TWO_FRAME_PRE = (
+    "You are given TWO frames from the same fixed traffic camera, about five minutes apart. The "
+    "FIRST is the earlier frame, context only. Classify the SECOND.\n\n"
+)
+
+
+def build_prompt(captured_at_iso: str | None, two_frame: bool = False) -> str:
     """Assemble the prompt, telling the model what local time it is looking at.
 
     Without this the model has no way to tell 'deserted because of a downpour' from
     'deserted because it is 4am', and both look identical in a dark frame.
+
+    two_frame must match what is actually sent: the pair wording talks about "the
+    earlier frame", which is worse than useless if only one image goes with it.
     """
+    pre = TWO_FRAME_PRE if two_frame else ""
+    tail = TAIL_OPEN + (NO_BULLET_PAIR if two_frame else NO_BULLET_SINGLE) + TAIL_CLOSE
     if not captured_at_iso:
-        return PROMPT_HEAD + PROMPT_TAIL
+        return pre + PROMPT_HEAD + tail
 
     local = datetime.fromisoformat(captured_at_iso).astimezone(ICT)
     hour = local.hour
@@ -170,7 +209,7 @@ def build_prompt(captured_at_iso: str | None) -> str:
         f"This frame was captured at {local.strftime('%H:%M')} local time in Ho Chi Minh City "
         f"({local.strftime('%A')}), which is {phase}.\n\n"
     )
-    return PROMPT_HEAD + when + (DARK_GUIDANCE if is_dark else DAY_GUIDANCE) + PROMPT_TAIL
+    return pre + PROMPT_HEAD + when + (DARK_GUIDANCE if is_dark else DAY_GUIDANCE) + tail
 
 
 def load_json(path: Path, default):
@@ -218,9 +257,30 @@ def append_history(rec: dict) -> None:
         log.warning("could not append history for %s: %s", rec.get("camera_id"), e)
 
 
-def annotate(svc: InsightsService, image_path: Path, captured_at_iso: str | None = None) -> dict:
+def usable_previous(svc: InsightsService, cam_id: str, image_path: Path) -> Path | None:
+    """The frame before image_path, if it is recent enough to compare against."""
+    if not PAIR_ENABLED:
+        return None
+    recent = svc.latest_images_for_camera(cam_id, limit=2)
+    if len(recent) < 2 or recent[-1] != image_path:
+        return None
+    prev = recent[-2]
+    now, before = captured_at_from(image_path), captured_at_from(prev)
+    if not (now and before):
+        return None
+    gap = (datetime.fromisoformat(now) - datetime.fromisoformat(before)).total_seconds()
+    return prev if 0 < gap <= PAIR_MAX_GAP_SEC else None
+
+
+def annotate(
+    svc: InsightsService,
+    image_path: Path,
+    captured_at_iso: str | None = None,
+    prev_path: Path | None = None,
+) -> dict:
+    images = [prev_path, image_path] if prev_path else [image_path]
     text = svc.google_generate_with_prompt(
-        images=[image_path], prompt=build_prompt(captured_at_iso)
+        images=images, prompt=build_prompt(captured_at_iso, two_frame=prev_path is not None)
     )
     cleaned = re.sub(r"^```(json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
     return json.loads(cleaned)
@@ -298,23 +358,24 @@ def main():
                 if age < min_reannotate_interval_sec:
                     continue  # rate-limit Gemma usage; state stays unset so we retry once cooldown passes
 
-            due.append((cam, rec, img_path))
+            due.append((cam, rec, img_path, usable_previous(svc, cam_id, img_path)))
 
         # Phase 2 -- run the Gemma calls concurrently. Workers are pure: they only do
         # the network call and hand back a result. All mutation of records/state and
         # every file write stays on this thread, so none of it needs locking.
         def call_gemma(item):
-            cam, rec, img_path = item
+            cam, rec, img_path, prev_path = item
             started = time.monotonic()
             try:
-                return item, annotate(svc, img_path, captured_at_from(img_path)), time.monotonic() - started, None
+                result = annotate(svc, img_path, captured_at_from(img_path), prev_path)
+                return item, result, time.monotonic() - started, None
             except Exception as e:
                 return item, None, time.monotonic() - started, e
 
         changed = 0
         if due:
             with ThreadPoolExecutor(max_workers=ANNOTATE_WORKERS) as pool:
-                for (cam, rec, img_path), result, elapsed, err in pool.map(call_gemma, due):
+                for (cam, rec, img_path, prev_path), result, elapsed, err in pool.map(call_gemma, due):
                     cam_id = cam["camera_id"]
                     if err is not None:
                         log.warning("[%s] annotate failed after %.1fs: %s", cam_id, elapsed, err)
@@ -330,9 +391,10 @@ def main():
                     state[cam_id] = str(img_path)
                     changed += 1
                     log.info(
-                        "[%s] %s -> %s (%s, %.1fs) %s",
+                        "[%s] %s -> %s (%s%s, %.1fs) %s",
                         cam_id, rec["location_text"] or cam.get("district", ""), rec["rain"],
-                        img_path.name, elapsed, rec["justification"],
+                        img_path.name, f" +{prev_path.name}" if prev_path else " single",
+                        elapsed, rec["justification"],
                     )
 
                     append_history(rec)
