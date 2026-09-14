@@ -91,6 +91,31 @@ DAY_GUIDANCE = (
     "falling.\n\n"
 )
 
+# DAY_GUIDANCE calls ponchos and umbrellas "the clearest signals available in
+# daylight", and then PROMPT_TAIL overrules it by requiring visible falling
+# water. The result was measured against VRAIN gauges: on 20 frames where a gauge
+# within 4km recorded >=5mm in the surrounding hour, production called rain on 2.
+# It described what it saw -- "the road is soaked and a rider is wearing a
+# poncho" -- and answered No anyway, 18 times at one camera while 14.2mm fell
+# 2.7km away.
+#
+# This lets converging daylight evidence carry a verdict. Scored on the same
+# gauge-labelled set: recall 10% -> 30%, dry precision 98% -> 95%. A stronger
+# version that accepted a soaked road on its own reached 50% recall but dropped
+# dry precision to 78%, because it reported aftermath as rain -- rejected.
+#
+# Daylight only, deliberately. Night is where glare and mist manufacture false
+# positives, and an earlier night-affecting change put false Heavy readings on
+# the public map. DARK_GUIDANCE frames are untouched by this.
+DAY_RELAX = (
+    "In daylight you do not need to see the water itself. If the road is soaked AND at least one "
+    "other sign agrees -- riders in ponchos or raincoats, pedestrians under umbrellas, people "
+    "sheltering, or traffic suddenly much sparser than this road normally carries -- then it is "
+    "raining, and 'Light' or 'Medium' is the honest answer rather than 'No'. Those signs are what "
+    "a person glancing out of a window would go on. Reserve 'No' for a daylight scene where the "
+    "road is merely damp or drying and nobody is behaving as though it is raining.\n\n"
+)
+
 PROMPT_HEAD = (
     "This is one frame from a public traffic camera on a street in Ho Chi Minh City, Vietnam. "
     "Decide whether rain is falling there AT THIS MOMENT.\n\n"
@@ -234,7 +259,8 @@ def build_prompt(captured_at_iso: str | None, two_frame: bool = False) -> str:
         f"This frame was captured at {local.strftime('%H:%M')} local time in Ho Chi Minh City "
         f"({local.strftime('%A')}), which is {phase}.\n\n"
     )
-    return pre + PROMPT_HEAD + when + (DARK_GUIDANCE if is_dark else DAY_GUIDANCE) + tail
+    guidance = DARK_GUIDANCE if is_dark else DAY_GUIDANCE + DAY_RELAX
+    return pre + PROMPT_HEAD + when + guidance + tail
 
 
 def load_json(path: Path, default):
