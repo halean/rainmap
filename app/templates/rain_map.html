@@ -47,6 +47,8 @@
 
       .legend-box {
         position: relative;
+        max-height: calc(100dvh - 90px);
+        overflow-y: auto;
         background: var(--card);
         padding: 10px 30px 10px 12px;
         border-radius: 8px;
@@ -230,8 +232,12 @@
         }
         rows += `<div class="note">Only rain is coloured &mdash; dry areas stay clear. The field is a radar-style interpolation between sampled cameras, not a per-point boundary. Click a pin for the live frame.</div>`;
         rows += `<label class="toggle-row"><input type="checkbox" id="realRadarToggle" /> Real weather radar (RainViewer)</label>`;
+        rows += `<label class="toggle-row"><input type="checkbox" id="cameraDensityToggle" checked /> Camera rain density</label>`;
         legendBoxEl.innerHTML = rows;
         legendBoxEl.querySelector(".legend-close").addEventListener("click", () => setLegendVisible(false));
+        legendBoxEl.querySelector("#cameraDensityToggle").addEventListener("change", (e) => {
+          if (radarOverlay) radarOverlay.setOpacity(e.target.checked ? 1 : 0);
+        });
         legendBoxEl.querySelector("#realRadarToggle").addEventListener("change", (e) => {
           if (e.target.checked) {
             ensureRealRadarLayer(() => realRadarLayer.addTo(map));
@@ -442,7 +448,7 @@
           radarOverlay.setUrl(url);
           radarOverlay.setBounds(bounds);
         } else {
-          radarOverlay = L.imageOverlay(url, bounds, { opacity: 1, interactive: false }).addTo(map);
+          radarOverlay = L.imageOverlay(url, bounds, { opacity: document.getElementById("cameraDensityToggle").checked ? 1 : 0, interactive: false }).addTo(map);
         }
       }
 
@@ -530,5 +536,6 @@
       poll();
       setInterval(poll, 45000);
     </script>
+    <script src="/media/app/static/vrain.js"></script>
   </body>
 </html>

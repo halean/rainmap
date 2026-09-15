@@ -3,12 +3,14 @@ import json
 import re
 from collections import deque
 from pathlib import Path
+from datetime import datetime
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.services.fetch_jobs import FetchJobManager
+from app.services.vrain import rain_density
 
 RAIN_SAMPLE_PATH = Path("data/derived/rain_sample.json")
 RAIN_HISTORY_PATH = Path("data/derived/rain_history.csv")
@@ -69,6 +71,12 @@ def register_routes(
     def rain_history(camera_id: str, limit: int = HISTORY_PER_CAMERA) -> list[dict]:
         limit = max(1, min(limit, 50))
         return _camera_history(camera_id, limit)
+
+    @app.get("/api/rain-map/vrain")
+    def vrain_density(hours: int = Query(3, ge=1, le=24), at: datetime | None = None) -> dict:
+        if at is not None and at.tzinfo is None:
+            raise HTTPException(status_code=422, detail="at must include a timezone")
+        return rain_density(hours=hours, at=at)
 
     @app.get("/api/status")
     def get_status() -> dict:
