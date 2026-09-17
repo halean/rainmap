@@ -14,9 +14,23 @@ Design notes (learned the hard way):
 - After changing sample_cameras.json, restart the *fetch job* (via the API;
   cheap, no server restart) so its CSV-driven camera list picks up the swap.
   rain_annotator.py reloads its camera list from disk every pass on its own.
+- A camera can fail without failing the liveness check: the endpoint keeps
+  serving a full-size image that never changes. is_live() sees a valid 40KB
+  JPEG and passes it forever, so it never strikes out, stays in the sample, and
+  the annotator republishes a verdict about a frozen scene indefinitely.
+  Measured over the stored frames: 8 of 320 cameras have served byte-identical
+  full-size frames, in runs up to 3 (~15 min at the fetch cadence), and three of
+  those went fully offline afterwards -- a freeze is a leading indicator, not
+  just a nuisance. Detected here from the frames on disk rather than from this
+  loop's own probes, because the fetch job samples every ~5 min against this
+  loop's 20, and a 15-minute freeze is invisible at 20-minute resolution.
+  Frames below OFFLINE_THRESHOLD are excluded: the site serves one shared 2.6KB
+  placeholder for dead cameras, which repeats forever by nature and is already
+  the liveness check's job to catch.
 """
 
 import csv
+import hashlib
 import json
 import math
 import os
@@ -50,6 +64,14 @@ CHECK_TIMEOUT = 25
 
 CHECK_INTERVAL_SEC = int(os.getenv("CHECK_INTERVAL_SEC", str(20 * 60)))  # health-check cadence
 STRIKE_THRESHOLD = 3            # consecutive failed cycles before replacing (~1hr at 20min cadence)
+
+# STALL_ENABLED=0 leaves a frozen feed in the sample, which is what shipped before.
+# The threshold is one frame above the longest genuine freeze in the stored history
+# (3, seen on 8 cameras): short freezes recover on their own and are logged but not
+# acted on, so replacing a camera means ~20 min of a provably unchanging picture.
+STALL_ENABLED = os.getenv("STALL_ENABLED", "1") == "1"
+STALL_FRAMES = int(os.getenv("STALL_FRAMES", "4"))
+RAW_ROOT = REPO / "data" / "raw"
 APP_BASE_URL = "http://127.0.0.1:8000"
 
 # --- Rotation -------------------------------------------------------------
@@ -134,6 +156,37 @@ def is_live(camera_id: str) -> bool:
         return len(resp.content) >= OFFLINE_THRESHOLD
     except Exception:
         return False
+
+
+def frozen_run(camera_id: str) -> int:
+    """How many of the newest stored frames are byte-identical to each other.
+
+    1 means the latest frame differs from the one before it -- a live feed. These
+    frames carry a burned-in clock, so two genuinely fresh captures differ even
+    when the street is empty and nothing moves; identical bytes mean the endpoint
+    re-served one image rather than that the scene held still.
+
+    Reads only the last STALL_FRAMES files. Path order is chronological because
+    the layout is <id>/YYYY/MM/DD/YYYYMMDD_HHMMSS.jpg.
+    """
+    cdir = RAW_ROOT / camera_id
+    if not cdir.is_dir():
+        return 1
+    try:
+        recent = [p for p in sorted(cdir.rglob("*.jpg"))[-STALL_FRAMES:]
+                  if p.stat().st_size >= OFFLINE_THRESHOLD]
+        if len(recent) < STALL_FRAMES:
+            return 1  # too few full-size frames to judge; a new camera is not a stalled one
+        digests = [hashlib.md5(p.read_bytes()).hexdigest() for p in recent]
+    except OSError as e:
+        log.warning("could not read frames for %s: %s", camera_id, e)
+        return 1
+    run = 1
+    for a, b in zip(reversed(digests), reversed(digests[:-1])):
+        if a != b:
+            break
+        run += 1
+    return run
 
 
 def write_fetch_csv(cameras):
@@ -380,8 +433,10 @@ def commit(cameras, strikes, blocklist, recent):
 
 def main():
     log.info("watchdog: checking %s every %ds, replacing after %d consecutive failed checks; "
+             "stall detection %s (>= %d identical frames); "
              "rotation %s (spacing >= %.1fkm, drift <= %.1fkm, recent TTL %dh)",
              SAMPLE_CAMERAS_PATH.name, CHECK_INTERVAL_SEC, STRIKE_THRESHOLD,
+             "on" if STALL_ENABLED else "off", STALL_FRAMES,
              "on" if ROTATE_ENABLED else "off", MIN_SPACING_KM, MAX_ANCHOR_DRIFT_KM,
              RECENT_TTL_SEC // 3600)
 
@@ -402,11 +457,23 @@ def main():
             commit(cameras, strikes, blocklist, recent)
 
         dead_this_round = []
+        stalled_this_round = []
         for cam in cameras:
             cid = cam["camera_id"]
             ok = is_live(cid)
             if ok:
                 strikes[cid] = 0
+                # Reachable but possibly frozen. Judged on the frames already on
+                # disk, so this costs no extra request to a service we are trying
+                # not to lean on.
+                if STALL_ENABLED:
+                    run = frozen_run(cid)
+                    if run >= STALL_FRAMES:
+                        log.warning("%s (%s) serving a frozen picture: last %d frames identical",
+                                    cid, cam.get("district", ""), run)
+                        stalled_this_round.append(cid)
+                    elif run > 1:
+                        log.info("%s briefly frozen (%d identical frames), watching", cid, run)
             else:
                 strikes[cid] = strikes.get(cid, 0) + 1
                 log.warning("%s (%s) failed check, strikes=%d", cid, cam.get("district", ""), strikes[cid])
@@ -416,8 +483,19 @@ def main():
 
         save_json(STRIKES_PATH, strikes)
 
+        # Stalled cameras join the dead: from here the handling is identical --
+        # dropped from the sample, blocklisted so rotation cannot pick them back
+        # up, replaced by one live camera, and commit() carries that through
+        # sample_cameras.json, the fetch CSV, rain_sample.json and the annotator
+        # state in a single pass.
+        if stalled_this_round:
+            log.warning("replacing frozen feeds (>= %d identical frames): %s",
+                        STALL_FRAMES, stalled_this_round)
+            dead_this_round.extend(stalled_this_round)
+
         if dead_this_round:
-            log.warning("confirmed dead (>= %d consecutive strikes): %s", STRIKE_THRESHOLD, dead_this_round)
+            log.warning("confirmed dead (>= %d consecutive strikes) or frozen: %s",
+                        STRIKE_THRESHOLD, dead_this_round)
             for dead_id in dead_this_round:
                 cameras = [c for c in cameras if c["camera_id"] != dead_id]
                 blocklist.append(dead_id)
