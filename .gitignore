@@ -15,4 +15,7 @@ data/test_sets/
 logs/
 data/derived/rain_history.csv
 data/derived/vrain_history.csv
+# cached model perceptions keyed by frame path -- regenerated on demand by
+# scripts/perception_eval.py, and it grows with every frame ever scored
+data/derived/perception_cache.json
 NOTES.md
