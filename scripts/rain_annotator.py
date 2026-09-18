@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+import random
 import re
 import sys
 import time
@@ -77,6 +78,26 @@ PAIR_MAX_GAP_SEC = int(os.getenv("PAIR_MAX_GAP_SEC", "780"))  # 13 min
 # evidence carries the plateau.
 #
 # STATEFUL_ENABLED=0 falls back to the stateless prompt, which is unchanged.
+# Quota pacing. The limit that actually binds is input tokens per project per
+# MINUTE (a 429 names it: "generate_content_paid_tier_2_input_token_count,
+# limit: 16000"), and it is shared by every camera, every tier, and any
+# experiment running alongside. So a 429 for one camera means the next call is
+# about to fail too, and retrying it on the next 60s poll -- which is what this
+# did -- turns one rejected call into a storm that outlives what caused it. On
+# 2026-09-14 that amplified a brief collision into 47 minutes and 1013 errors,
+# while successful throughput never rose above its normal ~5.5/min.
+#
+# Google says exactly how long to wait ("Please retry in 18.2237487s"), so honour
+# it: pause every camera until then rather than backing each off separately.
+QUOTA_RETRY_RE = re.compile(r"retry in ([0-9.]+)\s*s", re.IGNORECASE)
+# Distinct from both a result and an error: this call was never attempted.
+DEFERRED = object()
+QUOTA_FALLBACK_SEC = float(os.getenv("QUOTA_FALLBACK_SEC", "60"))
+# Non-quota failures (a timeout, an unparseable reply, one sick camera) are that
+# camera's own problem, so they back off per camera instead of stalling the pass.
+BACKOFF_BASE_SEC = float(os.getenv("BACKOFF_BASE_SEC", "120"))
+BACKOFF_MAX_SEC = float(os.getenv("BACKOFF_MAX_SEC", "1800"))
+
 STATEFUL_ENABLED = os.getenv("STATEFUL_ENABLED", "1") == "1"
 # "the road was dry" stops meaning anything if that judgment is hours old. Text
 # state ages better than a frame comparison, so this is looser than
@@ -588,9 +609,35 @@ def annotate(
     return json.loads(cleaned)
 
 
+def quota_retry_after(err):
+    """Seconds to wait if `err` is a rate-limit rejection, else None.
+
+    Matches on the 429 status rather than the message text, so a quota error
+    whose wording changes still pauses; the parsed delay is only the duration.
+    """
+    text = str(err)
+    # \b so an unrelated number containing 429 is not read as a status code.
+    if not re.search(r"\b429\b", text) and "RESOURCE_EXHAUSTED" not in text:
+        return None
+    found = QUOTA_RETRY_RE.search(text)
+    # Jitter: without it the whole due list wakes at the same instant and walks
+    # straight back into the same per-minute bucket.
+    return (float(found.group(1)) if found else QUOTA_FALLBACK_SEC) + random.uniform(0.5, 3.0)
+
+
+def backoff_for(failures):
+    """Exponential per-camera backoff, jittered, for a camera's Nth failure."""
+    delay = min(BACKOFF_BASE_SEC * (2 ** max(0, failures - 1)), BACKOFF_MAX_SEC)
+    return delay * random.uniform(0.8, 1.2)
+
+
 def main():
     svc = InsightsService()
     state = load_json(STATE_PATH, {})
+    # Transient pacing state, deliberately in memory only: a restart should start
+    # clean rather than inherit a backoff from a quota event that has long passed.
+    failures, retry_at = {}, {}
+    quota_pause_until = 0.0
     records = {r["camera_id"]: r for r in load_json(OUTPUT_PATH, [])}
     display_names = {r["camera_id"]: r.get("display_name", "") for r in load_json(LOCATIONS_PATH, [])}
 
@@ -621,12 +668,25 @@ def main():
             write_json_atomic(OUTPUT_PATH, list(records.values()))
             write_json_atomic(STATE_PATH, state)
 
+        # The quota is per minute and shared, so there is nothing useful to do while
+        # it is exhausted -- every call in this pass would just be rejected.
+        remaining = quota_pause_until - time.monotonic()
+        if remaining > 0:
+            # Wake when the quota does, not on the next poll boundary: the API's
+            # delays are tens of seconds, so sleeping a full POLL_SECONDS would
+            # idle the map for longer than the limit actually asked for.
+            log.info("quota paused, %.0fs remaining; skipping this pass", remaining)
+            time.sleep(min(POLL_SECONDS, max(1.0, remaining)))
+            continue
+
         # Phase 1 -- pick what's due, single-threaded. Selecting up front means two
         # workers can never be handed the same camera, and the cooldown is evaluated
         # exactly once per camera per pass.
         due = []
         for cam in cameras:
             cam_id = cam["camera_id"]
+            if time.monotonic() < retry_at.get(cam_id, 0):
+                continue  # this one is backing off after its own failure
             latest = svc.latest_images_for_camera(cam_id, limit=1)
             if not latest:
                 continue
@@ -665,8 +725,18 @@ def main():
         # Phase 2 -- run the Gemma calls concurrently. Workers are pure: they only do
         # the network call and hand back a result. All mutation of records/state and
         # every file write stays on this thread, so none of it needs locking.
+        # Workers share one mutable cell for the pause because they need to see a
+        # 429 raised by a sibling. Assignment is atomic under the GIL and only the
+        # latest deadline matters, so this needs no lock.
+        pause = {"until": 0.0}
+
         def call_gemma(item):
             cam, rec, img_path, prev_path = item
+            # Once one call has been refused, the rest of this pass is already
+            # over the same per-minute bucket. Queued work bails out here instead
+            # of spending the whole due list on calls that will be rejected.
+            if time.monotonic() < pause["until"]:
+                return item, None, 0.0, DEFERRED
             started = time.monotonic()
             try:
                 captured = captured_at_from(img_path)
@@ -674,16 +744,37 @@ def main():
                                   prev=prior_state(rec, captured))
                 return item, result, time.monotonic() - started, None
             except Exception as e:
+                wait = quota_retry_after(e)
+                if wait is not None:
+                    pause["until"] = max(pause["until"], time.monotonic() + wait)
                 return item, None, time.monotonic() - started, e
 
-        changed = 0
+        changed = refused = deferred = 0
         if due:
             with ThreadPoolExecutor(max_workers=ANNOTATE_WORKERS) as pool:
                 for (cam, rec, img_path, prev_path), result, elapsed, err in pool.map(call_gemma, due):
                     cam_id = cam["camera_id"]
-                    if err is not None:
-                        log.warning("[%s] annotate failed after %.1fs: %s", cam_id, elapsed, err)
+                    if err is DEFERRED:
+                        deferred += 1  # never attempted; not a failure
                         continue
+                    if err is not None:
+                        wait = quota_retry_after(err)
+                        if wait is not None:
+                            # Shared-quota rejection: say so once per pass rather than
+                            # once per camera, and leave this camera's own backoff
+                            # alone -- it did nothing wrong.
+                            quota_pause_until = max(quota_pause_until, time.monotonic() + wait)
+                            refused += 1
+                        else:
+                            failures[cam_id] = failures.get(cam_id, 0) + 1
+                            delay = backoff_for(failures[cam_id])
+                            retry_at[cam_id] = time.monotonic() + delay
+                            log.warning("[%s] annotate failed after %.1fs (%d in a row, "
+                                        "next try in %.0fs): %s",
+                                        cam_id, elapsed, failures[cam_id], delay, err)
+                        continue
+                    failures.pop(cam_id, None)
+                    retry_at.pop(cam_id, None)
 
                     rec["location_text"] = display_names.get(cam_id) or cam.get("display_name") or rec.get("location_text", "")
                     if PERCEPTION_DECISION and prev_path is None:
@@ -723,6 +814,9 @@ def main():
                     write_json_atomic(OUTPUT_PATH, list(records.values()))
                     write_json_atomic(STATE_PATH, state)
 
+        if refused:
+            log.warning("quota refused %d call(s), %d deferred; pausing %.0fs",
+                        refused, deferred, max(0.0, quota_pause_until - time.monotonic()))
         if changed:
             log.info("pass complete: %d camera(s) re-annotated", changed)
         time.sleep(POLL_SECONDS)
