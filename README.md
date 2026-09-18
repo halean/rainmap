@@ -59,12 +59,13 @@ returns to the most recent logged observation. The blue field interpolates
 observed increases within 12 km of gauges; click a gauge for its amount and
 coverage. The camera density can be toggled independently.
 
-If Nginx restricts public paths, allow the layers' JavaScript assets as well
-as the map and the layer APIs. The deployed `muaroi.conf` names them
-explicitly rather than opening `/media/app/static/`:
+If Nginx restricts public paths, allow each layer's JavaScript asset as well
+as the map and the layer APIs. `/api/rain-map` already covers every layer's
+API, but a static asset needs a rule of its own, and the deployed
+`muaroi.conf` names each one rather than opening `/media/app/static/`:
 
 ```nginx
-location ~ ^/media/app/static/(vrain|himawari)\.js$ {
+location = /media/app/static/vrain.js {
     proxy_pass http://127.0.0.1:8000;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
@@ -72,9 +73,16 @@ location ~ ^/media/app/static/(vrain|himawari)\.js$ {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
 }
+
+location = /media/app/static/himawari.js {
+    ...the same proxy headers...
+}
 ```
 
-Validate with `sudo nginx -t` before `sudo systemctl reload nginx`.
+Adding a layer therefore means adding a rule. Until one exists the script
+404s, the page loads without it, and the layer is simply absent from the
+legend rather than visibly broken. Validate with `sudo nginx -t` before
+`sudo systemctl reload nginx`.
 
 `GET /api/rain-map/vrain?hours=3` returns amounts, coverage, log freshness, and
 reset evidence. Optional `at=2026-09-14T15:30:00%2B07:00` selects history.
