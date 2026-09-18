@@ -46,10 +46,21 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000 &
 python scripts/rain_annotator.py &
 python scripts/camera_watchdog.py &
 python scripts/vrain_poller.py &
-curl -X POST http://127.0.0.1:8000/api/jobs/start
+curl -X POST http://127.0.0.1:8000/api/jobs/start   # or set FETCH_AUTOSTART=1
 ```
 
 Then open `http://localhost:8000/rain-map`.
+
+The camera sweep runs as a daemon thread inside the service process, so it stops
+whenever that process does and nothing says so: the map keeps serving the frames
+it already has while no new ones arrive. `FETCH_AUTOSTART=1` starts the sweep
+with the service, so a restart picks it back up. It is off unless set, because a
+test or a local run should not sweep the city's public camera site merely by
+importing the app. Starting it twice is harmless -- the second start is refused
+and logged, not an error.
+
+Nothing else here is supervised: the service and the three scripts above are
+whatever you started by hand, so a crash or a reboot needs starting them again.
 
 ## VRAIN gauge density
 

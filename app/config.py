@@ -62,3 +62,10 @@ HIMAWARI_TIMEOUT_SEC = float(os.getenv("HIMAWARI_TIMEOUT_SEC", "60"))
 # miss is a multi-megabyte download, so a public endpoint should not accept an
 # arbitrary date.
 HIMAWARI_MAX_AGE_HOURS = float(os.getenv("HIMAWARI_MAX_AGE_HOURS", "6"))
+
+# Start the camera sweep together with the service. The sweep runs as a daemon
+# thread inside the uvicorn process, so every restart drops it silently: the map
+# keeps serving the frames it already has and nothing reports that new ones
+# stopped arriving. Off by default, so a test or a local run never sweeps the
+# city's public camera site just by importing the app.
+FETCH_AUTOSTART = os.getenv("FETCH_AUTOSTART", "").strip().lower() in {"1", "true", "yes", "on"}
