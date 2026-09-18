@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.config import HIMAWARI_BAND, HIMAWARI_MAX_AGE_HOURS
+from app.config import HIMAWARI_BAND, HIMAWARI_IMAGE_SIZES, HIMAWARI_MAX_AGE_HOURS
 from app.services import himawari
 from app.services.fetch_jobs import FetchJobManager
 from app.services.vrain import rain_density
@@ -20,6 +20,16 @@ RAIN_HISTORY_PATH = Path("data/derived/rain_history.csv")
 IMAGE_STAMP_RE = re.compile(r"^(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})")
 HISTORY_PER_CAMERA = 12
 SCAN_STAMP = "%Y%m%d%H%M"
+
+
+def _checked_size(size: int | None) -> int | None:
+    """Sizes are render-cache keys, so only the listed ones are servable."""
+    if size is not None and size not in HIMAWARI_IMAGE_SIZES:
+        raise HTTPException(
+            status_code=422,
+            detail=f"size must be one of {', '.join(map(str, HIMAWARI_IMAGE_SIZES))}",
+        )
+    return size
 
 
 def _camera_history(camera_id: str, limit: int) -> list[dict]:
@@ -83,7 +93,7 @@ def register_routes(
         return rain_density(hours=hours, at=at)
 
     @app.get("/api/rain-map/himawari")
-    def himawari_scene(size: int = Query(None, ge=128, le=1024)) -> dict:
+    def himawari_scene(size: int = Query(None)) -> dict:
         """Metadata for the newest cloud-top scan, and where to fetch its image.
 
         The image is left to a second request so the browser can cache it
@@ -91,7 +101,7 @@ def register_routes(
         minutes, and they cost a multi-megabyte download from NOAA to produce.
         """
         try:
-            scene = himawari.latest_scene(size)
+            scene = himawari.latest_scene(_checked_size(size))
         except (himawari.HimawariUnavailable, ValueError) as e:
             raise HTTPException(status_code=503, detail=str(e))
         except (requests.RequestException, OSError) as e:
@@ -123,7 +133,8 @@ def register_routes(
         }
 
     @app.get("/api/rain-map/himawari.png")
-    def himawari_image(scan: str, size: int = Query(None, ge=128, le=1024)) -> Response:
+    def himawari_image(scan: str, size: int = Query(None)) -> Response:
+        size = _checked_size(size)
         try:
             slot = datetime.strptime(scan, SCAN_STAMP).replace(tzinfo=timezone.utc)
         except ValueError:

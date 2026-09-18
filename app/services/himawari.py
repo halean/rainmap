@@ -31,6 +31,8 @@ from app.config import (
     HIMAWARI_BBOX,
     HIMAWARI_BUCKET,
     HIMAWARI_IMAGE_SIZE,
+    HIMAWARI_IMAGE_SIZES,
+    HIMAWARI_MAX_AGE_HOURS,
     HIMAWARI_PREFIX,
     HIMAWARI_RESOLUTION,
     HIMAWARI_SATELLITE,
@@ -236,10 +238,13 @@ def _exists(key: str) -> bool:
     return requests.head(_url(key), timeout=HIMAWARI_TIMEOUT_SEC).status_code == 200
 
 
+# Scratch space for building a frame, not a result cache. A strip is ~6 MB
+# decompressed, and once a scan has been rendered its strips are never wanted
+# again -- the finished PNG is 100x smaller and answers the same request. So
+# this stays small on purpose and `render` below is the cache that grows.
 @lru_cache(maxsize=3)
 def _segment(slot: datetime, segment: int) -> tuple[Header, np.ndarray]:
-    """One decoded strip. Cached because a strip is ~6 MB decompressed and the
-    same scan is served for the ten minutes until the next one lands."""
+    """One decoded strip, held only long enough to draw the scans that need it."""
     response = requests.get(_url(_key(slot, segment)), timeout=HIMAWARI_TIMEOUT_SEC)
     response.raise_for_status()
     return _parse(bz2.decompress(response.content))
@@ -353,7 +358,15 @@ def colorize(kelvin: np.ndarray) -> np.ndarray:
     return rgba
 
 
-@lru_cache(maxsize=8)
+# Big enough to hold every (scan, size) the image endpoint will serve, so a
+# caller cycling scan stamps finds finished PNGs in memory rather than making
+# the service fetch from NOAA again. Derived from the window rather than fixed,
+# so widening the window cannot quietly reopen that. At ~57 KB a PNG this is a
+# few megabytes; the strips behind them would have been hundreds.
+RENDER_CACHE = max(8, int(HIMAWARI_MAX_AGE_HOURS * 6) * len(HIMAWARI_IMAGE_SIZES))
+
+
+@lru_cache(maxsize=RENDER_CACHE)
 def render(slot: datetime, segments: tuple[int, ...], size: int) -> Scene:
     parts = [_segment(slot, segment) for segment in segments]
     kelvin = sample_bbox(parts, size)

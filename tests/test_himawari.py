@@ -15,6 +15,7 @@ import numpy as np
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.config import HIMAWARI_IMAGE_SIZES, HIMAWARI_MAX_AGE_HOURS
 from app.services import himawari
 
 UTC = timezone.utc
@@ -322,6 +323,94 @@ class EndpointTests(unittest.TestCase):
             ]
         self.assertEqual(codes, [422, 422, 404, 404])  # unparsable, off-grid, too old, in the future
         fetch.assert_not_called()
+
+
+class CacheTests(unittest.TestCase):
+    """A frame must cost one download, once -- not one per request.
+
+    The image endpoint serves any scan in its window, so anything that can ask
+    for scans in a cycle (a viewer stepping back through them, an animation, or
+    someone hammering the URL) walks the whole window repeatedly. If the cache
+    of finished frames is smaller than that window, every lap re-renders, and
+    re-rendering needs strips that were long since evicted -- so every lap goes
+    back to NOAA for megabytes it already downloaded.
+    """
+
+    def setUp(self):
+        himawari._SEGMENT_INDEX.clear()
+        himawari._SEGMENT_INDEX[(himawari.HIMAWARI_BAND, himawari.HIMAWARI_RESOLUTION,
+                                 himawari.HIMAWARI_BBOX)] = (4, 5)
+        self.addCleanup(himawari._SEGMENT_INDEX.clear)
+        self.fetched = []
+
+    def strip(self, slot, segment):
+        self.fetched.append((slot, segment))
+        first = (segment - 1) * LINES_PER_SEGMENT + 1
+        rows = np.arange(first, first + LINES_PER_SEGMENT)[:, None]
+        counts = np.broadcast_to(500 + (rows - 1651) * 3, (LINES_PER_SEGMENT, COLUMNS))
+        return himawari._parse(
+            hsd_file(segment=segment, counts=np.ascontiguousarray(counts, dtype="<u2"))
+        )
+
+    def walk(self, frames, passes):
+        render = himawari.lru_cache(maxsize=himawari.RENDER_CACHE)(himawari.render.__wrapped__)
+        cached_strip = himawari.lru_cache(maxsize=3)(self.strip)
+        base = datetime(2026, 9, 18, 18, tzinfo=UTC)
+        with patch.object(himawari, "_segment", cached_strip):
+            for _ in range(passes):
+                for i in range(frames):
+                    render(base + timedelta(minutes=10 * i), (4, 5), 512)
+
+    def test_a_full_window_is_downloaded_once_however_often_it_is_walked(self):
+        frames = int(HIMAWARI_MAX_AGE_HOURS * 6)
+        self.walk(frames, passes=3)
+        self.assertEqual(len(self.fetched), len(set(self.fetched)),
+                         "a strip was fetched more than once across the three passes")
+        self.assertEqual(len(self.fetched), frames * 2, "two strips per scan, once each")
+
+    def test_the_result_cache_covers_everything_the_endpoint_will_serve(self):
+        """The bound that makes the above true. Widening the window without
+        widening this would quietly restore the re-downloading."""
+        servable = int(HIMAWARI_MAX_AGE_HOURS * 6) * len(HIMAWARI_IMAGE_SIZES)
+        self.assertGreaterEqual(himawari.RENDER_CACHE, servable)
+
+    def test_strips_are_not_the_cache_that_grows(self):
+        """Holding the window in strips would cost ~100x the memory of holding
+        it in finished PNGs, for the same saved downloads."""
+        self.assertLessEqual(himawari._segment.cache_info().maxsize, 4)
+
+
+class SizeAllowlistTests(unittest.TestCase):
+    """Size is a cache key too, so cycling it thrashes exactly as scans do."""
+
+    def setUp(self):
+        self.client = TestClient(app)
+        self.slot = datetime.now(UTC).replace(second=0, microsecond=0)
+        self.slot -= timedelta(minutes=self.slot.minute % 10 + 20)
+
+    def test_listed_sizes_are_accepted(self):
+        scene = himawari.Scene(scan=self.slot, size=256, png=b"\x89PNG", bounds=himawari.HIMAWARI_BBOX,
+                               coldest_k=210.0, median_k=270.0, coverage=1.0, segments=(4, 5))
+        with patch.object(himawari, "latest_scene", return_value=scene):
+            for size in HIMAWARI_IMAGE_SIZES:
+                self.assertEqual(
+                    self.client.get(f"/api/rain-map/himawari?size={size}").status_code, 200, size
+                )
+
+    def test_unlisted_sizes_are_refused_before_any_fetch(self):
+        with patch.object(himawari, "latest_scene") as meta, patch.object(himawari, "scene_at") as png:
+            stamp = self.slot.strftime("%Y%m%d%H%M")
+            for size in (129, 511, 777, 2048):
+                self.assertEqual(
+                    self.client.get(f"/api/rain-map/himawari?size={size}").status_code, 422, size)
+                self.assertEqual(
+                    self.client.get(
+                        f"/api/rain-map/himawari.png?scan={stamp}&size={size}").status_code, 422, size)
+        meta.assert_not_called()
+        png.assert_not_called()
+
+    def test_the_configured_default_is_always_servable(self):
+        self.assertIn(himawari.HIMAWARI_IMAGE_SIZE, HIMAWARI_IMAGE_SIZES)
 
 
 if __name__ == "__main__":

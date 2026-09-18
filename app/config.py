@@ -57,6 +57,11 @@ HIMAWARI_BBOX = tuple(  # south, west, north, east
     float(v) for v in os.getenv("HIMAWARI_BBOX", "9.7,105.6,11.9,107.8").split(",")
 )
 HIMAWARI_IMAGE_SIZE = int(os.getenv("HIMAWARI_IMAGE_SIZE", "512"))
+# Every accepted size is a separate render-cache key, so an open range lets one
+# caller cycle sizes, evict the cache and make the service pull strips from NOAA
+# again for images it has already drawn. A short list bounds what can be asked
+# for; the configured default is always servable.
+HIMAWARI_IMAGE_SIZES = tuple(sorted({256, 512, 1024, HIMAWARI_IMAGE_SIZE}))
 HIMAWARI_TIMEOUT_SEC = float(os.getenv("HIMAWARI_TIMEOUT_SEC", "60"))
 # How far back the PNG endpoint will serve. The bucket holds years, and each
 # miss is a multi-megabyte download, so a public endpoint should not accept an

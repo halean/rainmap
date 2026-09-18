@@ -19,10 +19,23 @@ class AutostartTests(unittest.TestCase):
         self.addCleanup(patcher.stop)
         return TestClient(main.app)
 
-    def test_off_by_default(self):
-        """The default must hold even with the lifespan running: an unguarded
-        hook would have every test run fetching from the public camera site."""
-        self.assertFalse(config.FETCH_AUTOSTART, "autostart must be opt-in")
+    def test_off_unless_set(self):
+        """Opt-in is a property of the code, not of whatever .env this machine
+        happens to carry -- a deployment that sets the flag must not be able to
+        make this pass vacuously. Checked with the variable removed outright."""
+        import importlib
+        import os
+        # config calls load_dotenv() at import, so the deployment's .env would
+        # put the variable straight back. Silence it to see the bare default.
+        with patch("dotenv.load_dotenv", lambda *a, **k: False):
+            with patch.dict(os.environ, {}, clear=False):
+                os.environ.pop("FETCH_AUTOSTART", None)
+                self.assertFalse(importlib.reload(config).FETCH_AUTOSTART)
+        importlib.reload(config)  # restore this machine's actual setting
+
+    def test_the_lifespan_respects_the_flag(self):
+        """An unguarded hook would have every test run that uses the lifespan
+        fetching from the city's public camera site."""
         with patch.object(main.fetch_manager, "start") as start:
             with self.client(autostart=False):
                 pass
