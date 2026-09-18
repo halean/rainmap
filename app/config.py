@@ -40,3 +40,25 @@ COLLAGE_JPEG_QUALITY = int(os.getenv("COLLAGE_JPEG_QUALITY", "95"))
 ANALYSIS_MAX_WORKERS = int(os.getenv("ANALYSIS_MAX_WORKERS", "4"))
 ANALYSIS_KEEP_LAST = int(os.getenv("ANALYSIS_KEEP_LAST", "200"))
 FETCH_KEEP_LAST = int(os.getenv("FETCH_KEEP_LAST", "50"))
+
+# Himawari-9 cloud tops, read from NOAA's open mirror of the raw instrument
+# files. Band 13 (10.4 um) is thermal infrared: it works at night, when most of
+# the city's convective rain arrives. R20 is the 2 km grid that band is
+# distributed on; the resolution tag is part of the object key, so the two move
+# together. The box is wider than the camera sample so panning off the city
+# still shows cloud, and every extra degree of it costs bandwidth: a strip is
+# ~3 MB compressed and the box currently spans one or two of them per scan.
+HIMAWARI_BUCKET = os.getenv("HIMAWARI_BUCKET", "https://noaa-himawari9.s3.amazonaws.com/")
+HIMAWARI_PREFIX = os.getenv("HIMAWARI_PREFIX", "AHI-L1b-FLDK")
+HIMAWARI_SATELLITE = os.getenv("HIMAWARI_SATELLITE", "H09")
+HIMAWARI_BAND = os.getenv("HIMAWARI_BAND", "B13")
+HIMAWARI_RESOLUTION = os.getenv("HIMAWARI_RESOLUTION", "R20")
+HIMAWARI_BBOX = tuple(  # south, west, north, east
+    float(v) for v in os.getenv("HIMAWARI_BBOX", "9.7,105.6,11.9,107.8").split(",")
+)
+HIMAWARI_IMAGE_SIZE = int(os.getenv("HIMAWARI_IMAGE_SIZE", "512"))
+HIMAWARI_TIMEOUT_SEC = float(os.getenv("HIMAWARI_TIMEOUT_SEC", "60"))
+# How far back the PNG endpoint will serve. The bucket holds years, and each
+# miss is a multi-megabyte download, so a public endpoint should not accept an
+# arbitrary date.
+HIMAWARI_MAX_AGE_HOURS = float(os.getenv("HIMAWARI_MAX_AGE_HOURS", "6"))

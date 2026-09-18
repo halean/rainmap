@@ -3,12 +3,15 @@ import json
 import re
 from collections import deque
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
+import requests
 from fastapi import FastAPI, HTTPException, Request, Query
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
+from app.config import HIMAWARI_BAND, HIMAWARI_MAX_AGE_HOURS
+from app.services import himawari
 from app.services.fetch_jobs import FetchJobManager
 from app.services.vrain import rain_density
 
@@ -16,6 +19,7 @@ RAIN_SAMPLE_PATH = Path("data/derived/rain_sample.json")
 RAIN_HISTORY_PATH = Path("data/derived/rain_history.csv")
 IMAGE_STAMP_RE = re.compile(r"^(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})")
 HISTORY_PER_CAMERA = 12
+SCAN_STAMP = "%Y%m%d%H%M"
 
 
 def _camera_history(camera_id: str, limit: int) -> list[dict]:
@@ -77,6 +81,78 @@ def register_routes(
         if at is not None and at.tzinfo is None:
             raise HTTPException(status_code=422, detail="at must include a timezone")
         return rain_density(hours=hours, at=at)
+
+    @app.get("/api/rain-map/himawari")
+    def himawari_scene(size: int = Query(None, ge=128, le=1024)) -> dict:
+        """Metadata for the newest cloud-top scan, and where to fetch its image.
+
+        The image is left to a second request so the browser can cache it
+        against the scan it belongs to: the pixels only change every ten
+        minutes, and they cost a multi-megabyte download from NOAA to produce.
+        """
+        try:
+            scene = himawari.latest_scene(size)
+        except (himawari.HimawariUnavailable, ValueError) as e:
+            raise HTTPException(status_code=503, detail=str(e))
+        except (requests.RequestException, OSError) as e:
+            raise HTTPException(status_code=503, detail=f"Himawari fetch failed: {e}")
+        south, west, north, east = scene.bounds
+        return {
+            "scan": scene.scan.isoformat(),
+            "age_minutes": round(
+                (datetime.now(timezone.utc) - scene.scan).total_seconds() / 60
+            ),
+            "band": HIMAWARI_BAND,
+            "bounds": [[south, west], [north, east]],
+            "image_url": f"/api/rain-map/himawari.png"
+            f"?scan={scene.scan.strftime(SCAN_STAMP)}&size={scene.size}",
+            "coldest_k": scene.coldest_k,
+            "median_k": scene.median_k,
+            "coverage": scene.coverage,
+            # Served rather than hardcoded in the legend so the key cannot drift
+            # away from the ramp the image is actually drawn with.
+            "scale": [
+                {
+                    "kelvin": kelvin,
+                    "celsius": round(kelvin - 273.15),
+                    "color": "#%02x%02x%02x" % rgb,
+                    "opacity": round(alpha / 255, 3),
+                }
+                for kelvin, rgb, alpha in himawari.CLOUD_STOPS
+            ],
+        }
+
+    @app.get("/api/rain-map/himawari.png")
+    def himawari_image(scan: str, size: int = Query(None, ge=128, le=1024)) -> Response:
+        try:
+            slot = datetime.strptime(scan, SCAN_STAMP).replace(tzinfo=timezone.utc)
+        except ValueError:
+            raise HTTPException(status_code=422, detail="scan must be YYYYMMDDHHMM (UTC)")
+        now = datetime.now(timezone.utc)
+        if slot != himawari.floor_to_scan(slot):
+            raise HTTPException(status_code=422, detail="scans start every 10 minutes")
+        # Each miss downloads strips from NOAA, so the window a stranger can ask
+        # for stays small even though the bucket itself goes back years.
+        if not timedelta(0) <= now - slot <= timedelta(hours=HIMAWARI_MAX_AGE_HOURS):
+            raise HTTPException(
+                status_code=404,
+                detail=f"only the last {HIMAWARI_MAX_AGE_HOURS:g} hours of scans are served",
+            )
+        try:
+            scene = himawari.scene_at(slot, size)
+        except (himawari.HimawariUnavailable, ValueError) as e:
+            raise HTTPException(status_code=503, detail=str(e))
+        except requests.HTTPError as e:
+            status = 404 if e.response is not None and e.response.status_code == 404 else 503
+            raise HTTPException(status_code=status, detail=f"Himawari fetch failed: {e}")
+        except (requests.RequestException, OSError) as e:
+            raise HTTPException(status_code=503, detail=f"Himawari fetch failed: {e}")
+        return Response(
+            content=scene.png,
+            media_type="image/png",
+            # The scan is pinned in the URL, so this image can never change.
+            headers={"Cache-Control": "public, max-age=86400, immutable"},
+        )
 
     @app.get("/api/status")
     def get_status() -> dict:
