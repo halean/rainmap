@@ -129,12 +129,24 @@ observation time. Reset inference remains provisional until more days accrue.
 
 ## Satellite cloud tops
 
-Enable **Satellite cloud tops (Himawari-9)** in the map legend. The colour is
-cloud-top temperature: clear above 0 °C, grey through the mid-levels, violet
-and magenta for the coldest tops. Cold tops are tall clouds, and tall clouds
-are where convective rain comes from -- but this is a cloud measurement, not a
-rain measurement, and a cold top over a dry street is entirely possible. It is
-context for the camera readings, not a second opinion on them.
+Enable **Satellite (Himawari-9)** in the map legend and pick a band.
+
+**Cloud tops (infrared)**, band 13 at 2 km, is the default and works day and
+night. The colour is cloud-top temperature: clear above 0 °C, grey through the
+mid-levels, violet and magenta for the coldest tops. Cold tops are tall clouds,
+and tall clouds are where convective rain comes from.
+
+**Visible (daylight only)**, band 3 at 0.5 km, is four times finer and resolves
+individual convective towers as greyscale imagery. It sees reflected sunlight,
+so it is offered only while the sun is more than `HIMAWARI_MIN_SUN_DEG` above
+the city; below that the layer reports the sun's angle rather than fetching a
+dark frame. It is also about eleven times heavier per scan (65 MB against 6 MB),
+so the first load takes some seconds.
+
+Neither band measures rain. A cold top, or a bright deck, over a dry street is
+entirely possible, and reflected light cannot tell low stratus from a
+thunderstorm at all. This is context for the camera readings, not a second
+opinion on them.
 
 `noaa-himawari9` publishes Himawari Standard Data rather than map tiles: one
 bz2-compressed binary per band per 10-minute full-disk scan, cut into ten
@@ -154,11 +166,12 @@ Web Mercator box Leaflet draws an image overlay in. Rendered scans and decoded
 strips are cached in the process, so the ten minutes until the next scan cost
 nothing further.
 
-Band 13 is thermal infrared at 10.4 um, which reads cloud tops at night as
-well as by day -- the hours most of the city's convective rain arrives in.
-Change the band with `HIMAWARI_BAND`, and its matching grid with
-`HIMAWARI_RESOLUTION`; the visible and near-infrared bands are distributed at
-0.5 and 1 km, so their strips are several times larger to move and to decode.
+Bands are declared in `HIMAWARI_BANDS`, each with the grid it ships on and its
+kind. The kind decides how the file is *read*, not just how it is drawn: a
+visible file carries its radiance-to-albedo factor at the byte offset an
+infrared file uses for Planck coefficients, so reading one as the other returns
+temperatures in the tens of millions, which clamp to transparent and draw a
+blank layer with no error anywhere. `HIMAWARI_BAND` sets the default.
 
 `GET /api/rain-map/himawari` returns the newest scan's time, bounds, colour
 scale, coldest top, and the URL of its image. `GET /api/rain-map/himawari.png`

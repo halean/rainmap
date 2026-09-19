@@ -15,7 +15,7 @@ import numpy as np
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.config import HIMAWARI_IMAGE_SIZES, HIMAWARI_MAX_AGE_HOURS
+from app.config import HIMAWARI_BANDS, HIMAWARI_IMAGE_SIZES, HIMAWARI_MAX_AGE_HOURS
 from app.services import himawari
 
 UTC = timezone.utc
@@ -28,8 +28,14 @@ RAD_TO_BT = (-0.118260812197365, 1.00101143081895, -1.80800453227613e-06)
 LIGHT, PLANCK, BOLTZMANN = 299792458.0, 6.62606957e-34, 1.3806488e-23
 
 
-def hsd_file(segment=4, lines=LINES_PER_SEGMENT, counts=None, blocks=11):
-    """A minimal but structurally faithful HSD file."""
+# A real B03 file's calibration tail: c', the calibration date in MJD, and an
+# updated gain pair. These sit exactly where B13 keeps its Planck coefficients.
+VIS_GAIN, VIS_CONSTANT = 0.30510371, -6.102074
+C_PRIME, CAL_MJD = 0.00192798475658132, 60940.86111111112
+
+
+def hsd_file(segment=4, lines=LINES_PER_SEGMENT, counts=None, blocks=11, band=13):
+    """A minimal but structurally faithful HSD file, infrared or visible."""
     if counts is None:
         counts = np.full((lines, COLUMNS), 1500, dtype="<u2")
     bodies = {
@@ -40,11 +46,17 @@ def hsd_file(segment=4, lines=LINES_PER_SEGMENT, counts=None, blocks=11):
         )
         + b"\0" * 80,
         4: b"\0" * 136,
-        5: struct.pack("<HdHHHdd", 13, 10.4074, 12, 65535, 65534, GAIN, CONSTANT)
-        + struct.pack("<3d", *RAD_TO_BT)
-        + struct.pack("<3d", 0.0, 0.0, 0.0)
-        + struct.pack("<3d", LIGHT, PLANCK, BOLTZMANN)
-        + b"\0" * 40,
+        5: (
+            struct.pack("<HdHHHdd", 13, 10.4074, 12, 65535, 65534, GAIN, CONSTANT)
+            + struct.pack("<3d", *RAD_TO_BT)
+            + struct.pack("<3d", 0.0, 0.0, 0.0)
+            + struct.pack("<3d", LIGHT, PLANCK, BOLTZMANN)
+            + b"\0" * 40
+        ) if band == 13 else (
+            struct.pack("<HdHHHdd", 3, 0.6397, 11, 65535, 65534, VIS_GAIN, VIS_CONSTANT)
+            + struct.pack("<4d", C_PRIME, CAL_MJD, 0.30901666, -6.180333)
+            + b"\0" * 64
+        ),
         6: b"\0" * 256,
         7: struct.pack("<BBH", SEGMENTS, segment, (segment - 1) * LINES_PER_SEGMENT + 1)
         + b"\0" * 40,
@@ -171,7 +183,7 @@ class SceneTests(unittest.TestCase):
         self.addCleanup(himawari._segment.cache_clear)
         self.addCleanup(himawari.render.cache_clear)
 
-    def fake_segment(self, slot, segment):
+    def fake_segment(self, slot, segment, band=None):
         """Strips of a disk whose temperature falls off to the south, so a
         sampling error shows up as a discontinuity rather than as noise."""
         first = (segment - 1) * LINES_PER_SEGMENT + 1
@@ -206,7 +218,8 @@ class SceneTests(unittest.TestCase):
             scene = himawari.render(datetime(2026, 9, 18, 19, 30, tzinfo=UTC), (4, 5), 128)
         self.assertTrue(scene.png.startswith(b"\x89PNG"))
         self.assertEqual(scene.coverage, 1.0)
-        self.assertLess(scene.coldest_k, scene.median_k)
+        self.assertEqual(scene.band, "B13")
+        self.assertLess(scene.extreme, scene.median)  # infrared reports its coldest top
 
 
 class ColorTests(unittest.TestCase):
@@ -225,10 +238,11 @@ class ColorTests(unittest.TestCase):
 
 class ScanResolutionTests(unittest.TestCase):
     def setUp(self):
-        himawari._RESOLVED = None
-        self.addCleanup(setattr, himawari, "_RESOLVED", None)
+        himawari._RESOLVED.clear()
+        self.addCleanup(himawari._RESOLVED.clear)
         himawari._SEGMENT_INDEX.clear()
-        himawari._SEGMENT_INDEX[(himawari.HIMAWARI_BAND, himawari.HIMAWARI_RESOLUTION,
+        himawari._SEGMENT_INDEX[(himawari.HIMAWARI_BAND,
+                                 HIMAWARI_BANDS[himawari.HIMAWARI_BAND]["resolution"],
                                  himawari.HIMAWARI_BBOX)] = (4, 5)
         self.addCleanup(himawari._SEGMENT_INDEX.clear)
 
@@ -281,8 +295,8 @@ class EndpointTests(unittest.TestCase):
         self.slot = datetime.now(UTC).replace(second=0, microsecond=0)
         self.slot -= timedelta(minutes=self.slot.minute % 10 + 20)
         self.scene = himawari.Scene(
-            scan=self.slot, size=256, png=b"\x89PNG\r\n\x1a\n",
-            bounds=himawari.HIMAWARI_BBOX, coldest_k=212.3, median_k=278.0,
+            scan=self.slot, size=256, band="B13", png=b"\x89PNG\r\n\x1a\n",
+            bounds=himawari.HIMAWARI_BBOX, extreme=212.3, median=278.0,
             coverage=1.0, segments=(4, 5),
         )
 
@@ -294,7 +308,7 @@ class EndpointTests(unittest.TestCase):
         self.assertAlmostEqual(body["age_minutes"], expected, delta=1)
         self.assertEqual(body["bounds"], [[9.7, 105.6], [11.9, 107.8]])
         self.assertIn(self.slot.strftime("%Y%m%d%H%M"), body["image_url"])
-        self.assertEqual(body["scale"][0]["celsius"], 0)
+        self.assertEqual(body["scale"][0]["label"], "0\u00b0C")
 
     def test_unavailable_bucket_is_a_503(self):
         with patch.object(himawari, "latest_scene", side_effect=himawari.HimawariUnavailable("no scan")):
@@ -338,12 +352,13 @@ class CacheTests(unittest.TestCase):
 
     def setUp(self):
         himawari._SEGMENT_INDEX.clear()
-        himawari._SEGMENT_INDEX[(himawari.HIMAWARI_BAND, himawari.HIMAWARI_RESOLUTION,
+        himawari._SEGMENT_INDEX[(himawari.HIMAWARI_BAND,
+                                 HIMAWARI_BANDS[himawari.HIMAWARI_BAND]["resolution"],
                                  himawari.HIMAWARI_BBOX)] = (4, 5)
         self.addCleanup(himawari._SEGMENT_INDEX.clear)
         self.fetched = []
 
-    def strip(self, slot, segment):
+    def strip(self, slot, segment, band=None):
         self.fetched.append((slot, segment))
         first = (segment - 1) * LINES_PER_SEGMENT + 1
         rows = np.arange(first, first + LINES_PER_SEGMENT)[:, None]
@@ -389,8 +404,8 @@ class SizeAllowlistTests(unittest.TestCase):
         self.slot -= timedelta(minutes=self.slot.minute % 10 + 20)
 
     def test_listed_sizes_are_accepted(self):
-        scene = himawari.Scene(scan=self.slot, size=256, png=b"\x89PNG", bounds=himawari.HIMAWARI_BBOX,
-                               coldest_k=210.0, median_k=270.0, coverage=1.0, segments=(4, 5))
+        scene = himawari.Scene(scan=self.slot, size=256, band="B13", png=b"\x89PNG", bounds=himawari.HIMAWARI_BBOX,
+                               extreme=210.0, median=270.0, coverage=1.0, segments=(4, 5))
         with patch.object(himawari, "latest_scene", return_value=scene):
             for size in HIMAWARI_IMAGE_SIZES:
                 self.assertEqual(
@@ -411,6 +426,108 @@ class SizeAllowlistTests(unittest.TestCase):
 
     def test_the_configured_default_is_always_servable(self):
         self.assertIn(himawari.HIMAWARI_IMAGE_SIZE, HIMAWARI_IMAGE_SIZES)
+
+
+class VisibleBandTests(unittest.TestCase):
+    """The visible band is not the infrared one with a different palette.
+
+    A B03 file carries c' -- the radiance-to-albedo factor -- at the byte offset
+    a B13 file uses for its Planck coefficients. Reading one as the other raises
+    nothing: it returns temperatures in the tens of millions, which clamp to the
+    transparent end of the infrared ramp and draw an empty layer. The band has to
+    decide how its own file is read.
+    """
+
+    def setUp(self):
+        self.vis, _ = himawari._parse(hsd_file(band=3))
+        self.ir, _ = himawari._parse(hsd_file(band=13))
+
+    def test_each_kind_carries_only_its_own_coefficients(self):
+        self.assertEqual(self.vis.band, 3)
+        self.assertAlmostEqual(self.vis.albedo_factor, C_PRIME)
+        self.assertIsNone(self.vis.rad_to_bt)
+        self.assertIsNone(self.vis.planck)
+        self.assertEqual(self.ir.band, 13)
+        self.assertIsNone(self.ir.albedo_factor)
+        self.assertIsNotNone(self.ir.rad_to_bt)
+
+    def test_counts_convert_to_plausible_albedo(self):
+        counts = np.array([[0, 200, 800, 1600, 2047]], dtype="<u2")
+        albedo = himawari.reflectance(self.vis, counts)
+        self.assertTrue(np.all(np.diff(albedo[0]) > 0), "brighter counts are brighter cloud")
+        # Uncorrected for solar angle, so it runs a little past 1 on the brightest tops.
+        self.assertGreater(albedo[0, -1], 0.9)
+        self.assertLess(albedo[0, -1], 1.3)
+        self.assertLess(abs(albedo[0, 0]), 0.05)
+
+    def test_eleven_bit_flags_are_honoured(self):
+        """B03 declares 11 valid bits where B13 declares 12, so the threshold
+        has to come from the file rather than from a constant."""
+        counts = np.array([[2048, 65535, 2047]], dtype="<u2")
+        albedo = himawari.reflectance(self.vis, counts)
+        self.assertTrue(np.all(np.isnan(albedo[0, :2])))
+        self.assertFalse(np.isnan(albedo[0, 2]))
+
+    def test_physical_dispatches_on_the_band(self):
+        counts = np.array([[1500]], dtype="<u2")
+        self.assertAlmostEqual(float(himawari.physical(self.ir, counts)),
+                               float(himawari.brightness_temperature(self.ir, counts)))
+        self.assertAlmostEqual(float(himawari.physical(self.vis, counts)),
+                               float(himawari.reflectance(self.vis, counts)))
+
+    def test_the_infrared_path_on_a_visible_file_is_the_bug_this_prevents(self):
+        """Demonstrates why the branch exists rather than trusting the offsets."""
+        wrong = himawari.brightness_temperature(
+            himawari.Header(**{**self.vis.__dict__,
+                               "rad_to_bt": (C_PRIME, CAL_MJD, 0.309),
+                               "light_speed": LIGHT, "planck": PLANCK, "boltzmann": BOLTZMANN}),
+            np.array([[1500]], dtype="<u2"))
+        self.assertGreater(float(wrong), 1e6)  # tens of millions of kelvin
+        self.assertEqual(himawari.colorize(wrong, "B13")[0, 0, 3], 0)  # and so, invisible
+
+
+class VisibleRampTests(unittest.TestCase):
+    def test_dark_ground_and_gaps_draw_nothing(self):
+        rgba = himawari.colorize(np.array([[0.0, 0.06, np.nan, 0.9]]), "B03")
+        self.assertEqual(rgba[0, 0, 3], 0)
+        self.assertEqual(rgba[0, 1, 3], 0)
+        self.assertEqual(rgba[0, 2, 3], 0)
+        self.assertEqual(rgba[0, 3, 3], himawari.VISIBLE_STOPS[-1][2])
+
+    def test_brighter_cloud_is_never_less_opaque(self):
+        alpha = himawari.colorize(np.linspace(0, 1, 400).reshape(1, -1), "B03")[0, :, 3].astype(int)
+        self.assertTrue(np.all(np.diff(alpha) >= 0))
+
+    def test_the_two_ramps_run_in_opposite_directions(self):
+        """Infrared is drawn for its coldest values and visible for its
+        brightest, so a shared ramp would invert one of them."""
+        self.assertGreater(himawari.CLOUD_STOPS[0][0], himawari.CLOUD_STOPS[-1][0])
+        self.assertLess(himawari.VISIBLE_STOPS[0][0], himawari.VISIBLE_STOPS[-1][0])
+
+
+class DaylightGateTests(unittest.TestCase):
+    NOON = datetime(2026, 9, 19, 5, 0, tzinfo=UTC)     # 12:00 ICT
+    MIDNIGHT = datetime(2026, 9, 19, 17, 0, tzinfo=UTC)  # 00:00 ICT
+
+    def test_the_sun_is_where_it_should_be(self):
+        self.assertGreater(himawari.solar_elevation(self.NOON), 60)
+        self.assertLess(himawari.solar_elevation(self.MIDNIGHT), -40)
+
+    def test_infrared_is_never_gated(self):
+        self.assertTrue(himawari.is_lit("B13", self.MIDNIGHT))
+        self.assertTrue(himawari.is_lit("B13", self.NOON))
+
+    def test_visible_is_offered_only_in_daylight(self):
+        self.assertTrue(himawari.is_lit("B03", self.NOON))
+        self.assertFalse(himawari.is_lit("B03", self.MIDNIGHT))
+
+    def test_a_dark_request_never_reaches_the_bucket(self):
+        """65 MB is too much to spend discovering the sun is down."""
+        with patch.object(himawari, "resolve_scan") as fetch:
+            with patch.object(himawari, "solar_elevation", return_value=-20.0):
+                with self.assertRaises(himawari.HimawariUnavailable):
+                    himawari.latest_scene(band="B03")
+        fetch.assert_not_called()
 
 
 if __name__ == "__main__":

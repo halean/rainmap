@@ -53,6 +53,19 @@ HIMAWARI_PREFIX = os.getenv("HIMAWARI_PREFIX", "AHI-L1b-FLDK")
 HIMAWARI_SATELLITE = os.getenv("HIMAWARI_SATELLITE", "H09")
 HIMAWARI_BAND = os.getenv("HIMAWARI_BAND", "B13")
 HIMAWARI_RESOLUTION = os.getenv("HIMAWARI_RESOLUTION", "R20")
+# Each band ships on its own grid and the resolution tag is part of the object
+# key, so the two move together. The kind decides how the file is read, not just
+# how it is drawn: a visible band carries an albedo coefficient at the byte
+# offset an infrared band uses for its Planck coefficients, so reading one as
+# the other yields temperatures in the tens of millions and a silently blank
+# layer. Visible is also four times finer and eleven times heavier per scan.
+HIMAWARI_BANDS = {
+    "B13": {"resolution": "R20", "kind": "infrared", "label": "Cloud tops (infrared)"},
+    "B03": {"resolution": "R05", "kind": "visible", "label": "Visible (daylight only)"},
+}
+# Below this the visible band returns a dark, long-shadowed frame that costs a
+# 65 MB download to discover is useless, so the gate is arithmetic, not a fetch.
+HIMAWARI_MIN_SUN_DEG = float(os.getenv("HIMAWARI_MIN_SUN_DEG", "10"))
 HIMAWARI_BBOX = tuple(  # south, west, north, east
     float(v) for v in os.getenv("HIMAWARI_BBOX", "9.7,105.6,11.9,107.8").split(",")
 )
