@@ -22,16 +22,20 @@ Planck coefficients, so each kind is calibrated by its own path.
 """
 
 import bz2
+import json
 import math
 import struct
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from io import BytesIO
+from pathlib import Path
 
 import numpy as np
 import requests
 from PIL import Image
+
+from app.atomic_write import write_json_atomic
 
 from app.config import (
     HIMAWARI_BAND,
@@ -43,6 +47,8 @@ from app.config import (
     HIMAWARI_MAX_AGE_HOURS,
     HIMAWARI_MIN_SUN_DEG,
     HIMAWARI_PREFIX,
+    HIMAWARI_RETENTION_HOURS,
+    HIMAWARI_STORE,
     HIMAWARI_SATELLITE,
     HIMAWARI_TIMEOUT_SEC,
 )
@@ -540,6 +546,101 @@ def solar_elevation(when: datetime | None = None) -> float:
 def is_lit(band: str, when: datetime | None = None) -> bool:
     """Whether this band has anything to show right now."""
     return band_kind(band) == "infrared" or solar_elevation(when) >= HIMAWARI_MIN_SUN_DEG
+
+
+# --- the frame store -------------------------------------------------------
+#
+# Rendered frames are kept on disk rather than in the process. A daylight scan
+# costs a 71 MB fetch and ~26 s to draw, so losing the window to a restart is
+# expensive in a way the in-memory caches are not; the frames themselves are a
+# few hundred KB each.
+
+INDEX_NAME = "index.json"
+
+
+def _index_path() -> Path:
+    return HIMAWARI_STORE / INDEX_NAME
+
+
+def _frame_path(slot: datetime, size: int) -> Path:
+    return HIMAWARI_STORE / f"{slot:%Y%m%d%H%M}_{size}.png"
+
+
+def read_index() -> dict[str, dict]:
+    try:
+        return json.loads(_index_path().read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def save_scene(scene: Scene) -> Path:
+    """Write a frame and record it. The index is the catalogue; the PNGs are
+    the data, so a lost index can be rebuilt from the filenames."""
+    HIMAWARI_STORE.mkdir(parents=True, exist_ok=True)
+    path = _frame_path(scene.scan, scene.size)
+    path.write_bytes(scene.png)
+    index = read_index()
+    index[scene.scan.strftime("%Y%m%d%H%M")] = {
+        "scan": scene.scan.isoformat(),
+        "size": scene.size,
+        "bands": list(scene.bands),
+        "mode": scene.mode,
+        "coldest_k": scene.coldest_k,
+        "brightest_albedo": scene.brightest_albedo,
+        "coverage": scene.coverage,
+        "bytes": len(scene.png),
+    }
+    write_json_atomic(_index_path(), index)
+    return path
+
+
+def load_scene(slot: datetime, size: int) -> Scene | None:
+    """A stored frame, or None. Saves a multi-megabyte refetch on a cache miss."""
+    entry = read_index().get(slot.strftime("%Y%m%d%H%M"))
+    path = _frame_path(slot, size)
+    if not entry or entry.get("size") != size or not path.exists():
+        return None
+    try:
+        png = path.read_bytes()
+    except OSError:
+        return None
+    return Scene(
+        scan=slot, size=size,
+        plan=tuple((band, ()) for band in entry.get("bands", ())),
+        png=png, bounds=HIMAWARI_BBOX,
+        coldest_k=entry.get("coldest_k"),
+        brightest_albedo=entry.get("brightest_albedo"),
+        coverage=entry.get("coverage", 0.0),
+    )
+
+
+def stored_frames(hours: float | None = None, now: datetime | None = None) -> list[dict]:
+    """Newest-last catalogue of the frames on disk, for replay."""
+    now = now or datetime.now(UTC)
+    cutoff = now - timedelta(hours=hours if hours is not None else HIMAWARI_RETENTION_HOURS)
+    frames = []
+    for stamp, entry in read_index().items():
+        scan = datetime.fromisoformat(entry["scan"])
+        if scan >= cutoff and _frame_path(scan, entry["size"]).exists():
+            frames.append({**entry, "stamp": stamp})
+    return sorted(frames, key=lambda f: f["scan"])
+
+
+def prune_store(now: datetime | None = None) -> int:
+    """Drop frames past the retention window. Files first, then the index, so
+    an interrupted prune leaves entries pointing at nothing rather than orphan
+    files nothing will ever delete."""
+    now = now or datetime.now(UTC)
+    cutoff = now - timedelta(hours=HIMAWARI_RETENTION_HOURS)
+    index, dropped = read_index(), 0
+    for stamp, entry in list(index.items()):
+        if datetime.fromisoformat(entry["scan"]) < cutoff:
+            _frame_path(datetime.fromisoformat(entry["scan"]), entry["size"]).unlink(missing_ok=True)
+            del index[stamp]
+            dropped += 1
+    if dropped:
+        write_json_atomic(_index_path(), index)
+    return dropped
 
 
 def latest_scene(size: int | None = None, now: datetime | None = None) -> Scene:

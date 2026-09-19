@@ -10,7 +10,12 @@ from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.config import HIMAWARI_BANDS, HIMAWARI_IMAGE_SIZES, HIMAWARI_MAX_AGE_HOURS
+from app.config import (
+    HIMAWARI_BANDS,
+    HIMAWARI_IMAGE_SIZES,
+    HIMAWARI_MAX_AGE_HOURS,
+    HIMAWARI_RETENTION_HOURS,
+)
 from app.services import himawari
 from app.services.fetch_jobs import FetchJobManager
 from app.services.vrain import rain_density
@@ -144,6 +149,31 @@ def register_routes(
             "texture_scale": _ramp("B03") if "B03" in scene.bands else None,
         }
 
+    @app.get("/api/rain-map/himawari/frames")
+    def himawari_frames(hours: float = Query(None, gt=0, le=48)) -> dict:
+        """The collected window, oldest first -- what a replay would step through.
+
+        Empty unless `scripts/himawari_poller.py` is running: a frame can only
+        be had by drawing it while its scan was current.
+        """
+        frames = himawari.stored_frames(hours)
+        return {
+            "retention_hours": HIMAWARI_RETENTION_HOURS,
+            "count": len(frames),
+            "frames": [
+                {
+                    "scan": f["scan"],
+                    "mode": f["mode"],
+                    "bands": f["bands"],
+                    "coldest_k": f.get("coldest_k"),
+                    "coverage": f.get("coverage"),
+                    "image_url": f"/api/rain-map/himawari.png"
+                    f"?scan={f['stamp']}&size={f['size']}",
+                }
+                for f in frames
+            ],
+        }
+
     @app.get("/api/rain-map/himawari.png")
     def himawari_image(scan: str, size: int = Query(None)) -> Response:
         size = _checked_size(size)
@@ -156,13 +186,18 @@ def register_routes(
             raise HTTPException(status_code=422, detail="scans start every 10 minutes")
         # Each miss downloads strips from NOAA, so the window a stranger can ask
         # for stays small even though the bucket itself goes back years.
-        if not timedelta(0) <= now - slot <= timedelta(hours=HIMAWARI_MAX_AGE_HOURS):
+        stored = himawari.load_scene(slot, size)
+        if stored is None and not timedelta(0) <= now - slot <= timedelta(hours=HIMAWARI_MAX_AGE_HOURS):
+            # The window only limits what may be *fetched*. A frame already
+            # collected is free to serve, however old the retention lets it get.
             raise HTTPException(
                 status_code=404,
                 detail=f"only the last {HIMAWARI_MAX_AGE_HOURS:g} hours of scans are served",
             )
         try:
-            scene = himawari.scene_at(slot, size)
+            # A collected frame costs a disk read; a miss costs a multi-megabyte
+            # fetch from NOAA and ~26 s to draw, so the store is checked first.
+            scene = stored or himawari.scene_at(slot, size)
         except (himawari.HimawariUnavailable, ValueError) as e:
             raise HTTPException(status_code=503, detail=str(e))
         except requests.HTTPError as e:

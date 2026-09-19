@@ -19,3 +19,6 @@ data/derived/vrain_history.csv
 # scripts/perception_eval.py, and it grows with every frame ever scored
 data/derived/perception_cache.json
 NOTES.md
+
+# rendered satellite frames -- a rolling window, refetched from NOAA on demand
+data/derived/himawari/

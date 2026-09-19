@@ -21,6 +21,11 @@ satellite cloud tops decoded straight from Himawari-9's raw instrument files.
 - **`app/services/himawari.py`** -- decodes Himawari-9 band 13 cloud-top
   temperature from NOAA's open mirror of the raw satellite files and renders
   it as a map overlay. Fetched on demand, not polled.
+- **`scripts/himawari_poller.py`** -- draws a satellite frame every 10 minutes
+  into `data/derived/himawari/` and prunes past the retention window, so a
+  recent span can be replayed. A history only exists if each scan was drawn
+  while it was current, which is the whole reason this polls rather than
+  waiting to be asked.
 - **`scripts/vrain_poller.py`** -- records nearby VRAIN rain-gauge readings
   (vrain.vn) every 10 minutes into `data/derived/vrain_history.csv`. Pure
   collection; `app/services/vrain.py` reads this log for the gauge density layer.
@@ -46,6 +51,7 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000 &
 python scripts/rain_annotator.py &
 python scripts/camera_watchdog.py &
 python scripts/vrain_poller.py &
+python scripts/himawari_poller.py &
 curl -X POST http://127.0.0.1:8000/api/jobs/start   # or set FETCH_AUTOSTART=1
 ```
 
@@ -182,6 +188,34 @@ visible file carries its radiance-to-albedo factor at the byte offset an
 infrared file uses for Planck coefficients, so reading one as the other returns
 temperatures in the tens of millions, which clamp to transparent and draw a
 blank layer with no error anywhere. `HIMAWARI_BAND` sets the default.
+
+### Collecting a replay window
+
+`scripts/himawari_poller.py` keeps `HIMAWARI_RETENTION_HOURS` (12 by default)
+of rendered frames on disk. `GET /api/rain-map/himawari/frames` lists them
+oldest-first with an image URL each -- the window an animation would step
+through. Without the poller running it is simply empty: 08:20 cannot be
+reconstructed at noon.
+
+What it costs, measured rather than estimated. A daylight scan is a 71 MB fetch
+and ~20 s to decode and draw; a night scan is 6 MB. At 144 scans a day:
+
+| `HIMAWARI_POLL` | Collected | Per day |
+| --- | --- | --- |
+| `auto` (default) | every scan, visible band in daylight | ~5.0 GB |
+| `infrared` | every scan, infrared only | ~0.86 GB |
+| `off` | nothing; the layer stays on-demand | 0 |
+
+The visible band is 83% of that. Dropping it costs the daylight texture but not
+the band that identifies convection, and the city's storms peak after dark when
+visible is blank anyway. The bytes are inbound on an open NOAA dataset built
+for bulk access; the frames themselves are a few hundred KB, so twelve hours is
+tens of megabytes. The cost is the fetching, not the keeping.
+
+A collected frame is served from disk without touching NOAA, and stays servable
+even once it is older than `HIMAWARI_MAX_AGE_HOURS` -- that limit exists to stop
+a stranger making the service download arbitrary old scans, and a frame already
+drawn costs nothing.
 
 `GET /api/rain-map/himawari` returns the newest scan's time, bounds, colour
 scale, coldest top, and the URL of its image. `GET /api/rain-map/himawari.png`

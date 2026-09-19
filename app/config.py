@@ -66,6 +66,19 @@ HIMAWARI_BANDS = {
 # Below this the visible band returns a dark, long-shadowed frame that costs a
 # 65 MB download to discover is useless, so the gate is arithmetic, not a fetch.
 HIMAWARI_MIN_SUN_DEG = float(os.getenv("HIMAWARI_MIN_SUN_DEG", "10"))
+
+# Rendered frames kept on disk so a window of recent scans can be replayed.
+# Only the default size is stored; other sizes stay on-demand. A frame is a few
+# hundred KB, so twelve hours is tens of megabytes -- the cost is the fetching,
+# not the keeping.
+HIMAWARI_STORE = Path(os.getenv("HIMAWARI_STORE", "data/derived/himawari"))
+HIMAWARI_RETENTION_HOURS = float(os.getenv("HIMAWARI_RETENTION_HOURS", "12"))
+# What the poller collects. "auto" follows the sun, so daylight frames carry the
+# visible band -- about 5.0 GB/day, of which the visible band is 83%.
+# "infrared" keeps every scan round the clock for 0.86 GB/day and drops the
+# daylight texture; the band that identifies convection is in both. "off"
+# disables collection and leaves the layer on-demand only.
+HIMAWARI_POLL = os.getenv("HIMAWARI_POLL", "auto").strip().lower()
 HIMAWARI_BBOX = tuple(  # south, west, north, east
     float(v) for v in os.getenv("HIMAWARI_BBOX", "9.7,105.6,11.9,107.8").split(",")
 )
