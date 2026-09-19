@@ -131,15 +131,21 @@ class Scene:
 
     scan: datetime
     size: int
-    band: str
+    # Drawn bottom-up: ((band, strips), ...). One band at night, two by day.
+    plan: tuple[tuple[str, tuple[int, ...]], ...]
     png: bytes
     bounds: tuple[float, float, float, float]
-    # Kelvin for infrared, albedo for visible. "extreme" is the end of the scale
-    # the layer is drawn for: the coldest top, or the brightest cloud.
-    extreme: float | None
-    median: float | None
+    coldest_k: float | None
+    brightest_albedo: float | None
     coverage: float
-    segments: tuple[int, ...]
+
+    @property
+    def bands(self) -> tuple[str, ...]:
+        return tuple(band for band, _ in self.plan)
+
+    @property
+    def mode(self) -> str:
+        return "daylight" if len(self.plan) > 1 else "night"
 
 
 def _parse(raw: bytes) -> tuple[Header, np.ndarray]:
@@ -348,31 +354,65 @@ def floor_to_scan(when: datetime) -> datetime:
     )
 
 
-_RESOLVED: dict[str, tuple[datetime, datetime, tuple[int, ...]]] = {}
+_RESOLVED: dict[tuple[str, ...], tuple[datetime, datetime, tuple]] = {}
 # A scan only changes every ten minutes, so re-probing the bucket for every
 # browser that asks would spend requests to learn the same answer.
 RESOLVE_CACHE = timedelta(seconds=60)
 
 
-def resolve_scan(now: datetime | None = None,
-                 band: str = HIMAWARI_BAND) -> tuple[datetime, tuple[int, ...]]:
-    """The newest scan whose strips are all in the bucket."""
+def bands_for(when: datetime) -> tuple[str, ...]:
+    """Which bands to draw for a scan taken at `when`.
+
+    Decided from the scan's own timestamp rather than from the clock, so a
+    pinned image URL renders the same thing forever and can be cached as
+    immutable. Visible goes first: it is the greyscale base, and the infrared
+    cold-top ramp is composited over it.
+
+    Both, in daylight, because they are not the same measurement. Reflected
+    light is cloud thickness; emitted heat is cloud height. Through afternoon
+    convection the two agree closely (r = -0.93 over one scan), but on a morning
+    of thick low cloud that collapses to -0.34, and visible alone paints a warm
+    stratus deck as though it were a storm. Infrared costs 6 MB against
+    visible's 65, so keeping it is nearly free and removes that failure.
+    """
+    return ("B03", "B13") if is_lit("B03", when) else ("B13",)
+
+
+def resolve_plan(now: datetime | None = None,
+                 bands: tuple[str, ...] | None = None
+                 ) -> tuple[datetime, tuple[tuple[str, tuple[int, ...]], ...]]:
+    """The newest scan where every band we intend to draw has fully landed."""
     now = now or datetime.now(UTC)
-    cached = _RESOLVED.get(band)
+    bands = bands or bands_for(now)
+    cached = _RESOLVED.get(bands)
     if cached is not None and timedelta(0) <= now - cached[0] < RESOLVE_CACHE:
         return cached[1], cached[2]
     slot = floor_to_scan(now)
     for _ in range(MAX_SLOTS_BACK):
-        if _exists(_key(slot, 1, band)):
+        plan = []
+        for band in bands:
+            # Strip 1 is the cheap probe; the rest are only checked if it exists.
+            if not _exists(_key(slot, 1, band)):
+                break
             segments = _segments_for_bbox(slot, band)
-            if all(_exists(_key(slot, segment, band)) for segment in segments):
-                _RESOLVED[band] = (now, slot, segments)
-                return slot, segments
+            if not all(_exists(_key(slot, segment, band)) for segment in segments):
+                break
+            plan.append((band, segments))
+        else:
+            _RESOLVED[bands] = (now, slot, tuple(plan))
+            return slot, tuple(plan)
         slot -= SCAN_INTERVAL
     raise HimawariUnavailable(
-        f"no complete {band} scan in the {MAX_SLOTS_BACK * 10} minutes before "
-        f"{floor_to_scan(now):%Y-%m-%d %H:%M} UTC"
+        f"no complete {'+'.join(bands)} scan in the {MAX_SLOTS_BACK * 10} minutes "
+        f"before {floor_to_scan(now):%Y-%m-%d %H:%M} UTC"
     )
+
+
+def resolve_scan(now: datetime | None = None,
+                 band: str = HIMAWARI_BAND) -> tuple[datetime, tuple[int, ...]]:
+    """One band's newest complete scan."""
+    slot, plan = resolve_plan(now, (band,))
+    return slot, plan[0][1]
 
 
 def sample_bbox(parts, size: int) -> np.ndarray:
@@ -442,27 +482,39 @@ RENDER_CACHE = max(8, int(HIMAWARI_MAX_AGE_HOURS * 6) * len(HIMAWARI_IMAGE_SIZES
 
 
 @lru_cache(maxsize=RENDER_CACHE)
-def render(slot: datetime, segments: tuple[int, ...], size: int,
-           band: str = HIMAWARI_BAND) -> Scene:
-    parts = [_segment(slot, segment, band) for segment in segments]
-    values = sample_bbox(parts, size)
-    measured = values[~np.isnan(values)]
+def render(slot: datetime, plan: tuple[tuple[str, tuple[int, ...]], ...], size: int) -> Scene:
+    """Draw the plan's bands into one image, bottom band first.
+
+    Compositing here rather than in the browser keeps it a single request and a
+    single cached PNG, and means the layer's appearance does not depend on two
+    images arriving together.
+    """
+    canvas = None
+    coldest = brightest = coverage = None
+    for band, segments in plan:
+        values = sample_bbox([_segment(slot, seg, band) for seg in segments], size)
+        measured = values[~np.isnan(values)]
+        if band_kind(band) == "infrared":
+            coldest = float(measured.min()) if measured.size else None
+            # Coverage is reported from the infrared layer: it is the one always
+            # drawn, and the one whose absence would mean an empty map.
+            coverage = round(float(measured.size / values.size), 3)
+        elif measured.size:
+            brightest = float(measured.max())
+        layer = Image.fromarray(colorize(values, band), "RGBA")
+        canvas = layer if canvas is None else Image.alpha_composite(canvas, layer)
+
     png = BytesIO()
-    Image.fromarray(colorize(values, band), "RGBA").save(png, format="PNG", optimize=True)
-    # The interesting end differs: infrared is drawn for the coldest tops, the
-    # visible band for the brightest cloud.
-    extreme = (measured.min() if band_kind(band) == "infrared" else measured.max()) \
-        if measured.size else None
+    canvas.save(png, format="PNG", optimize=True)
     return Scene(
         scan=slot,
         size=size,
-        band=band,
+        plan=plan,
         png=png.getvalue(),
         bounds=HIMAWARI_BBOX,
-        extreme=round(float(extreme), 3) if extreme is not None else None,
-        median=round(float(np.median(measured)), 3) if measured.size else None,
-        coverage=round(float(measured.size / values.size), 3),
-        segments=segments,
+        coldest_k=round(coldest, 1) if coldest is not None else None,
+        brightest_albedo=round(brightest, 3) if brightest is not None else None,
+        coverage=coverage if coverage is not None else 0.0,
     )
 
 
@@ -490,15 +542,17 @@ def is_lit(band: str, when: datetime | None = None) -> bool:
     return band_kind(band) == "infrared" or solar_elevation(when) >= HIMAWARI_MIN_SUN_DEG
 
 
-def latest_scene(size: int | None = None, band: str = HIMAWARI_BAND) -> Scene:
-    if not is_lit(band):
-        raise HimawariUnavailable(
-            f"{band} sees reflected sunlight only, and the sun is "
-            f"{solar_elevation():.0f}\u00b0 over the city"
-        )
-    slot, segments = resolve_scan(band=band)
-    return render(slot, segments, size or HIMAWARI_IMAGE_SIZE, band)
+def latest_scene(size: int | None = None, now: datetime | None = None) -> Scene:
+    """The current satellite view. No band to choose -- the sun decides."""
+    slot, plan = resolve_plan(now)
+    return render(slot, plan, size or HIMAWARI_IMAGE_SIZE)
 
 
-def scene_at(slot: datetime, size: int | None = None, band: str = HIMAWARI_BAND) -> Scene:
-    return render(slot, _segments_for_bbox(slot, band), size or HIMAWARI_IMAGE_SIZE, band)
+def scene_at(slot: datetime, size: int | None = None) -> Scene:
+    """A pinned scan, rebuilt exactly as it was drawn when it was current.
+
+    The band set comes from the scan's own time, so an image URL issued at noon
+    still renders the daylight composite when it is fetched after dark.
+    """
+    plan = tuple((band, _segments_for_bbox(slot, band)) for band in bands_for(slot))
+    return render(slot, plan, size or HIMAWARI_IMAGE_SIZE)

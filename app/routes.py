@@ -10,12 +10,7 @@ from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.config import (
-    HIMAWARI_BAND,
-    HIMAWARI_BANDS,
-    HIMAWARI_IMAGE_SIZES,
-    HIMAWARI_MAX_AGE_HOURS,
-)
+from app.config import HIMAWARI_BANDS, HIMAWARI_IMAGE_SIZES, HIMAWARI_MAX_AGE_HOURS
 from app.services import himawari
 from app.services.fetch_jobs import FetchJobManager
 from app.services.vrain import rain_density
@@ -37,14 +32,20 @@ def _checked_size(size: int | None) -> int | None:
     return size
 
 
-def _checked_band(band: str | None) -> str:
-    if band is None:
-        return HIMAWARI_BAND
-    if band not in HIMAWARI_BANDS:
-        raise HTTPException(
-            status_code=422, detail=f"band must be one of {', '.join(HIMAWARI_BANDS)}"
-        )
-    return band
+def _ramp(band: str) -> list[dict]:
+    """A band's colour key, served rather than hardcoded in the legend so the
+    two cannot drift apart."""
+    infrared = himawari.band_kind(band) == "infrared"
+    stops = himawari.CLOUD_STOPS if infrared else himawari.VISIBLE_STOPS
+    return [
+        {
+            "value": value,
+            "label": f"{round(value - 273.15)}\u00b0C" if infrared else f"{round(value * 100)}%",
+            "color": "#%02x%02x%02x" % rgb,
+            "opacity": round(alpha / 255, 3),
+        }
+        for value, rgb, alpha in stops
+    ]
 
 
 def _camera_history(camera_id: str, limit: int) -> list[dict]:
@@ -108,16 +109,15 @@ def register_routes(
         return rain_density(hours=hours, at=at)
 
     @app.get("/api/rain-map/himawari")
-    def himawari_scene(size: int = Query(None), band: str = Query(None)) -> dict:
+    def himawari_scene(size: int = Query(None)) -> dict:
         """Metadata for the newest cloud-top scan, and where to fetch its image.
 
         The image is left to a second request so the browser can cache it
         against the scan it belongs to: the pixels only change every ten
         minutes, and they cost a multi-megabyte download from NOAA to produce.
         """
-        band = _checked_band(band)
         try:
-            scene = himawari.latest_scene(_checked_size(size), band)
+            scene = himawari.latest_scene(_checked_size(size))
         except (himawari.HimawariUnavailable, ValueError) as e:
             raise HTTPException(status_code=503, detail=str(e))
         except (requests.RequestException, OSError) as e:
@@ -125,41 +125,28 @@ def register_routes(
         south, west, north, east = scene.bounds
         return {
             "scan": scene.scan.isoformat(),
-            "kind": himawari.band_kind(scene.band),
-            "label": HIMAWARI_BANDS[scene.band]["label"],
-            "solar_elevation": round(himawari.solar_elevation(), 1),
             "age_minutes": round(
                 (datetime.now(timezone.utc) - scene.scan).total_seconds() / 60
             ),
-            "band": scene.band,
+            "mode": scene.mode,
+            "bands": list(scene.bands),
+            "label": " + ".join(HIMAWARI_BANDS[b]["label"] for b in scene.bands),
+            "solar_elevation": round(himawari.solar_elevation(), 1),
             "bounds": [[south, west], [north, east]],
             "image_url": f"/api/rain-map/himawari.png"
-            f"?scan={scene.scan.strftime(SCAN_STAMP)}&size={scene.size}&band={scene.band}",
-            "extreme": scene.extreme,
-            "median": scene.median,
+            f"?scan={scene.scan.strftime(SCAN_STAMP)}&size={scene.size}",
+            "coldest_k": scene.coldest_k,
+            "brightest_albedo": scene.brightest_albedo,
             "coverage": scene.coverage,
-            # Served rather than hardcoded in the legend so the key cannot drift
-            # away from the ramp the image is actually drawn with.
-            "scale": [
-                {
-                    "value": value,
-                    "label": (f"{round(value - 273.15)}\u00b0C"
-                              if himawari.band_kind(scene.band) == "infrared"
-                              else f"{round(value * 100)}%"),
-                    "color": "#%02x%02x%02x" % rgb,
-                    "opacity": round(alpha / 255, 3),
-                }
-                for value, rgb, alpha in (
-                    himawari.CLOUD_STOPS
-                    if himawari.band_kind(scene.band) == "infrared"
-                    else himawari.VISIBLE_STOPS
-                )
-            ],
+            # The infrared ramp is the colour key and is always present. The
+            # greyscale one only applies while the visible band is being drawn.
+            "scale": _ramp("B13"),
+            "texture_scale": _ramp("B03") if "B03" in scene.bands else None,
         }
 
     @app.get("/api/rain-map/himawari.png")
-    def himawari_image(scan: str, size: int = Query(None), band: str = Query(None)) -> Response:
-        size, band = _checked_size(size), _checked_band(band)
+    def himawari_image(scan: str, size: int = Query(None)) -> Response:
+        size = _checked_size(size)
         try:
             slot = datetime.strptime(scan, SCAN_STAMP).replace(tzinfo=timezone.utc)
         except ValueError:
@@ -175,7 +162,7 @@ def register_routes(
                 detail=f"only the last {HIMAWARI_MAX_AGE_HOURS:g} hours of scans are served",
             )
         try:
-            scene = himawari.scene_at(slot, size, band)
+            scene = himawari.scene_at(slot, size)
         except (himawari.HimawariUnavailable, ValueError) as e:
             raise HTTPException(status_code=503, detail=str(e))
         except requests.HTTPError as e:

@@ -1,12 +1,16 @@
-/* Himawari-9 satellite imagery, two bands of the same instrument.
+/* Himawari-9 satellite. One layer; the sun decides what it is made of.
 
-   Infrared reads cloud-top temperature day and night -- cold tops mean deep
-   convection, which is where the city's rain comes from. Visible is four times
-   finer and shows the texture of individual towers, but it only sees reflected
-   sunlight, so it is offered when the sun is up.
+   By day the visible band (0.5 km reflected sunlight) is drawn as greyscale
+   cloud texture with the infrared cold-top ramp composited over it. After dark
+   the visible band sees nothing, so only the infrared remains.
 
-   Both are cloud, not rain, and the panel says so: tops can be cold, or a deck
-   can be bright, over a street that stays dry. */
+   Both are drawn in daylight because they are different measurements, not two
+   resolutions of one. Reflected light is how thick a cloud is; emitted heat is
+   how high it reached. On a morning of thick low cloud the visible band alone
+   paints a warm stratus deck as though it were a storm -- the infrared is what
+   knows better, and it costs a tenth of what the visible band costs to fetch.
+
+   Neither is rain. Cold tops and bright decks both sit over dry streets. */
 (() => {
   map.createPane("himawariPane");
   map.getPane("himawariPane").style.zIndex = 330;  // above the basemap, under the radars
@@ -16,82 +20,82 @@
   panel.innerHTML = `
     <label class="toggle-row"><input type="checkbox" id="himawariToggle"> Satellite (Himawari-9)</label>
     <div id="himawariOptions" hidden style="max-width:230px">
-      <label>Band <select id="himawariBand" aria-label="Himawari band">
-        <option value="B13" selected>Cloud tops (infrared)</option>
-        <option value="B03">Visible (daylight only)</option>
-      </select></label>
       <div id="himawariScale" style="height:9px;margin-top:8px"></div>
       <div id="himawariScaleLabels" style="display:flex;justify-content:space-between;font-size:10px"></div>
+      <div id="himawariTexture" hidden>
+        <div id="himawariTextureBar" style="height:7px;margin-top:6px"></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px"><span>thin cloud</span><span>thick</span></div>
+      </div>
       <div class="note" id="himawariNote"></div>
       <div id="himawariStatus" class="note" role="status"></div>
     </div>`;
   legendBoxEl.appendChild(panel);
   L.DomEvent.disableScrollPropagation(panel);
   const toggle = panel.querySelector("#himawariToggle");
-  const bandSel = panel.querySelector("#himawariBand");
   const status = panel.querySelector("#himawariStatus");
   const note = panel.querySelector("#himawariNote");
-  let requestId = 0, shownKey = null;
+  const texture = panel.querySelector("#himawariTexture");
+  let requestId = 0, shownScan = null;
   const localLabel = (iso) => new Date(iso).toLocaleString("en-GB", {timeZone: "Asia/Ho_Chi_Minh"});
 
-  const NOTES = {
-    infrared: "Band 13 infrared, 2 km, every 10 minutes. Colder tops are taller storm clouds.",
-    visible: "Band 3 visible, 0.5 km, every 10 minutes. Brighter means thicker cloud — but reflected light cannot tell a low deck from a storm.",
-  };
-
-  // The ramp comes from the API so the key always matches the pixels. Stops are
+  // Ramps come from the API so the key always matches the pixels. Stops are
   // composited onto white here because a gradient swatch has nothing behind it.
-  function drawScale(scale) {
+  function gradient(scale) {
     const first = scale[0].value, last = scale[scale.length - 1].value;
-    const stops = scale.map((s) => {
+    return scale.map((s) => {
       const rgb = [1, 3, 5].map((i) => parseInt(s.color.slice(i, i + 2), 16));
       const over = rgb.map((v) => Math.round(255 * (1 - s.opacity) + v * s.opacity));
-      const at = ((s.value - first) / (last - first)) * 100;
-      return `rgb(${over.join(",")}) ${at.toFixed(1)}%`;
-    });
-    panel.querySelector("#himawariScale").style.background = `linear-gradient(to right, ${stops.join(",")})`;
+      return `rgb(${over.join(",")}) ${(((s.value - first) / (last - first)) * 100).toFixed(1)}%`;
+    }).join(",");
+  }
+
+  function drawScales(data) {
+    panel.querySelector("#himawariScale").style.background =
+      `linear-gradient(to right, ${gradient(data.scale)})`;
+    const mid = Math.floor(data.scale.length / 2);
     panel.querySelector("#himawariScaleLabels").innerHTML =
-      `<span>${scale[0].label}</span><span>${scale[Math.floor(scale.length / 2)].label}</span>` +
-      `<span>${scale[scale.length - 1].label}</span>`;
+      `<span>${data.scale[0].label}</span><span>${data.scale[mid].label}</span>` +
+      `<span>${data.scale[data.scale.length - 1].label}</span>`;
+    texture.hidden = !data.texture_scale;
+    if (data.texture_scale) {
+      panel.querySelector("#himawariTextureBar").style.background =
+        `linear-gradient(to right, ${gradient(data.texture_scale)})`;
+    }
   }
 
   async function refresh() {
     if (!toggle.checked) return;
     const id = ++requestId;
-    const band = bandSel.value;
-    if (!shownKey || !shownKey.startsWith(band)) {
-      // A visible scan is ~65 MB for the server to fetch and decode, so say so
-      // rather than leaving the panel silent for twenty seconds.
-      status.textContent = band === "B03" ? "Loading visible scan (this takes a moment)…"
-                                          : "Loading satellite…";
-    }
+    // A daylight scan is ~71 MB for the server to fetch and decode, so say so
+    // rather than leaving the panel silent for half a minute.
+    if (!shownScan) status.textContent = "Loading satellite…";
     try {
-      const response = await fetch(`/api/rain-map/himawari?band=${band}`);
+      const response = await fetch("/api/rain-map/himawari");
       if (!response.ok) throw new Error((await response.json().catch(() => ({}))).detail || `HTTP ${response.status}`);
       const data = await response.json();
-      if (id !== requestId || !toggle.checked || bandSel.value !== band) return;
-      drawScale(data.scale);
-      note.textContent = NOTES[data.kind] || "";
-      const key = `${data.band}@${data.scan}`;
-      if (key !== shownKey) {
+      if (id !== requestId || !toggle.checked) return;
+      drawScales(data);
+      note.textContent = data.mode === "daylight"
+        ? "Colour is cloud-top temperature; grey is cloud thickness at 0.5 km. Cold tops are tall storm clouds — cloud is not rain."
+        : "Cloud-top temperature, 2 km, every 10 minutes. Colder tops are taller storm clouds — cloud is not rain.";
+      if (data.scan !== shownScan) {
         const image = L.imageOverlay(data.image_url, data.bounds, {
           pane: "himawariPane", interactive: false,
           attribution: 'Cloud tops &copy; <a href="https://www.data.jma.go.jp/mscweb/en/index.html">JMA</a> Himawari-9, via <a href="https://registry.opendata.aws/noaa-himawari/">NOAA on AWS</a>',
         });
         image.once("load", () => layer.getLayers().filter((l) => l !== image).forEach((l) => layer.removeLayer(l)));
         image.addTo(layer);
-        shownKey = key;
+        shownScan = data.scan;
       }
-      const reading = data.extreme === null ? "no reading"
-        : data.kind === "infrared" ? `${Math.round(data.extreme - 273.15)}°C coldest top`
-        : `${Math.round(data.extreme * 100)}% brightest cloud`;
-      status.textContent = `Scan ${localLabel(data.scan)} ICT, ${data.age_minutes} min old. ${reading}. ` +
+      const tops = data.coldest_k === null ? "no reading"
+        : `${Math.round(data.coldest_k - 273.15)}°C coldest top`;
+      status.textContent = `Scan ${localLabel(data.scan)} ICT, ${data.age_minutes} min old. ${tops}. ` +
+        `Sun ${data.solar_elevation}°, showing ${data.label}. ` +
         (data.coverage < 1 ? `${Math.round(data.coverage * 100)}% of the box has data.` : "");
     } catch (error) {
       if (id !== requestId) return;
-      // The visible band going dark is expected once a day, not a fault.
       layer.clearLayers();
-      shownKey = null;
+      shownScan = null;
       status.textContent = `Satellite layer unavailable: ${error.message}`;
     }
   }
@@ -101,6 +105,5 @@
     if (toggle.checked) { layer.addTo(map); refresh(); }
     else { ++requestId; map.removeLayer(layer); }
   });
-  bandSel.addEventListener("change", () => { layer.clearLayers(); shownKey = null; refresh(); });
   setInterval(refresh, 120000);
 })();

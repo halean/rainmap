@@ -129,19 +129,29 @@ observation time. Reset inference remains provisional until more days accrue.
 
 ## Satellite cloud tops
 
-Enable **Satellite (Himawari-9)** in the map legend and pick a band.
+Enable **Satellite (Himawari-9)** in the map legend. There is no band to pick:
+the sun decides what the layer is made of.
 
-**Cloud tops (infrared)**, band 13 at 2 km, is the default and works day and
-night. The colour is cloud-top temperature: clear above 0 °C, grey through the
-mid-levels, violet and magenta for the coldest tops. Cold tops are tall clouds,
-and tall clouds are where convective rain comes from.
+**By day** the visible band (band 3, 0.64 um reflected sunlight, 0.5 km) is
+drawn as greyscale cloud texture with the infrared cold-top ramp composited
+over it. **After dark** the visible band sees nothing, so only the infrared
+remains (band 13, 10.4 um, 2 km). The switch happens at
+`HIMAWARI_MIN_SUN_DEG` of solar elevation over the city, computed locally --
+below it, nothing is fetched.
 
-**Visible (daylight only)**, band 3 at 0.5 km, is four times finer and resolves
-individual convective towers as greyscale imagery. It sees reflected sunlight,
-so it is offered only while the sun is more than `HIMAWARI_MIN_SUN_DEG` above
-the city; below that the layer reports the sun's angle rather than fetching a
-dark frame. It is also about eleven times heavier per scan (65 MB against 6 MB),
-so the first load takes some seconds.
+Both bands are drawn in daylight rather than the visible one alone, because
+they are not two resolutions of the same measurement. Reflected light is how
+thick a cloud is; emitted heat is how high it reached. Through afternoon
+convection those agree closely -- over one 14:30 scan, r = -0.93 between albedo
+and brightness temperature, with 165 disagreeing pixels out of 262,144. On a
+09:30 scan of thick low cloud that collapses to r = -0.34 and 3.7% of the box
+reads bright-but-warm: a warm stratus deck that the visible band alone paints
+as though it were a storm. Infrared costs 6 MB a scan against the visible
+band's 65 MB, so keeping it is nearly free and removes that failure entirely.
+
+The band set is chosen from the *scan's* timestamp, not the clock, so a pinned
+image URL renders the same picture whenever it is fetched and can be cached as
+immutable.
 
 Neither band measures rain. A cold top, or a bright deck, over a dry street is
 entirely possible, and reflected light cannot tell low stratus from a

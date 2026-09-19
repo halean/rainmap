@@ -215,11 +215,14 @@ class SceneTests(unittest.TestCase):
 
     def test_render_produces_a_png_and_statistics(self):
         with patch.object(himawari, "_segment", self.fake_segment):
-            scene = himawari.render(datetime(2026, 9, 18, 19, 30, tzinfo=UTC), (4, 5), 128)
+            scene = himawari.render(datetime(2026, 9, 18, 19, 30, tzinfo=UTC),
+                                    (("B13", (4, 5)),), 128)
         self.assertTrue(scene.png.startswith(b"\x89PNG"))
         self.assertEqual(scene.coverage, 1.0)
-        self.assertEqual(scene.band, "B13")
-        self.assertLess(scene.extreme, scene.median)  # infrared reports its coldest top
+        self.assertEqual(scene.bands, ("B13",))
+        self.assertEqual(scene.mode, "night")
+        self.assertIsNotNone(scene.coldest_k)
+        self.assertIsNone(scene.brightest_albedo)  # no visible band in this plan
 
 
 class ColorTests(unittest.TestCase):
@@ -295,9 +298,9 @@ class EndpointTests(unittest.TestCase):
         self.slot = datetime.now(UTC).replace(second=0, microsecond=0)
         self.slot -= timedelta(minutes=self.slot.minute % 10 + 20)
         self.scene = himawari.Scene(
-            scan=self.slot, size=256, band="B13", png=b"\x89PNG\r\n\x1a\n",
-            bounds=himawari.HIMAWARI_BBOX, extreme=212.3, median=278.0,
-            coverage=1.0, segments=(4, 5),
+            scan=self.slot, size=256, plan=(("B13", (4, 5)),), png=b"\x89PNG\r\n\x1a\n",
+            bounds=himawari.HIMAWARI_BBOX, coldest_k=212.3, brightest_albedo=None,
+            coverage=1.0,
         )
 
     def test_metadata_points_at_the_pinned_image(self):
@@ -309,6 +312,8 @@ class EndpointTests(unittest.TestCase):
         self.assertEqual(body["bounds"], [[9.7, 105.6], [11.9, 107.8]])
         self.assertIn(self.slot.strftime("%Y%m%d%H%M"), body["image_url"])
         self.assertEqual(body["scale"][0]["label"], "0\u00b0C")
+        self.assertEqual(body["mode"], "night")
+        self.assertIsNone(body["texture_scale"])
 
     def test_unavailable_bucket_is_a_503(self):
         with patch.object(himawari, "latest_scene", side_effect=himawari.HimawariUnavailable("no scan")):
@@ -374,7 +379,7 @@ class CacheTests(unittest.TestCase):
         with patch.object(himawari, "_segment", cached_strip):
             for _ in range(passes):
                 for i in range(frames):
-                    render(base + timedelta(minutes=10 * i), (4, 5), 512)
+                    render(base + timedelta(minutes=10 * i), (("B13", (4, 5)),), 512)
 
     def test_a_full_window_is_downloaded_once_however_often_it_is_walked(self):
         frames = int(HIMAWARI_MAX_AGE_HOURS * 6)
@@ -404,8 +409,9 @@ class SizeAllowlistTests(unittest.TestCase):
         self.slot -= timedelta(minutes=self.slot.minute % 10 + 20)
 
     def test_listed_sizes_are_accepted(self):
-        scene = himawari.Scene(scan=self.slot, size=256, band="B13", png=b"\x89PNG", bounds=himawari.HIMAWARI_BBOX,
-                               extreme=210.0, median=270.0, coverage=1.0, segments=(4, 5))
+        scene = himawari.Scene(scan=self.slot, size=256, plan=(("B13", (4, 5)),),
+                               png=b"\x89PNG", bounds=himawari.HIMAWARI_BBOX,
+                               coldest_k=210.0, brightest_albedo=None, coverage=1.0)
         with patch.object(himawari, "latest_scene", return_value=scene):
             for size in HIMAWARI_IMAGE_SIZES:
                 self.assertEqual(
@@ -521,13 +527,21 @@ class DaylightGateTests(unittest.TestCase):
         self.assertTrue(himawari.is_lit("B03", self.NOON))
         self.assertFalse(himawari.is_lit("B03", self.MIDNIGHT))
 
-    def test_a_dark_request_never_reaches_the_bucket(self):
-        """65 MB is too much to spend discovering the sun is down."""
-        with patch.object(himawari, "resolve_scan") as fetch:
-            with patch.object(himawari, "solar_elevation", return_value=-20.0):
-                with self.assertRaises(himawari.HimawariUnavailable):
-                    himawari.latest_scene(band="B03")
-        fetch.assert_not_called()
+    def test_the_plan_follows_the_sun(self):
+        self.assertEqual(himawari.bands_for(self.NOON), ("B03", "B13"))
+        self.assertEqual(himawari.bands_for(self.MIDNIGHT), ("B13",))
+
+    def test_the_plan_comes_from_the_scan_not_the_clock(self):
+        """A pinned image URL must render the same thing whenever it is
+        fetched, or it could not be cached as immutable."""
+        with patch.object(himawari, "_segments_for_bbox", return_value=(4, 5)):
+            with patch.object(himawari, "render") as drawn:
+                himawari.scene_at(self.NOON)      # a daylight scan...
+        self.assertEqual(drawn.call_args[0][1], (("B03", (4, 5)), ("B13", (4, 5))))
+        with patch.object(himawari, "_segments_for_bbox", return_value=(4, 5)):
+            with patch.object(himawari, "render") as drawn:
+                himawari.scene_at(self.MIDNIGHT)  # ...and a night one
+        self.assertEqual(drawn.call_args[0][1], (("B13", (4, 5)),))
 
 
 if __name__ == "__main__":

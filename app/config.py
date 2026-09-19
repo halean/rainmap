@@ -60,8 +60,8 @@ HIMAWARI_RESOLUTION = os.getenv("HIMAWARI_RESOLUTION", "R20")
 # the other yields temperatures in the tens of millions and a silently blank
 # layer. Visible is also four times finer and eleven times heavier per scan.
 HIMAWARI_BANDS = {
-    "B13": {"resolution": "R20", "kind": "infrared", "label": "Cloud tops (infrared)"},
-    "B03": {"resolution": "R05", "kind": "visible", "label": "Visible (daylight only)"},
+    "B13": {"resolution": "R20", "kind": "infrared", "label": "infrared cold tops"},
+    "B03": {"resolution": "R05", "kind": "visible", "label": "visible cloud texture"},
 }
 # Below this the visible band returns a dark, long-shadowed frame that costs a
 # 65 MB download to discover is useless, so the gate is arithmetic, not a fetch.
