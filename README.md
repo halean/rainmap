@@ -228,3 +228,11 @@ The projection was checked against a midday scene over Indochina, where warm
 land against cool sea traced the coastline at Hong Kong, Da Nang, and Borneo.
 
 See [tests/README.md](tests/README.md) for automated and browser checks.
+
+## 3D rain map
+
+The [3D map](https://muaroi.dynv6.net/3d/) is served from `3d/` and uses the
+same weather APIs as the main map. Generated model assets are excluded from
+Git and must be rebuilt after a fresh checkout. See [3D asset rebuild instructions](3d/README.md)
+for the isolated Python environment, source OSM/camera data, staged build,
+validation and publishing commands.
