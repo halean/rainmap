@@ -4,14 +4,14 @@ const $ = id => document.getElementById(id);
 const time = iso => Number.isFinite(Date.parse(iso)) ? new Date(iso).toLocaleString('en-GB', {timeZone:'Asia/Ho_Chi_Minh'}) + ' ICT' : 'unknown time';
 export function createWeather({scene, project, manifest}) {
   const groups = {}, busy = {}, generations = {};
-  let rain = null, rainBase = [], last = 0;
+  let rain = null, rainBase = [], last = 0, lastRainPoints = [];
   const state = {cameraCount:0, rainParticleCount:0, rainDensityCells:0, gaugeCount:0, cloudScan:null};
   for (const name of ['rain','gauges','clouds']) { groups[name] = new THREE.Group(); scene.add(groups[name]); }
   function clear(name) {
     for (const o of [...groups[name].children]) {
       groups[name].remove(o); o.geometry?.dispose(); o.material?.map?.dispose(); o.material?.dispose();
     }
-    if (name === 'rain') {rain = null; rainBase = []; state.cameraCount = 0; state.rainParticleCount = 0; state.rainDensityCells = 0; $('weather-readings').replaceChildren();}
+    if (name === 'rain') {rain = null; rainBase = []; lastRainPoints = []; state.cameraCount = 0; state.rainParticleCount = 0; state.rainDensityCells = 0; $('weather-readings').replaceChildren();}
     if (name === 'gauges') {state.gaugeCount = 0; $('gauge-readings').replaceChildren();}
     if (name === 'clouds') {state.cloudScan = null; $('cloud-scale').replaceChildren();}
   }
@@ -29,6 +29,9 @@ export function createWeather({scene, project, manifest}) {
     if (!Array.isArray(data)) throw new Error('Invalid camera response');
     clear('rain');
     const points = data.filter(p => freshCamera(p));
+    // Kept for 3d/lightning.js: which currently-reporting cameras are wet
+    // enough to plausibly be under a thunderstorm, and where.
+    lastRainPoints = points.map(p => {const [x,z] = project(p.lon,p.lat); return {x, z, classIndex: rainClasses[p.rain]};});
     const positions = [], colors = [], drops = [], dropColors = [];
     for (const p of points) {
       const [x,z] = project(p.lon,p.lat), level = rainClasses[p.rain], c = new THREE.Color(rainColors[level]);
@@ -131,7 +134,7 @@ export function createWeather({scene, project, manifest}) {
   $('cloud-opacity').oninput=()=>groups.clouds.children.forEach(o=>o.material.opacity=Number($('cloud-opacity').value));
   setInterval(()=>refresh('rain'),60000);
   setInterval(()=>['gauges','clouds'].forEach(refresh),120000);
-  return {state, update(now) {
+  return {state, rainPoints: () => lastRainPoints, update(now) {
     if(now-last<32 || !rain || !groups.rain.visible) return;last=now;
     const pos=rain.geometry.attributes.position;
     for(let i=0;i<rainBase.length;i++) {const y=50+((rainBase[i]-now*.25)%1300+1300)%1300;pos.setY(i*2,y);pos.setY(i*2+1,y+45);}

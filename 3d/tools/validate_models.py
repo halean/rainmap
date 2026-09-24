@@ -12,7 +12,7 @@ assets=parser.parse_args().assets.resolve()
 manifest=json.loads((assets/'manifest.json').read_text())
 total=0
 triangles=0
-for entry in [manifest['overview'],*manifest['tiles']]:
+for entry in [manifest['overview'],*manifest['tiles'],*([manifest['skyline']] if 'skyline' in manifest else [])]:
     relative=Path(entry['url']).relative_to('assets')
     assert '..' not in relative.parts
     raw=(assets/relative).read_bytes()
@@ -61,4 +61,4 @@ w,s,e,n=manifest['boundsLonLat']
 assert all(w<=c['lon']<=e and s<=c['lat']<=n for c in cameras)
 assert len(manifest['tiles'])==len(set(t['id'] for t in manifest['tiles']))
 assert len(manifest['tiles'])>0
-print(json.dumps({'glbFiles':len(manifest['tiles'])+1,'triangles':triangles,'bytes':total,'camerasCovered':len(cameras),'geometryErrors':manifest['geometryErrors']},indent=2))
+print(json.dumps({'glbFiles':len(manifest['tiles'])+1+int('skyline' in manifest),'triangles':triangles,'bytes':total,'camerasCovered':len(cameras),'geometryErrors':manifest['geometryErrors']},indent=2))

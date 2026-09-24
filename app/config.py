@@ -100,3 +100,18 @@ HIMAWARI_MAX_AGE_HOURS = float(os.getenv("HIMAWARI_MAX_AGE_HOURS", "6"))
 # stopped arriving. Off by default, so a test or a local run never sweeps the
 # city's public camera site just by importing the app.
 FETCH_AUTOSTART = os.getenv("FETCH_AUTOSTART", "").strip().lower() in {"1", "true", "yes", "on"}
+
+# Arrivals and departures at Tan Son Nhat for the 3D map. The schedule is
+# scripts/tia_poller.py's scrape of the airport operator's own live flight
+# board (tia.vietnamairport.vn, no key needed) -- see app/services/flights.py
+# and app/services/tia.py. Its six pages are each revisited every 6 minutes;
+# TIA_STALE_MINUTES gives one missed cycle before the endpoint falls back to
+# a clearly labelled synthetic sample rather than serving stale real flights
+# as current.
+FLIGHTS_STORE = Path(os.getenv("FLIGHTS_STORE", "data/derived/flights"))
+FLIGHTS_WINDOW_MINUTES = int(os.getenv("FLIGHTS_WINDOW_MINUTES", "720"))  # sample-schedule window only
+FLIGHTS_TIMEOUT_SEC = float(os.getenv("FLIGHTS_TIMEOUT_SEC", "30"))
+# The VVTS METAR (aviationweather.gov, no key) chooses the runway direction.
+METAR_REFRESH_MINUTES = float(os.getenv("METAR_REFRESH_MINUTES", "30"))
+TIA_STORE_PATH = Path(os.getenv("TIA_STORE_PATH", "data/derived/flights_tia.json"))
+TIA_STALE_MINUTES = float(os.getenv("TIA_STALE_MINUTES", "14"))

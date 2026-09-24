@@ -28,3 +28,8 @@ data/derived/himawari/
 /3d/build-cache/
 /3d/.venv-build/
 /3d/**/*.osm.pbf
+
+# arrivals/departures cache for the 3D airport animation -- refetched from the METAR API
+# and rebuilt continuously by scripts/tia_poller.py's scrape of the live flight board
+data/derived/flights/
+data/derived/flights_tia.json

@@ -5,3 +5,5 @@
 .header-note .map-back{font-size:11px;letter-spacing:0;white-space:nowrap}@media(max-width:650px){.brand{gap:6px;font-size:9px}.header-note{gap:6px}.header-note .map-back{font-size:10px}.header-note button{margin-left:0;padding:5px}.heading h1{font-size:25px}}
 
 .panel-title{gap:8px}.panel-title>span:first-child{flex:1}#detail-badge{white-space:nowrap}#legend-close{flex-shrink:0;width:26px;height:26px;padding:0;border:0;background:transparent;color:#a7bab3;font-size:21px;line-height:1}#legend-close:hover{background:#35514f;color:#e6efea}#legend-reopen{position:absolute;top:91px;right:22px;width:34px;height:34px;padding:0;font-size:19px;background:#15282def;border:1px solid #3c5555;border-radius:8px;box-shadow:0 4px 14px #0a1e2633}#map-legend[hidden],#legend-reopen[hidden]{display:none}@media(max-width:950px){#legend-reopen{right:14px}}@media(max-width:650px){#legend-reopen{top:auto;bottom:105px;right:12px}.panel-title{gap:5px}}
+
+#flights-list{max-height:170px;overflow:auto}#flights-list p{margin:4px 0;font-variant-numeric:tabular-nums}#flights-list .flight-sample{color:#ffc777}.flights-panel a{font-size:10px}

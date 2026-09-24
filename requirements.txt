@@ -6,3 +6,7 @@ requests==2.32.3
 pillow==11.0.0
 google-genai==1.36.0
 python-dotenv==1.2.2
+# scripts/tia_poller.py drives a headless browser to read Tan Son Nhat's live
+# flight board; see 3d/README.md for the system-Chromium note (this host is
+# ARM64, unsupported by Playwright's own bundled browser download).
+playwright==1.63.0

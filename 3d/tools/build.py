@@ -261,6 +261,8 @@ def main():
     for r in roads_index:unique.setdefault(r['name'],r)
     (ASSETS/'streets.json').write_text(json.dumps(sorted(unique.values(),key=lambda r:r['name']),ensure_ascii=False,separators=(',',':')))
     (ASSETS/'cameras.json').write_text(json.dumps([{**c,'x':project(c['lon'],c['lat'])[0],'z':project(c['lon'],c['lat'])[1]} for c in valid],ensure_ascii=False,separators=(',',':')))
+    from skyline import generate
+    generate(ASSETS)
     print('DONE',dict(stats),'tiles',len(tiles),'model MB',round(manifest['totalModelBytes']/1e6,1),'seconds',round(time.time()-t),flush=True)
 
 if __name__=='__main__':main()
