@@ -29,6 +29,23 @@ satellite cloud tops decoded straight from Himawari-9's raw instrument files.
 - **`scripts/vrain_poller.py`** -- records nearby VRAIN rain-gauge readings
   (vrain.vn) every 10 minutes into `data/derived/vrain_history.csv`. Pure
   collection; `app/services/vrain.py` reads this log for the gauge density layer.
+- **`scripts/hymetnet_poller.py`** -- records Vietnam's official lightning
+  feed (`hymetnet.gov.vn`, the national hydro-meteorological observation
+  centre's own public map, reverse-engineered the same way as VRAIN and the
+  TIA flight board -- see `app/services/lightning_vn.py`) every 3 minutes,
+  from two complementary, undocumented sources on the same site:
+  - `GET http://hymetnet.gov.vn/dongset` -- commune-level (a few km, named
+    places), into `data/derived/lightning_vn_history.csv`.
+  - A plain `GET` of `http://hymetnet.gov.vn/lightningmaps/` itself --
+    exact coordinates, second, peak current (kA), sensor count, DOF, and
+    ground/cloud classification, embedded directly in the page's HTML as
+    `set[N] = [{...}];` literals rather than fetched separately, into
+    `data/derived/lightning_vn_strikes_history.csv`.
+
+  Neither source has HTTPS on this host (both are plain HTTP). Pure
+  collection for now -- nothing reads this yet; the 3D map's lightning
+  layer still dramatises from camera rain reports rather than this real
+  feed.
 - **`data/derived/`** -- small JSON/CSV state: camera coordinates (fetched
   from the traffic system's own coordinate API), the current 40-camera
   sample, and the live rain readings.
