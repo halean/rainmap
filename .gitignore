@@ -33,3 +33,6 @@ data/derived/himawari/
 # and rebuilt continuously by scripts/tia_poller.py's scrape of the live flight board
 data/derived/flights/
 data/derived/flights_tia.json
+
+# per-camera recent-readings index, rebuilt from rain_history.csv by scripts/backfill_recent.py
+data/derived/recent/

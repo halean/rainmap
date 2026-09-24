@@ -83,16 +83,8 @@ API, but a static asset needs a rule of its own, and the deployed
 
 ```nginx
 location = /media/app/static/vrain.js {
-    proxy_pass http://127.0.0.1:8000;
-    proxy_http_version 1.1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-}
-
-location = /media/app/static/himawari.js {
-    ...the same proxy headers...
+    alias /media/150G/rainmap/app/static/vrain.js;
+    add_header Cache-Control "no-cache";   # revalidate per load (ETag/304)
 }
 ```
 
@@ -100,6 +92,33 @@ Adding a layer therefore means adding a rule. Until one exists the script
 404s, the page loads without it, and the layer is simply absent from the
 legend rather than visibly broken. Validate with `sudo nginx -t` before
 `sudo systemctl reload nginx`.
+
+### Caching and who does what
+
+Every viewer polls the same handful of URLs whose data changes every 1-10
+minutes, so the split is: Python computes a response once, **nginx** serves
+it to everyone for a short while, browsers hold static things for longer.
+
+- **API microcache.** `/api/rain-map*` and `/rain-map` are cached by nginx
+  (`conf.d/rainmap-cache.conf` defines the store under
+  `/var/cache/nginx/rainmap`; the `location` blocks in `muaroi.conf` use
+  it): 20 s for API responses, 10 s for the page, GET only, keyed on the
+  full URL so `?hours=`/`?at=`/`?camera_id=` variants are separate.
+  `proxy_cache_lock` lets one request refresh while the rest are served
+  the cached or stale copy, so a crowd never stampedes the backend, and an
+  upstream `Cache-Control` (the immutable Himawari PNG) overrides the
+  default. The `X-Cache` response header says `HIT`/`MISS`/`STALE`. With
+  this in place the backend answers roughly once per URL per 20 s
+  regardless of how many people are watching.
+- **Camera frames** (`/media/data/raw/`) are served by nginx straight from
+  disk with `alias` -- no cache directory involved -- and marked
+  `immutable` for a year, since each filename is a unique capture time and
+  a frame never changes once written. Python no longer serves image bytes,
+  and the page no longer appends a cache-buster to them.
+- **Per-camera history** (`/api/rain-map/rain-history`) reads the annotator's
+  small per-camera index (`data/derived/recent/`, see
+  `app/services/recent.py`) rather than scanning `rain_history.csv`, so its
+  cost no longer grows with the archive; the microcache covers it too.
 
 `GET /api/rain-map/vrain?hours=3` returns amounts, coverage, log freshness, and
 reset evidence. Optional `at=2026-09-14T15:30:00%2B07:00` selects history.

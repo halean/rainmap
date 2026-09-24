@@ -1,7 +1,4 @@
-import csv
 import json
-import re
-from collections import deque
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
@@ -16,14 +13,13 @@ from app.config import (
     HIMAWARI_MAX_AGE_HOURS,
     HIMAWARI_RETENTION_HOURS,
 )
-from app.services import himawari
+from app.services import flights, himawari, recent
 from app.services.fetch_jobs import FetchJobManager
 from app.services.vrain import rain_density
 
 RAIN_SAMPLE_PATH = Path("data/derived/rain_sample.json")
-RAIN_HISTORY_PATH = Path("data/derived/rain_history.csv")
-IMAGE_STAMP_RE = re.compile(r"^(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})")
-HISTORY_PER_CAMERA = 12
+# The index holds this many per camera (recent.RECENT_LIMIT); the endpoint cannot return more.
+HISTORY_PER_CAMERA = recent.RECENT_LIMIT
 SCAN_STAMP = "%Y%m%d%H%M"
 
 
@@ -54,32 +50,25 @@ def _ramp(band: str) -> list[dict]:
 
 
 def _camera_history(camera_id: str, limit: int) -> list[dict]:
-    """Most-recent-first annotation history for one camera, read from the
-    append-only rain_history.csv log (oldest-first on disk)."""
-    if not RAIN_HISTORY_PATH.exists():
-        return []
-    recent: deque[dict] = deque(maxlen=limit)
-    with RAIN_HISTORY_PATH.open(newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            if row.get("camera_id") != camera_id:
-                continue
-            image = row.get("image", "")
-            m = IMAGE_STAMP_RE.match(image)
-            image_url = None
-            captured_at = None
-            if m:
-                y, mo, d, h, mi, s = m.groups()
-                image_url = f"/media/data/raw/{camera_id}/{y}/{mo}/{d}/{image}"
-                captured_at = f"{y}-{mo}-{d}T{h}:{mi}:{s}Z"
-            recent.append(
-                {
-                    "captured_at": captured_at,
-                    "rain": row.get("rain"),
-                    "justification": row.get("justification"),
-                    "image_url": image_url,
-                }
-            )
-    return list(reversed(recent))
+    """Most-recent-first readings for one camera, from the per-camera index
+    the annotator maintains (app/services/recent.py) -- a few KB read,
+    constant regardless of how large the history log grows. The log itself
+    is no longer touched at request time. A camera with no index file has no
+    history; an id that isn't a camera id is refused rather than turned into
+    a path."""
+    try:
+        entries = recent.load_recent(camera_id, base=recent.RECENT_DIR)
+    except recent.BadCameraId:
+        raise HTTPException(status_code=422, detail="camera_id must be a 24-character hex id")
+    return [
+        {
+            "captured_at": e.get("captured_at"),
+            "rain": e.get("rain"),
+            "justification": e.get("justification"),
+            "image_url": e.get("image_url"),
+        }
+        for e in entries[:limit]
+    ]
 
 
 def register_routes(
@@ -104,7 +93,7 @@ def register_routes(
 
     @app.get("/api/rain-map/rain-history")
     def rain_history(camera_id: str, limit: int = HISTORY_PER_CAMERA) -> list[dict]:
-        limit = max(1, min(limit, 50))
+        limit = max(1, min(limit, recent.RECENT_LIMIT))
         return _camera_history(camera_id, limit)
 
     @app.get("/api/rain-map/vrain")
@@ -211,6 +200,13 @@ def register_routes(
             # The scan is pinned in the URL, so this image can never change.
             headers={"Cache-Control": "public, max-age=86400, immutable"},
         )
+
+    @app.get("/api/rain-map/flights")
+    def flights_schedule() -> dict:
+        """Arrivals and departures at Tan Son Nhat, with runway geometry and
+        the wind that picks the runway direction. Served from a disk cache so
+        the free schedule tier is touched a handful of times a day."""
+        return flights.status()
 
     @app.get("/api/status")
     def get_status() -> dict:

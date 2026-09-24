@@ -338,7 +338,11 @@
       function loadCameraHistory(camId) {
         const state = markerIndex[camId];
         if (!state) return;
-        if (state.history) {
+        // A poll can land a newer frame while the cache from an earlier popup
+        // open is still sitting on the marker -- reusing it would show that
+        // stale frame instead of the camera's actual latest. Only skip the
+        // refetch when the cache still matches the current latest image.
+        if (state.history && state.history[0] && state.history[0].image_url === state.point.image_url) {
           renderFrame(camId);
           return;
         }
@@ -492,7 +496,7 @@
 
           const imgHtml = p.image_url
             ? `<div class="frame-slider">
-                 <img class="frame-img" src="${p.image_url}?t=${Date.now()}" alt="${p.location_text}" onclick="openLightboxFor('${p.camera_id}')" />
+                 <img class="frame-img" src="${p.image_url}" alt="${p.location_text}" onclick="openLightboxFor('${p.camera_id}')" />
                  <div class="frame-nav">
                    <button class="frame-prev" onclick="slideFrame('${p.camera_id}', 1)" title="Older frame">&#8249;</button>
                    <span class="frame-counter"></span>

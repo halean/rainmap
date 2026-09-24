@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.atomic_write import write_json_atomic
 from app.log_setup import get_logger
 from app.services.insights import InsightsService
+from app.services.recent import record_reading
 
 REPO = Path(__file__).resolve().parents[1]
 SAMPLE_CAMERAS_PATH = REPO / "data" / "derived" / "sample_cameras.json"
@@ -811,6 +812,13 @@ def main():
                     )
 
                     append_history(rec)
+                    # The per-camera recent index (app/services/recent.py):
+                    # this process is its only writer, and this is the moment
+                    # a reading exists. Never worth killing the loop over.
+                    try:
+                        record_reading(rec, REPO / "data" / "derived" / "recent")
+                    except Exception as e:
+                        log.warning("could not update recent index for %s: %s", cam_id, e)
                     write_json_atomic(OUTPUT_PATH, list(records.values()))
                     write_json_atomic(STATE_PATH, state)
 
