@@ -7,8 +7,10 @@ into one field with '-' as a plain delimiter, not a sign.
 
 import csv
 import logging
+import os
 import tempfile
 import unittest
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
@@ -267,6 +269,164 @@ class PollerStrikesDedupTests(QuietLoggerTests):
             added = poller.poll_strikes_once(seen)
         self.assertEqual(added, 0)
         self.assertFalse(self.path.exists())
+
+
+HCMC_BBOX = (9.7, 105.6, 11.9, 107.8)  # matches HIMAWARI_BBOX / app.config
+
+
+class RecentStrikesTests(unittest.TestCase):
+    """The reader side of the strikes archive: what a live map layer polls."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.path = Path(self.temp.name) / "strikes.csv"
+        self.now = datetime(2026, 9, 24, 15, 0, tzinfo=lvn.UTC)
+
+    def write(self, rows, mtime=None):
+        with self.path.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(
+                f, fieldnames=["id", "time", "lat", "lon", "current_ka", "sensor_count", "dof", "kind"]
+            )
+            writer.writeheader()
+            for i, (when, lat, lon, ka, kind) in enumerate(rows):
+                writer.writerow({
+                    "id": f"s{i}", "time": when.isoformat().replace("+00:00", "Z"),
+                    "lat": lat, "lon": lon, "current_ka": ka, "sensor_count": 6, "dof": 3, "kind": kind,
+                })
+        # Fixed rather than real wall-clock time, so staleness assertions
+        # below are deterministic regardless of when the suite happens to run.
+        ts = (mtime or self.now).timestamp()
+        os.utime(self.path, (ts, ts))
+
+    def test_a_missing_archive_is_empty_and_flagged_stale_not_fatal(self):
+        result = lvn.recent_strikes(self.path, now=self.now)
+        self.assertEqual(result["strikes"], [])
+        self.assertIsNone(result["latest_anywhere"])
+        self.assertIsNone(result["collected_at"])
+        self.assertTrue(result["collector_stale"])
+
+    def test_only_strikes_within_the_window_are_returned(self):
+        self.write([
+            (self.now - timedelta(minutes=10), 10.8, 106.7, -30, "ground"),
+            (self.now - timedelta(minutes=200), 10.8, 106.7, -30, "ground"),  # outside a 90-min window
+        ])
+        result = lvn.recent_strikes(self.path, minutes=90, now=self.now)
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(result["strikes"][0]["age_seconds"], 600)
+
+    def test_bbox_filters_out_a_strike_far_from_the_region(self):
+        self.write([
+            (self.now - timedelta(minutes=5), 10.8, 106.7, -30, "ground"),   # HCMC
+            (self.now - timedelta(minutes=5), 21.0, 105.8, -30, "ground"),   # Hanoi, well outside
+        ])
+        result = lvn.recent_strikes(self.path, bbox=HCMC_BBOX, now=self.now)
+        self.assertEqual(result["count"], 1)
+        self.assertAlmostEqual(result["strikes"][0]["lat"], 10.8)
+
+    def test_a_missing_bbox_argument_returns_every_strike_in_window(self):
+        self.write([
+            (self.now - timedelta(minutes=5), 10.8, 106.7, -30, "ground"),
+            (self.now - timedelta(minutes=5), 21.0, 105.8, -30, "ground"),
+        ])
+        result = lvn.recent_strikes(self.path, now=self.now)
+        self.assertEqual(result["count"], 2)
+        self.assertIsNone(result["bbox"])
+
+    def test_collector_stale_is_judged_from_the_files_write_time_not_the_strikes_own_time(self):
+        # HYMETNET's own reported strike times run ~50 min behind real time
+        # even when the collector is perfectly healthy (see recent_strikes'
+        # docstring), so a strike this "old" must not, by itself, make the
+        # collector look stale -- only a file that hasn't been written to
+        # in a while should.
+        self.write([(self.now - timedelta(minutes=50), 10.8, 106.7, -30, "ground")], mtime=self.now)
+        fresh = lvn.recent_strikes(self.path, now=self.now)
+        self.assertFalse(fresh["collector_stale"])
+        self.assertEqual(fresh["collected_at"], self.now.isoformat().replace("+00:00", "Z"))
+        much_later = lvn.recent_strikes(self.path, now=self.now + timedelta(minutes=40))
+        self.assertTrue(much_later["collector_stale"])
+        self.assertEqual(much_later["latest_anywhere"], fresh["strikes"][0]["time"])
+
+    def test_strikes_are_returned_oldest_first(self):
+        self.write([
+            (self.now - timedelta(minutes=1), 10.8, 106.7, -20, "cloud"),
+            (self.now - timedelta(minutes=30), 10.8, 106.7, -20, "ground"),
+        ])
+        result = lvn.recent_strikes(self.path, now=self.now)
+        self.assertGreater(result["strikes"][0]["age_seconds"], result["strikes"][1]["age_seconds"])
+
+    def test_the_cache_invalidates_when_the_file_changes(self):
+        self.write([(self.now - timedelta(minutes=1), 10.8, 106.7, -20, "ground")])
+        first = lvn.recent_strikes(self.path, now=self.now)
+        self.write([
+            (self.now - timedelta(minutes=1), 10.8, 106.7, -20, "ground"),
+            (self.now - timedelta(seconds=10), 10.8, 106.7, -20, "cloud"),
+        ])
+        second = lvn.recent_strikes(self.path, now=self.now)
+        self.assertEqual(first["count"], 1)
+        self.assertEqual(second["count"], 2)
+
+    def test_a_malformed_row_is_skipped_not_fatal(self):
+        with self.path.open("w", newline="", encoding="utf-8") as f:
+            f.write("id,time,lat,lon,current_ka,sensor_count,dof,kind\n")
+            f.write("bad,not-a-time,10.8,106.7,-20,6,3,ground\n")
+            when = (self.now - timedelta(minutes=1)).isoformat().replace("+00:00", "Z")
+            f.write(f"ok,{when},10.8,106.7,-20,6,3,ground\n")
+        result = lvn.recent_strikes(self.path, now=self.now)
+        self.assertEqual(result["count"], 1)
+
+
+class LightningEndpointTests(unittest.TestCase):
+    """The route: /api/rain-map/lightning wired to the region box and archive path."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.path = Path(self.temp.name) / "strikes.csv"
+        patcher = patch.object(lvn, "STRIKES_HISTORY_PATH", self.path)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        from fastapi.testclient import TestClient
+        from app.main import app
+        self.client = TestClient(app)
+
+    def write(self, rows):
+        with self.path.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(
+                f, fieldnames=["id", "time", "lat", "lon", "current_ka", "sensor_count", "dof", "kind"]
+            )
+            writer.writeheader()
+            for i, (when, lat, lon, ka, kind) in enumerate(rows):
+                writer.writerow({
+                    "id": f"s{i}", "time": when.isoformat().replace("+00:00", "Z"),
+                    "lat": lat, "lon": lon, "current_ka": ka, "sensor_count": 6, "dof": 3, "kind": kind,
+                })
+
+    def test_serves_strikes_restricted_to_the_regional_box(self):
+        now = datetime.now(lvn.UTC)
+        self.write([
+            (now - timedelta(minutes=5), 10.8, 106.7, -30, "ground"),  # inside HIMAWARI_BBOX
+            (now - timedelta(minutes=5), 40.0, 116.4, -30, "ground"),  # Beijing, far outside
+        ])
+        r = self.client.get("/api/rain-map/lightning")
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        self.assertEqual(body["count"], 1)
+        self.assertEqual(set(body["strikes"][0]), {"time", "lat", "lon", "current_ka", "kind", "age_seconds"})
+
+    def test_minutes_query_param_is_bounded(self):
+        for bad in ("minutes=0", "minutes=4", "minutes=361", "minutes=oops"):
+            self.assertEqual(self.client.get(f"/api/rain-map/lightning?{bad}").status_code, 422)
+        self.assertEqual(self.client.get("/api/rain-map/lightning?minutes=30").status_code, 200)
+
+    def test_no_archive_yet_is_empty_not_an_error(self):
+        r = self.client.get("/api/rain-map/lightning")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["strikes"], [])
+        self.assertTrue(r.json()["collector_stale"])
+
+    def test_the_static_layer_script_is_served(self):
+        self.assertEqual(self.client.get("/media/app/static/lightning.js").status_code, 200)
 
 
 if __name__ == "__main__":

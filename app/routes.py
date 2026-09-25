@@ -9,11 +9,12 @@ from fastapi.templating import Jinja2Templates
 
 from app.config import (
     HIMAWARI_BANDS,
+    HIMAWARI_BBOX,
     HIMAWARI_IMAGE_SIZES,
     HIMAWARI_MAX_AGE_HOURS,
     HIMAWARI_RETENTION_HOURS,
 )
-from app.services import flights, himawari, recent
+from app.services import flights, himawari, lightning_vn, radar_nhb, recent
 from app.services.fetch_jobs import FetchJobManager
 from app.services.vrain import rain_density
 
@@ -101,6 +102,69 @@ def register_routes(
         if at is not None and at.tzinfo is None:
             raise HTTPException(status_code=422, detail="at must include a timezone")
         return rain_density(hours=hours, at=at)
+
+    @app.get("/api/rain-map/lightning")
+    def lightning_recent(minutes: int = Query(90, ge=5, le=360)) -> dict:
+        """Real strikes from HYMETNET's rich feed (scripts/hymetnet_poller.py),
+        not a dramatization -- see app/services/lightning_vn.py. Restricted to
+        HIMAWARI_BBOX, the same regional box the satellite layer uses, so an
+        approaching storm is visible before it reaches the city."""
+        return lightning_vn.recent_strikes(lightning_vn.STRIKES_HISTORY_PATH, minutes=minutes, bbox=HIMAWARI_BBOX)
+
+    @app.get("/api/rain-map/radar")
+    def radar_frames() -> dict:
+        """Nha Be weather radar (HYMETNET): the frames online, newest first.
+
+        Each frame is served recoloured into the map's own classes by
+        /api/rain-map/radar.png -- see app/services/radar_nhb.py for why.
+        """
+        try:
+            stamps = radar_nhb.available_frames()
+        except radar_nhb.RadarUnavailable as e:
+            raise HTTPException(status_code=503, detail=str(e))
+        now = datetime.now(timezone.utc)
+        frames = [
+            {
+                "time": radar_nhb.stamp_time(s).isoformat(),
+                "age_minutes": round((now - radar_nhb.stamp_time(s)).total_seconds() / 60),
+                "image_url": f"/api/rain-map/radar.png?time={s}",
+            }
+            for s in stamps
+        ]
+        return {
+            "station": "Nhà Bè",
+            "source": "HYMETNET (Trung tâm Kỹ thuật quan trắc KTTV)",
+            "product": "CMAX column-maximum reflectivity, recoloured by dBZ",
+            "site": list(radar_nhb.RADAR_SITE),
+            "bounds": radar_nhb.IMAGE_BOUNDS,
+            "classes": [
+                {"name": name, "min_dbz": lowest, "color": "#%02x%02x%02x" % rgb}
+                for lowest, name, rgb in radar_nhb.CLASSES
+            ],
+            "latest": frames[0],
+            "frames": frames,
+        }
+
+    @app.get("/api/rain-map/radar.png")
+    def radar_image(time: str) -> Response:
+        if not radar_nhb.STAMP_RE.match(time):
+            raise HTTPException(status_code=422, detail="time must be YYYYMMDDHHMM (UTC)")
+        try:
+            if time not in radar_nhb.available_frames() and not (radar_nhb.STORE / f"{time}.png").exists():
+                # Only frames HYMETNET currently lists (or already drawn) -- a
+                # stranger shouldn't be able to make us fetch arbitrary paths.
+                raise HTTPException(status_code=404, detail="no such radar frame online")
+            png = radar_nhb.frame_png(time)
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
+        except radar_nhb.RadarUnavailable as e:
+            raise HTTPException(status_code=503, detail=str(e))
+        return Response(
+            content=png,
+            media_type="image/png",
+            # The time is pinned in the URL, so this image can never change.
+            headers={"Cache-Control": "public, max-age=86400, immutable"},
+        )
 
     @app.get("/api/rain-map/himawari")
     def himawari_scene(size: int = Query(None)) -> dict:

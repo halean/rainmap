@@ -111,6 +111,7 @@
       .popup-card .just { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
       .popup-card img { width: 100%; border-radius: 6px; display: block; cursor: zoom-in; }
       .popup-card .approx-note { font-size: 10.5px; color: var(--muted); font-style: italic; margin-top: 4px; }
+      .popup-card .stale-note { font-size: 11px; color: #92400e; background: #fef3c7; border-radius: 4px; padding: 3px 6px; margin-top: 5px; }
 
       .popup-card .frame-slider { position: relative; }
       .popup-card .frame-nav {
@@ -185,33 +186,56 @@
       map.createPane("pinsPane");
       map.getPane("pinsPane").style.zIndex = 650;
 
-      // real-world precipitation radar (RainViewer), sits above basemap tiles but below our camera-based field
+      // Nhà Bè weather radar (HYMETNET), above the basemap but below the camera field.
+      // Served recoloured into the same Light / Medium / Heavy colours as the pins
+      // (app/services/radar_nhb.py), weaker echoes removed, so the two compare directly.
       map.createPane("realRadarPane");
       map.getPane("realRadarPane").style.zIndex = 350;
       map.getPane("realRadarPane").style.opacity = 0.75;
 
-      let realRadarLayer = null;
-      let realRadarLoaded = false;
+      const RADAR_REFRESH_MS = 5 * 60 * 1000; // HYMETNET publishes every 10 min
+      let realRadarLayer = null, realRadarTime = null, realRadarTimer = null;
 
-      function ensureRealRadarLayer(cb) {
-        if (realRadarLoaded) return cb();
-        fetch("https://api.rainviewer.com/public/weather-maps.json")
-          .then((r) => r.json())
+      function setRadarStatus(text) {
+        const el = document.getElementById("realRadarStatus");
+        if (el) el.textContent = text;
+      }
+
+      function refreshRealRadar() {
+        fetch("/api/rain-map/radar")
+          .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
           .then((data) => {
-            const frames = data.radar.past;
-            const latest = frames[frames.length - 1];
-            const url = `${data.host}${latest.path}/256/{z}/{x}/{y}/2/1_1.png`;
-            realRadarLayer = L.tileLayer(url, {
+            if (!document.getElementById("realRadarToggle").checked) return;
+            const f = data.latest;
+            const when = new Date(f.time).toLocaleTimeString("en-GB", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit" });
+            setRadarStatus(`Nhà Bè radar, ${when} ICT (${f.age_minutes} min ago).`);
+            if (f.time === realRadarTime) return;
+            realRadarTime = f.time;
+            const layer = L.imageOverlay(f.image_url, data.bounds, {
               pane: "realRadarPane",
-              maxNativeZoom: 7,
-              maxZoom: 19,
-              tileSize: 256,
-              attribution: "Radar &copy; <a href=\"https://www.rainviewer.com\">RainViewer</a>",
+              attribution: 'Radar &copy; <a href="http://hymetnet.gov.vn/radar/NHB" target="_blank" rel="noopener">HYMETNET</a>',
             });
-            realRadarLoaded = true;
-            cb();
+            // Swap only once the new frame has loaded, so the layer never blinks out.
+            layer.once("load", () => {
+              if (realRadarLayer && realRadarLayer !== layer) map.removeLayer(realRadarLayer);
+              realRadarLayer = layer;
+            });
+            layer.once("error", () => { map.removeLayer(layer); setRadarStatus("Radar frame failed to load."); });
+            layer.addTo(map);
           })
-          .catch((e) => console.error("RainViewer load failed", e));
+          .catch((e) => setRadarStatus(`Radar unavailable: ${e.message}`));
+      }
+
+      function setRealRadar(on) {
+        clearInterval(realRadarTimer);
+        if (on) {
+          refreshRealRadar();
+          realRadarTimer = setInterval(refreshRealRadar, RADAR_REFRESH_MS);
+        } else {
+          if (realRadarLayer) map.removeLayer(realRadarLayer);
+          realRadarLayer = null; realRadarTime = null;
+          setRadarStatus("");
+        }
       }
 
       const LEGEND_HIDDEN_KEY = "hcmcRainMap.legendHidden";
@@ -239,20 +263,16 @@
           rows += `<div class="row">${swatch}${label}${suffix}</div>`;
         }
         rows += `<div class="note">Only rain is coloured &mdash; dry areas stay clear. The field is a radar-style interpolation between sampled cameras, not a per-point boundary. Click a pin for the live frame.</div>`;
-        rows += `<label class="toggle-row"><input type="checkbox" id="realRadarToggle" /> Real weather radar (RainViewer)</label>`;
+        rows += `<label class="toggle-row"><input type="checkbox" id="realRadarToggle" /> Weather radar (Nhà Bè, HYMETNET)</label>`;
+        rows += `<div class="note">Vietnam's official radar for the city, in the same colours: 20&ndash;30 dBZ Light, 30&ndash;40 Medium, 40+ Heavy. Weaker echoes are hidden &mdash; mostly noise or cloud.</div>`;
+        rows += `<div id="realRadarStatus" class="note" role="status"></div>`;
         rows += `<label class="toggle-row"><input type="checkbox" id="cameraDensityToggle" checked /> Camera rain density</label>`;
         legendBoxEl.innerHTML = rows;
         legendBoxEl.querySelector(".legend-close").addEventListener("click", () => setLegendVisible(false));
         legendBoxEl.querySelector("#cameraDensityToggle").addEventListener("change", (e) => {
           if (radarOverlay) radarOverlay.setOpacity(e.target.checked ? 1 : 0);
         });
-        legendBoxEl.querySelector("#realRadarToggle").addEventListener("change", (e) => {
-          if (e.target.checked) {
-            ensureRealRadarLayer(() => realRadarLayer.addTo(map));
-          } else if (realRadarLayer) {
-            map.removeLayer(realRadarLayer);
-          }
-        });
+        legendBoxEl.querySelector("#realRadarToggle").addEventListener("change", (e) => setRealRadar(e.target.checked));
 
         reopenBtnEl = L.DomUtil.create("button", "legend-reopen", wrap);
         reopenBtnEl.title = "Show legend";
@@ -464,6 +484,21 @@
         }
       }
 
+      // A reading older than this no longer describes the weather: the camera
+      // stopped delivering frames (offline, or the site timing out), so its last
+      // verdict stays in rain_sample.json indefinitely. Same rule as the 3D
+      // view's freshCamera() in 3d/weather-data.js.
+      const STALE_MINUTES = 30;
+      const STALE_COLOR = "#b8c0cc";
+      function readingAgeMinutes(p, now = Date.now()) {
+        const at = capturedAt(p);
+        return at ? (now - Date.parse(at)) / 60000 : Infinity;
+      }
+      function isFresh(p) {
+        const age = readingAgeMinutes(p);
+        return age >= -5 && age <= STALE_MINUTES;
+      }
+
       function render(allPoints) {
         // Drop rows without coordinates up front. L.circleMarker([null,null]) throws,
         // and poll() swallows that into console.error -- so a single malformed record
@@ -480,18 +515,25 @@
         liveLayer.clearLayers();
         for (const key in markerIndex) delete markerIndex[key];
 
-        renderRadar(points);
+        const fresh = points.filter(isFresh);
+        renderRadar(fresh);
 
         points.forEach((p) => {
+          const stale = !isFresh(p);
           const color = RAIN_COLORS[p.rain] || "#888";
+          const age = readingAgeMinutes(p);
+          const staleNote = !stale ? "" : Number.isFinite(age)
+            ? `<div class="stale-note">No new frame for ${Math.round(age)} min &mdash; this reading is left out of the rain map.</div>`
+            : `<div class="stale-note">No frame time known &mdash; this reading is left out of the rain map.</div>`;
 
-          const marker = L.circleMarker([p.lat, p.lon], {
-            pane: "pinsPane",
-            radius: 10,
-            color: "#fff",
-            weight: 2,
-            fillColor: color,
-            fillOpacity: 1,
+          // Stale pins are hollow dashed rings, not a filled grey: "No rain"
+          // pins are already slate grey, and a second grey read as the same thing.
+          const marker = L.circleMarker([p.lat, p.lon], stale ? {
+            pane: "pinsPane", radius: 8, color: "#7c8799", weight: 2, dashArray: "3 3",
+            fillColor: "#ffffff", fillOpacity: 0.6,
+          } : {
+            pane: "pinsPane", radius: 10, color: "#fff", weight: 2,
+            fillColor: color, fillOpacity: 1,
           });
 
           const imgHtml = p.image_url
@@ -510,7 +552,8 @@
             <div class="popup-card">
               <div class="district">${p.district}</div>
               <div class="loc">${p.location_text}</div>
-              <span class="badge" style="background:${color}">${p.rain} rain</span>
+              <span class="badge" style="background:${stale ? STALE_COLOR : color}">${p.rain} rain${stale ? " (stale)" : ""}</span>
+              ${staleNote}
               <div class="just">${p.justification}</div>
               ${imgHtml}
               ${p.approx ? '<div class="approx-note">Approximate location (district centroid)</div>' : ""}
@@ -528,11 +571,13 @@
 
         // An all-dry city renders an empty field by design, so say so explicitly --
         // otherwise a blank map is indistinguishable from a failed load.
-        const counts = points.reduce((acc, p) => ((acc[p.rain] = (acc[p.rain] || 0) + 1), acc), {});
+        const counts = fresh.reduce((acc, p) => ((acc[p.rain] = (acc[p.rain] || 0) + 1), acc), {});
         const wet = ["Light", "Medium", "Heavy"].filter((k) => counts[k]);
-        document.getElementById("rainSummary").textContent = wet.length
-          ? "· " + wet.map((k) => `${counts[k]} ${k.toLowerCase()}`).join(", ") + ` of ${points.length} cameras`
-          : `· no rain at any of ${points.length} cameras`;
+        const staleCount = points.length - fresh.length;
+        document.getElementById("rainSummary").textContent = (wet.length
+          ? "· " + wet.map((k) => `${counts[k]} ${k.toLowerCase()}`).join(", ") + ` of ${fresh.length} cameras`
+          : `· no rain at any of ${fresh.length} cameras`) +
+          (staleCount ? ` · ${staleCount} stale (no frame in ${STALE_MINUTES} min)` : "");
 
         document.getElementById("lastUpdated").textContent =
           "· refreshed " + new Date().toLocaleTimeString();
@@ -550,5 +595,6 @@
     </script>
     <script src="/media/app/static/vrain.js"></script>
     <script src="/media/app/static/himawari.js"></script>
+    <script src="/media/app/static/lightning.js"></script>
   </body>
 </html>

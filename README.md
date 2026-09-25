@@ -2,7 +2,8 @@
 
 Live rain-intensity map of Ho Chi Minh City, read off the city's public
 traffic-camera feed by a vision model, plotted on real OpenStreetMap tiles
-with a real-radar (RainViewer) comparison layer, rain-gauge readings, and
+with Vietnam's official weather radar (Nhà Bè, HYMETNET) as a comparison
+layer, rain-gauge readings, and
 satellite cloud tops decoded straight from Himawari-9's raw instrument files.
 
 ## How it works
@@ -171,6 +172,59 @@ instead of prorating unknown rainfall. Incomplete amounts are lower bounds;
 zero means no observed increase, not proof of dry weather. Stale stations are
 excluded from the field, and a stale overall log is labelled with its last
 observation time. Reset inference remains provisional until more days accrue.
+
+## Live lightning
+
+Enable **Lightning (HYMETNET, live)** in the map legend. Unlike the 3D map's
+lightning layer, this one is not a dramatization of camera rain: every marker
+is a real strike from Vietnam's national lightning network, read from the
+archive `scripts/hymetnet_poller.py` has been collecting (see
+`app/services/lightning_vn.py`). `GET /api/rain-map/lightning?minutes=90`
+returns strikes from the trailing window, restricted to `HIMAWARI_BBOX` --
+the same regional box the satellite layer uses -- so an approaching storm is
+visible before it reaches the city, not just strikes over HCMC itself.
+
+Markers fade over the window rather than disappearing at its edge, so a quiet
+moment still shows what recently happened nearby; a strike new since the last
+check briefly pulses. Red is cloud-to-ground, violet is in-cloud.
+
+**HYMETNET's own strike timestamps run roughly 45-55 minutes behind the
+moment they were collected**, consistently, even when the collector is
+working perfectly -- this was confirmed by comparing the archive's newest
+strike time against the poller's own log timestamps, not assumed. A strike
+showing "50 min ago" is not stale data; it is what the source itself reports.
+For that reason `collector_stale` in the API response is judged from when
+the archive file was last written, not from the newest strike's own `time`
+field, and the map's status line separately reports when the collector last
+saw activity anywhere in the country even when nothing struck near HCMC.
+
+## Weather radar (Nhà Bè)
+
+Enable **Weather radar (Nhà Bè, HYMETNET)** in the map legend. This is the
+national radar covering the city, a few km south of the centre, published by
+HYMETNET (the same source as the lightning layer) as a PNG every 10 minutes
+with about 2 hours online -- see `app/services/radar_nhb.py` for the two
+undocumented endpoints and the image bounds. It replaced RainViewer, whose
+picture over HCMC matched this one closely but ran ~10 minutes behind and was
+smoothed. Detail is similar in both: the PNG has 260 m pixels, but it is the
+radar's ~780 m grid enlarged three times, so it looks blocky at street zoom.
+
+The product is CMAX, column-maximum reflectivity: the strongest echo anywhere
+above each point. It is recoloured into the map's own classes rather than
+shown in HYMETNET's dBZ palette -- 20-30 dBZ Light, 30-40 Medium, 40+ Heavy,
+the same colours as the camera pins -- and echoes under 20 dBZ are dropped:
+they cover most of each frame and are mostly clutter, beam artefacts and cloud
+that never reaches the ground. The dBZ-to-class cut-offs are a first
+approximation (roughly 0.6-3, 3-12 and 12+ mm/h by Marshall-Palmer), not
+calibrated against the cameras. CMAX also overstates rain at street level
+(evaporation below cloud, the bright melting layer), so treat it as where the
+storms are rather than a rain gauge.
+
+`GET /api/rain-map/radar` lists the frames online, newest first, with the
+bounds to draw them at; `GET /api/rain-map/radar.png?time=YYYYMMDDHHMM` (UTC)
+serves one recoloured. HYMETNET is plain http, which an https page cannot load
+images from, so frames are fetched and recoloured server-side, once each, and
+kept in `data/derived/radar_nhb/` for 48 hours.
 
 ## Satellite cloud tops
 

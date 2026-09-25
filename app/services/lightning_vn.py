@@ -18,8 +18,11 @@ detail -- so scripts/hymetnet_poller.py collects both, into separate
 archives. No published rate limit or ToS for either, so it polls gently.
 """
 
+import csv
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from functools import lru_cache
+from pathlib import Path
 
 UTC = timezone.utc
 BUCKET_RE = re.compile(r"^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})$")
@@ -177,4 +180,103 @@ def parse_embedded_strikes(html):
             if record:
                 seen[record["id"]] = record
     return sorted(seen.values(), key=lambda r: r["time"])
+
+# ---------------------------------------------------------------------------
+# Reading scripts/hymetnet_poller.py's own archive back, for a live map layer.
+# Only the rich per-strike CSV: it already has second-level time and exact
+# coordinates for anywhere the sensors reach, so a map asking "is there
+# lightning near here right now" doesn't need the coarser, commune-named
+# /dongset archive as well -- that one earns its keep on the province-level
+# question instead.
+STRIKES_HISTORY_PATH = Path("data/derived/lightning_vn_strikes_history.csv")
+# The poller appends roughly every 3 minutes whenever anything struck
+# anywhere in its coverage. Silence far past that means the collector itself
+# has stopped, which is a different fact from "no lightning near HCMC right
+# now" and the map should not conflate the two.
+COLLECTOR_STALE_AFTER = timedelta(minutes=20)
+
+
+def read_strikes_history(path):
+    """The strikes archive back into records with a parsed, tz-aware `time`
+    -- the shape scripts/hymetnet_poller.py's poll_strikes_once() appended.
+    A malformed or partially-written final row is skipped, not fatal, same
+    tolerance as app/services/vrain.py's read_history()."""
+    records = []
+    with Path(path).open(newline="", encoding="utf-8") as source:
+        for row in csv.DictReader(source):
+            try:
+                when = datetime.fromisoformat(row["time"].replace("Z", "+00:00"))
+                lat, lon = float(row["lat"]), float(row["lon"])
+                if when.tzinfo is None or not -90 <= lat <= 90 or not -180 <= lon <= 180:
+                    continue
+                records.append({
+                    "time": when,
+                    "lat": lat,
+                    "lon": lon,
+                    "current_ka": float(row["current_ka"]),
+                    "kind": row["kind"],
+                })
+            except (ValueError, TypeError, KeyError):
+                continue
+    return records
+
+
+@lru_cache(maxsize=2)
+def _load_strikes(path, mtime_ns, size):
+    return read_strikes_history(path)
+
+
+def recent_strikes(path=STRIKES_HISTORY_PATH, *, minutes=90, bbox=None, now=None):
+    """Strikes from the rich archive in the last `minutes`, optionally
+    restricted to a (south, west, north, east) box. Cached against the
+    file's own mtime/size (see app/services/vrain.py's `_load` for the same
+    pattern), since the archive only grows and re-parsing all of it on every
+    request would make the map's cost scale with the collector's lifetime
+    rather than with how many people are looking at it.
+
+    `collector_stale` is judged from the archive file's own mtime, not from
+    the newest strike's `time` field: HYMETNET's own reported strike times
+    run a consistent ~45-55 minutes behind the moment they're collected (see
+    README), so a poller that is working perfectly would otherwise look
+    permanently stale by that measure."""
+    path = Path(path)
+    now = now or datetime.now(UTC)
+    if not path.exists():
+        records, collected_at = [], None
+    else:
+        stat = path.stat()
+        records = _load_strikes(str(path.resolve()), stat.st_mtime_ns, stat.st_size)
+        collected_at = datetime.fromtimestamp(stat.st_mtime, UTC)
+    latest_anywhere = max((r["time"] for r in records), default=None)
+    start = now - timedelta(minutes=minutes)
+    windowed = [r for r in records if r["time"] >= start]
+    if bbox is not None:
+        south, west, north, east = bbox
+        windowed = [r for r in windowed if south <= r["lat"] <= north and west <= r["lon"] <= east]
+    windowed.sort(key=lambda r: r["time"])
+
+    def iso(dt):
+        return dt.isoformat().replace("+00:00", "Z")
+
+    return {
+        "strikes": [
+            {
+                "time": iso(r["time"]),
+                "lat": r["lat"],
+                "lon": r["lon"],
+                "current_ka": r["current_ka"],
+                "kind": r["kind"],
+                "age_seconds": round((now - r["time"]).total_seconds()),
+            }
+            for r in windowed
+        ],
+        "count": len(windowed),
+        "window_minutes": minutes,
+        "bbox": list(bbox) if bbox is not None else None,
+        "latest": iso(windowed[-1]["time"]) if windowed else None,
+        "latest_anywhere": iso(latest_anywhere) if latest_anywhere else None,
+        "collected_at": iso(collected_at) if collected_at else None,
+        "collector_stale": collected_at is None or now - collected_at > COLLECTOR_STALE_AFTER,
+        "generated_at": iso(now),
+    }
 

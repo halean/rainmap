@@ -25,6 +25,9 @@ NOTES.md
 # rendered satellite frames -- a rolling window, refetched from NOAA on demand
 data/derived/himawari/
 
+# recoloured radar frames -- a rolling 48 h window, refetched from HYMETNET on demand
+data/derived/radar_nhb/
+
 # Generated 3D map models and build inputs; rebuild with 3d/tools/build.py.
 /3d/assets/
 /3d/build-cache/
