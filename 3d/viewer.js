@@ -3,9 +3,12 @@ import {createWeather} from './weather.js';
 import {createFlights} from './flights.js';
 import {createLightning,tallBuildings,nearestHighrise} from './lightning.js';
 import {createSky} from './sky-render.js';
+import {createCityLighting} from './city-lighting.js';
 import {createFlag} from './flag.js';
 import {createMetro} from './metro.js';
-let weather,flights,lightning,sky,flag,metro;
+import {createNotreDame} from './notre-dame.js';
+import {createBenThanh} from './ben-thanh.js';
+let weather,flights,lightning,sky,flag,metro,cityLighting,cathedral,market;
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const $=id=>document.getElementById(id),host=$('viewport');
@@ -36,9 +39,9 @@ function goTo(x,z,distance=1600,top=false){controls.target.set(x,0,z);camera.pos
 function centralCity(){const [x,z]=project(106.699,10.774);controls.target.set(x,120,z);camera.position.copy(controls.target).add(new THREE.Vector3(-.6,.36,.7).normalize().multiplyScalar(2600));controls.update();lastLoad=0;setActive('downtown');}
 function wholeCity(){const b=manifest.boundsXZ,span=Math.hypot(b[2]-b[0],b[3]-b[1]);const fov=Math.min(camera.fov*Math.PI/360,Math.atan(Math.tan(camera.fov*Math.PI/360)*camera.aspect));goTo((b[0]+b[2])/2,(b[1]+b[3])/2,Math.min(200000,span*.52/Math.sin(fov)));setActive('overview');}
 function updateLayer(group){group.traverse(o=>{if(!o.isMesh&&!o.isLineSegments)return;const name=o.name;o.visible= name.startsWith('building')?$('buildings').checked : ['street','path'].includes(name)?$('minor').checked : true;});}
-function dispose(group){group.traverse(o=>{o.geometry?.dispose();if(o.material){for(const m of Array.isArray(o.material)?o.material:[o.material])m.dispose();}});}
+function dispose(group){cityLighting?.unregister(group);group.traverse(o=>{o.geometry?.dispose();if(o.material){for(const m of Array.isArray(o.material)?o.material:[o.material])m.dispose();}});}
 function tileDistance(tile){const b=tile.bounds,t=controls.target;const dx=Math.max(b[0]-t.x,0,t.x-b[2]),dz=Math.max(b[1]-t.z,0,t.z-b[3]);return Math.hypot(dx,dz);}
-function updateSkyline(){if(!skyline)return;skyline.traverse(o=>{if(!o.isMesh)return;const id=o.name.split('__')[1];o.visible=$('buildings').checked&&!tiles.get(id)?.group.visible;});}
+function updateSkyline(){if(!skyline)return;skyline.traverse(o=>{if(!o.isMesh)return;const id=o.name.split('__')[1];const visible=$('buildings').checked&&!tiles.get(id)?.group.visible;o.visible=visible;});}
 function updateTiles(){
  if(!ready)return;
  const distance=camera.position.distanceTo(controls.target),detail=distance<6500;
@@ -52,7 +55,7 @@ function updateTiles(){
  for(const t of selected){
   if(tiles.has(t.id)||pending.has(t.id)||failed.has(t.id)||pending.size>=3)continue;
   pending.add(t.id);
-  loader.load(t.url,gltf=>{pending.delete(t.id);sky?.registerWater(gltf.scene);sky?.registerBuildings(gltf.scene);updateLayer(gltf.scene);gltf.scene.visible=desired.has(t.id);scene.add(gltf.scene);tiles.set(t.id,{group:gltf.scene,lastSeen:performance.now()});updateSkyline();lastLoad=0;},undefined,error=>{pending.delete(t.id);failed.add(t.id);console.error('Tile load failed',t.id,error);lastLoad=0;});
+  loader.load(t.url,gltf=>{pending.delete(t.id);cathedral?.replaceGeneric(gltf.scene);market?.replaceGeneric(gltf.scene);sky?.registerWater(gltf.scene);sky?.registerBuildings(gltf.scene);sky?.registerRoads(gltf.scene);cityLighting?.register(gltf.scene);updateLayer(gltf.scene);gltf.scene.visible=desired.has(t.id);scene.add(gltf.scene);tiles.set(t.id,{group:gltf.scene,lastSeen:performance.now()});updateSkyline();lastLoad=0;},undefined,error=>{pending.delete(t.id);failed.add(t.id);console.error('Tile load failed',t.id,error);lastLoad=0;});
  }
  updateSkyline();
  const visible=[...tiles.keys()].filter(id=>desired.has(id)).length;
@@ -65,7 +68,7 @@ async function init(){
  const cameraData=await fetch('assets/cameras.json').then(r=>r.json());
  $('road-km').textContent=Math.round(manifest.statistics.roadLengthMetres/1000).toLocaleString();$('building-count').textContent=manifest.statistics.buildingFeatures.toLocaleString();
  const b=manifest.boundsXZ;$('extent').textContent=`${((b[2]-b[0])/1000).toFixed(0)} × ${((b[3]-b[1])/1000).toFixed(0)} km · ${manifest.cameraCount} camera locations · static 3D model`;
- const ground=new THREE.Mesh(new THREE.PlaneGeometry(600000,600000),new THREE.MeshStandardMaterial({color:'#455d52',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.5;scene.add(ground);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(600000,600000),new THREE.MeshStandardMaterial({color:'#455d52',roughness:1}));ground.name='ground';ground.rotation.x=-Math.PI/2;ground.position.y=-.5;scene.add(ground);
  const positions=[];for(const c of cameraData)positions.push(c.x,14,c.z);
  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));cameraMarkers=new THREE.Points(geometry,new THREE.PointsMaterial({color:'#ffc777',size:5,sizeAttenuation:false,depthTest:false}));cameraMarkers.visible=false;cameraMarkers.renderOrder=5;scene.add(cameraMarkers);
  centralCity();
@@ -73,15 +76,23 @@ async function init(){
  // Overview lines are a cartographic guide. Use a light colour so narrow streets remain legible at city scale.
  overview.traverse(o=>{if(o.isLineSegments){o.material.color.set(o.name==='major'?'#c1d1b6':o.name==='street'?'#90aaa0':'#88a294');o.material.transparent=true;o.material.opacity=o.name==='major'?.95:.65;}});
  if(manifest.skyline){const layer=await loader.loadAsync(manifest.skyline.url);skyline=layer.scene;scene.add(skyline);updateSkyline();highrises=tallBuildings(skyline,Infinity);}
+ cathedral=createNotreDame({scene,project});cathedral.group.visible=$('buildings').checked;cathedral.replaceGeneric(skyline);
+ market=createBenThanh({scene,project});market.group.visible=$('buildings').checked;market.replaceGeneric(skyline);
  sky=createSky({scene,manifest,directionalLight:sunLight,hemisphereLight:hemiLight});
- sky.registerWater(overview);sky.registerBuildings(skyline);
+ sky.registerWater(overview);sky.registerBuildings(skyline);sky.registerRoads(overview);
+ cityLighting=createCityLighting({scene,camera,controls,sky});
+ cityLighting.register(overview);cityLighting.register(skyline);
+ for(const [id,key] of [['city-lights','lights']]) {
+  const input=$(id);cityLighting.state[key]=input.checked;
+  input.onchange=()=>{cityLighting.state[key]=input.checked;};
+ }
  updateLayer(overview);scene.add(overview);$('loading').hidden=true;ready=true;updateTiles();
  weather=createWeather({scene,project,manifest});
  flights=createFlights({scene,project,controls});
  metro=createMetro({scene,project});
  lightning=createLightning({scene,weather,skyline,camera});
  flag=createFlag({scene,skyline,camera});
- window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get flag(){return flag?.state;},get metro(){return metro?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
+ window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get lighting(){return cityLighting?.state;},get flag(){return flag?.state;},get metro(){return metro?.state;},get cathedral(){return cathedral?.state;},get market(){return market?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
 }
 $('overview').onclick=()=>{if(ready)wholeCity();};
 $('downtown').onclick=()=>{if(ready)centralCity();};
@@ -120,7 +131,7 @@ renderer.domElement.addEventListener('wheel',e=>{if(!following)return;
 addEventListener('keydown',e=>{if(e.key==='Escape'&&following){stopFollowing();setActive('');}});
 $('vvk').onclick=()=>{if(!ready)return;const p=project(106.694,10.7605);goTo(...p,1900);setActive('vvk');};
 $('top').onclick=()=>{if(!ready)return;goTo(controls.target.x,controls.target.z,camera.position.distanceTo(controls.target),true);setActive('top');};
-for(const id of ['buildings','minor'])$(id).onchange=()=>{if(overview)updateLayer(overview);for(const e of tiles.values())updateLayer(e.group);updateSkyline();};
+for(const id of ['buildings','minor'])$(id).onchange=()=>{if(cathedral)cathedral.group.visible=$('buildings').checked;if(market)market.group.visible=$('buildings').checked;if(overview)updateLayer(overview);for(const e of tiles.values())updateLayer(e.group);updateSkyline();};
 $('cameras').onchange=()=>{if(cameraMarkers)cameraMarkers.visible=$('cameras').checked;};
 renderer.domElement.addEventListener('dblclick',e=>{
  if(!ready||!highrises.length)return;
@@ -142,6 +153,6 @@ renderer.domElement.addEventListener('dblclick',e=>{
 });
 $('about').onclick=()=>$('info').showModal();$('close').onclick=()=>$('info').close();
 controls.addEventListener('start',()=>{if(!following)setActive('');});
-function animate(now){requestAnimationFrame(animate);followTrain();controls.update();weather?.update(now);flights?.update(now);lightning?.update(now);flag?.update?.(now);metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}renderer.render(scene,camera);}
+function animate(now){requestAnimationFrame(animate);followTrain();controls.update();weather?.update(now);flights?.update(now);lightning?.update(now);flag?.update?.(now);metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}cityLighting?.update(now);renderer.render(scene,camera);}
 requestAnimationFrame(animate);
 init().catch(error=>{console.error(error);$('loading').innerHTML='';const title=document.createElement('strong');title.textContent='Model could not be loaded';const p=document.createElement('p');p.textContent=error.message;$('loading').append(title,p);});

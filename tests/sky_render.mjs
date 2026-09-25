@@ -225,7 +225,7 @@ run('registerBuildings() gives window glass to building meshes only, once, and s
   for (const k of ['water', 'street']) if (mats[k].onBeforeCompile) throw new Error(`${k} should not get window glass`);
 
   const compile = (m) => {
-    const shader = { uniforms: {}, vertexShader: '#include <common>\n#include <begin_vertex>', fragmentShader: '#include <common>\n#include <dithering_fragment>' };
+    const shader = { uniforms: {}, vertexShader: THREE.ShaderLib.standard.vertexShader, fragmentShader: THREE.ShaderLib.standard.fragmentShader };
     m.onBeforeCompile(shader); return shader;
   };
   const a = compile(mats.building), b = compile(mats.skyline);
@@ -237,6 +237,70 @@ run('registerBuildings() gives window glass to building meshes only, once, and s
   const before = mats.building.onBeforeCompile;
   sky.registerBuildings({ traverse: (visit) => visit(again) });
   if (mats.building.onBeforeCompile !== before) throw new Error('registerBuildings() reapplied the patch');
+});
+
+run('city illumination shares a solar fade across windows, overview roads and detailed roads', () => {
+  const sky = createSky({scene: makeScene(), manifest, now: noonICT(2026, 8, 24)});
+  const root = new THREE.Group();
+  const building = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial());
+  building.name = 'building';
+  const road = new THREE.Mesh(new THREE.PlaneGeometry(), new THREE.MeshStandardMaterial());
+  road.name = 'major';
+  const line = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial());
+  line.name = 'street';
+  const water = new THREE.Mesh(new THREE.PlaneGeometry(), new THREE.MeshStandardMaterial());
+  water.name = 'water';
+  root.add(building, road, line, water);
+  const waterHook = water.material.onBeforeCompile;
+  sky.registerBuildings(root); sky.registerRoads(root);
+  if (water.material.onBeforeCompile !== waterHook) throw new Error('road glow modified water');
+  const roadHook = road.material.onBeforeCompile;
+  sky.registerRoads(root);
+  if (road.material.onBeforeCompile !== roadHook) throw new Error('road patch not idempotent');
+  const compile = (object, source) => {
+    const shader = {uniforms: {}, vertexShader: source.vertexShader, fragmentShader: source.fragmentShader};
+    object.material.onBeforeCompile(shader); return shader;
+  };
+  const a = compile(building, THREE.ShaderLib.standard);
+  const b = compile(road, THREE.ShaderLib.standard);
+  const c = compile(line, THREE.ShaderLib.basic);
+  const fade = a.uniforms.uCityNight;
+  if (fade !== b.uniforms.uCityNight || fade !== c.uniforms.uCityNight) throw new Error('city fade not shared');
+  if (fade.value !== 0) throw new Error('lights on at noon');
+  if (!(b.uniforms.uRoadGlow.value > c.uniforms.uRoadGlow.value)) throw new Error('major roads should be brighter');
+  sky.update(midnightICT(2026, 8, 24));
+  if (fade.value !== 1 || sky.state.cityLights !== 1) throw new Error('city lights not fully on at night');
+  let previous = 0;
+  for (let minute = 0; minute <= 120; minute += 5) {
+    sky.update(new Date(Date.UTC(2026, 8, 24, 10, minute))); // 17:00–19:00 ICT
+    if (fade.value < previous) throw new Error('dusk fade reversed');
+    previous = fade.value;
+  }
+  sky.update(noonICT(2026, 8, 25));
+  if (fade.value !== 0) throw new Error('lights stayed on the next day');
+  for (const object of root.children) { object.geometry.dispose(); object.material.dispose(); }
+});
+
+run('the moon glints on water but does not whiten facades or add unshadowed directional light', () => {
+  const scene = makeScene();
+  const light = new THREE.DirectionalLight();
+  const sky = createSky({scene, manifest, directionalLight: light, now: midnightICT(2026, 8, 25)});
+  const material = new THREE.MeshStandardMaterial();
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(), material); mesh.name = 'water';
+  sky.registerWater(mesh);
+  const shader = {uniforms: {}, vertexShader: THREE.ShaderLib.standard.vertexShader, fragmentShader: THREE.ShaderLib.standard.fragmentShader};
+  material.onBeforeCompile(shader);
+  if (sky.state.body !== 'moon' || scene._added[1].material.opacity <= 0) throw new Error('moon disappeared');
+  if (!(shader.uniforms.uGlintIntensity.value > 0) || light.intensity !== 0) throw new Error('water moon glint missing or direct moonlight enabled');
+  const facade = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial()); facade.name = 'building';
+  sky.registerBuildings(facade);
+  const facadeShader = {uniforms: {}, vertexShader: THREE.ShaderLib.standard.vertexShader, fragmentShader: THREE.ShaderLib.standard.fragmentShader};
+  facade.material.onBeforeCompile(facadeShader);
+  if (facadeShader.uniforms.uGlintIntensity.value !== 0) throw new Error('unoccluded lunar facade glint enabled');
+  facade.geometry.dispose(); facade.material.dispose();
+  sky.update(noonICT(2026, 8, 26));
+  if (!(shader.uniforms.uGlintIntensity.value > 0 && light.intensity > 0)) throw new Error('solar light was disabled');
+  mesh.geometry.dispose(); material.dispose();
 });
 
 if (process.exitCode) process.exit(1);

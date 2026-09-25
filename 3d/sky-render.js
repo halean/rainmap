@@ -110,6 +110,7 @@ function makeGlintUniforms() {
     uGlintColor: { value: new THREE.Color('#fff3da') },
     uGlintTime: { value: 0 },
     uGlintIntensity: { value: 0 },
+    uFacadeGlintIntensity: { value: 0 },
   };
 }
 
@@ -181,12 +182,19 @@ function applyWaterGlint(material, uniforms) {
 // (as if the panes tilted toward the sky, which many do slightly) and only
 // its horizontal alignment is held tight -- a facade flashes when the camera
 // swings round to its mirror azimuth, which is the part that reads as real.
-function applyBuildingGlass(material, uniforms, glassBias) {
+// Color converts these sRGB swatches to the renderer's linear working space.
+const FACADE_PALETTE = ['#e4d8bd', '#e9dfc9', '#d5c19f', '#dcb8a5', '#bac8b1'].map(c => new THREE.Color(c));
+const GLASS_PALETTE = ['#86b9c9', '#79b3ac', '#b6c8d2'].map(c => new THREE.Color(c));
+
+function applyBuildingGlass(material, uniforms, glassBias, nightUniform) {
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uGlintDir = uniforms.uGlintDir;
     shader.uniforms.uGlintColor = uniforms.uGlintColor;
-    shader.uniforms.uGlintIntensity = uniforms.uGlintIntensity;
+    shader.uniforms.uGlintIntensity = uniforms.uFacadeGlintIntensity;
     shader.uniforms.uGlassBias = { value: glassBias };
+    shader.uniforms.uCityNight = nightUniform;
+    shader.uniforms.uFacadePalette = { value: FACADE_PALETTE };
+    shader.uniforms.uGlassPalette = { value: GLASS_PALETTE };
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vGlassWorldPos;\nvarying vec3 vGlassWorldNormal;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
@@ -200,23 +208,51 @@ function applyBuildingGlass(material, uniforms, glassBias) {
         uniform vec3 uGlintColor;
         uniform float uGlintIntensity;
         uniform float uGlassBias;
+        uniform float uCityNight;
+        uniform vec3 uFacadePalette[5];
+        uniform vec3 uGlassPalette[3];
         float glassHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        // Use the original wall normal, never the view-facing normal: the
+        // palette and window layout must stay fixed as the camera moves.
+        float facadeSeed(vec3 N, vec3 P) {
+          float plane = dot(N.xz, P.xz);
+          float orientation = floor(atan(N.z, N.x) * 32.0 + 0.5);
+          return glassHash(vec2(floor(plane * 0.5 + 0.5), orientation));
+        }
+        vec3 facadeColor(float seed) {
+          if (seed < 0.35) return uFacadePalette[0]; // ivory
+          if (seed < 0.65) return uFacadePalette[1]; // cream
+          if (seed < 0.85) return uFacadePalette[2]; // sandstone
+          if (seed < 0.94) return uFacadePalette[3]; // occasional peach
+          return uFacadePalette[4];                // occasional sage
+        }
         // Anti-aliased 1-D pulse: 1 inside the central 'open' fraction of each
         // cell, 0 on the frame, edges softened by the cell's screen footprint.
         float glassPulse(float x, float open, float fw) {
           float d = abs(fract(x) - 0.5) - open * 0.5;
           return 1.0 - smoothstep(-fw, fw, d);
         }`)
-      .replace('#include <dithering_fragment>', `
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        // Change albedo before lighting so sun, shade and night still work.
+        vec3 facadeN = normalize(vGlassWorldNormal);
+        if (abs(facadeN.y) < 0.5) {
+          float paletteSeed = facadeSeed(facadeN, vGlassWorldPos);
+          diffuseColor.rgb = facadeColor(glassHash(vec2(paletteSeed * 73.0, 19.0)));
+        } else {
+          diffuseColor.rgb = mix(diffuseColor.rgb, uFacadePalette[2] * 0.65, 0.65);
+        }`)
+      // Reflections are added in linear space, before tone mapping, color
+      // conversion and fog, so distant glass blends into the city haze.
+      .replace('#include <tonemapping_fragment>', `
         {
           vec3 N = normalize(vGlassWorldNormal);
           vec3 V = normalize(cameraPosition - vGlassWorldPos);
           if (abs(N.y) < 0.5) { // walls only; roofs keep their plain finish
             N = normalize(vec3(N.x, 0.0, N.z));
-            if (dot(N, V) < 0.0) N = -N; // double-sided: shade the side we see
             vec3 T = vec3(-N.z, 0.0, N.x);
             float plane = dot(N.xz, vGlassWorldPos.xz);
-            float seed = glassHash(vec2(floor(plane * 0.5 + 0.5), 7.0));
+            float seed = facadeSeed(N, vGlassWorldPos);
+            if (dot(N, V) < 0.0) N = -N; // double-sided lighting only
             float seed2 = glassHash(vec2(seed * 91.0, 3.0));
             bool curtain = seed < uGlassBias;
             float width = curtain ? 1.5 : 1.6 + seed2 * 1.2;
@@ -234,8 +270,35 @@ function applyBuildingGlass(material, uniforms, glassBias) {
             // Glass reads darker and slightly sky-tinted, more so at grazing
             // angles (Fresnel), before any glint.
             float fresnel = 0.04 + 0.96 * pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 5.0);
-            vec3 tinted = gl_FragColor.rgb * 0.5 + vec3(0.10, 0.14, 0.18) * (0.6 + fresnel);
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, tinted, glass * 0.8);
+            float tintSeed = glassHash(vec2(seed * 57.0, 11.0));
+            vec3 glassTint = tintSeed < 0.4 ? uGlassPalette[0] :
+                             tintSeed < 0.75 ? uGlassPalette[1] : uGlassPalette[2];
+            // An inexpensive sky reflection approximation, with no HDR map.
+            float skyHeight = clamp(reflect(-V, N).y * 0.5 + 0.5, 0.0, 1.0);
+            vec3 skyTint = mix(glassTint, vec3(0.42, 0.64, 0.82), skyHeight * 0.45);
+            float lightLevel = clamp(dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722)), 0.0, 1.5);
+            vec3 tinted = gl_FragColor.rgb * 0.35 + skyTint * lightLevel * (0.65 + 0.8 * fresnel);
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, tinted, glass * 0.88);
+
+            if (uCityNight > 0.0) {
+              // Stable room occupancy: no frame-dependent random flicker.
+              // Unresolved windows converge to their mean lit coverage.
+              float occupancy = mix(0.28, 0.62, seed2);
+              float room = glassHash(floor(cell) + vec2(seed * 127.0, 31.0));
+              float occupied = mix(occupancy, step(1.0 - occupancy, room), resolve);
+              float warmth = glassHash(floor(cell) + vec2(17.0, seed * 83.0));
+              vec3 roomColor = mix(vec3(1.0, 0.48, 0.16), vec3(1.0, 0.78, 0.43), warmth);
+              roomColor = mix(vec3(1.0, 0.63, 0.295), roomColor, resolve);
+              gl_FragColor.rgb += roomColor * glass * occupied * uCityNight * 1.25;
+
+              // Sparse amber vertical accents on tall facades, using the same
+              // filtered grid. No extra geometry or light objects are needed.
+              float accentCell = cell.x / 8.0;
+              float accentResolve = 1.0 - smoothstep(0.25, 0.6, fw.x / 8.0);
+              float accent = mix(0.055, glassPulse(accentCell, 0.055, fw.x / 8.0), accentResolve);
+              float tower = smoothstep(60.0, 140.0, vGlassWorldPos.y) * step(0.78, seed2);
+              gl_FragColor.rgb += vec3(1.0, 0.40, 0.08) * accent * tower * uCityNight * 0.8;
+            }
 
             vec3 L = normalize(uGlintDir);
             if (uGlintIntensity > 0.0 && dot(L.xz, N.xz) > 0.0) {
@@ -258,7 +321,7 @@ function applyBuildingGlass(material, uniforms, glassBias) {
             }
           }
         }
-        #include <dithering_fragment>`);
+        #include <tonemapping_fragment>`);
   };
   material.needsUpdate = true;
 }
@@ -277,6 +340,7 @@ export function createSky({ scene, manifest, directionalLight, hemisphereLight, 
   scene.add(sun, moon);
 
   const glintUniforms = makeGlintUniforms();
+  const nightUniform = { value: 0 };
   const state = { body: 'none', altitudeDeg: null, azimuthDeg: null, moonFraction: null, moonPhase: null };
   let lastMoonFraction = null;
 
@@ -302,8 +366,36 @@ export function createSky({ scene, manifest, directionalLight, hemisphereLight, 
     root.traverse((o) => {
       if (!o.isMesh || !o.name.startsWith('building') || o.userData.glassApplied) return;
       const bias = o.name.startsWith('building-skyline') ? 0.7 : o.name === 'building-tagged' ? 0.35 : 0.12;
-      applyBuildingGlass(o.material, glintUniforms, bias);
+      applyBuildingGlass(o.material, glintUniforms, bias, nightUniform);
       o.userData.glassApplied = true;
+    });
+  }
+
+  // Reuse the overview lines and detailed road ribbons. Shared uniforms
+  // avoid retaining tile/material references after the viewer evicts them.
+  function registerRoads(root) {
+    if (!root) return;
+    root.traverse(o => {
+      const strength = {major: 0.85, bridge: 0.85, street: 0.22}[o.name];
+      if (!(o.isMesh || o.isLineSegments) || !strength || o.userData.roadGlowApplied) return;
+      for (const material of Array.isArray(o.material) ? o.material : [o.material]) {
+        material.onBeforeCompile = shader => {
+          shader.uniforms.uCityNight = nightUniform;
+          shader.uniforms.uRoadGlow = {value: strength};
+          shader.fragmentShader = shader.fragmentShader
+            .replace('#include <common>', `#include <common>
+              uniform float uCityNight;
+              uniform float uRoadGlow;`)
+            .replace('#include <tonemapping_fragment>', `
+              // Amber emission replaces the pale daytime guide color at
+              // night; distant streets stay subtler than arterial roads.
+              gl_FragColor.rgb = mix(gl_FragColor.rgb,
+                vec3(1.0, 0.46, 0.10) * uRoadGlow + gl_FragColor.rgb * 0.5, uCityNight);
+              #include <tonemapping_fragment>`);
+        };
+        material.needsUpdate = true;
+      }
+      o.userData.roadGlowApplied = true;
     });
   }
 
@@ -313,6 +405,10 @@ export function createSky({ scene, manifest, directionalLight, hemisphereLight, 
     const m = getMoonPosition(date, lat, lon);
     const illum = getMoonIllumination(date);
 
+    // Fade in from +4° to -6° solar altitude, regardless of moon phase.
+    const dusk = THREE.MathUtils.clamp((4 - s.altitude * 180 / Math.PI) / 10, 0, 1);
+    nightUniform.value = dusk * dusk * (3 - 2 * dusk);
+    state.cityLights = nightUniform.value;
     const sunUp = s.altitude > RISE_SET_ALTITUDE;
     const moonUp = !sunUp && m.altitude > RISE_SET_ALTITUDE;
     const displayAlt = (alt) => Math.min(alt, DISPLAY_ALTITUDE_CAP);
@@ -353,12 +449,16 @@ export function createSky({ scene, manifest, directionalLight, hemisphereLight, 
 
       glintUniforms.uGlintDir.value.copy(dir);
       glintUniforms.uGlintColor.value.set('#d7e2ff');
+      // Keep the lunar glint on the river.
       glintUniforms.uGlintIntensity.value = (0.55 - 0.25 * Math.min(1, m.altitude / DISPLAY_ALTITUDE_CAP)) * illum.fraction;
     } else {
       sun.material.opacity = 0; moon.material.opacity = 0;
       state.body = 'none'; state.altitudeDeg = Math.max(s.altitude, m.altitude) * 180 / Math.PI; state.azimuthDeg = null;
       glintUniforms.uGlintIntensity.value = 0;
     }
+    // The stylized facade glint has no occlusion test; keep its lunar
+    // contribution off while retaining the glint on water.
+    glintUniforms.uFacadeGlintIntensity.value = sunUp ? glintUniforms.uGlintIntensity.value : 0;
     state.moonFraction = illum.fraction; state.moonPhase = illum.phase;
     glintUniforms.uGlintTime.value = date.getTime() / 1000;
 
@@ -369,11 +469,13 @@ export function createSky({ scene, manifest, directionalLight, hemisphereLight, 
         const climb = Math.max(0.08, Math.sin(s.altitude));
         directionalLight.intensity = 1.2 + 1.7 * climb;
         directionalLight.color.setRGB(1, 0.86 + 0.14 * climb, 0.72 + 0.28 * climb);
-        if (hemisphereLight) hemisphereLight.intensity = 1.6 + 1.0 * climb;
+        if (hemisphereLight) hemisphereLight.intensity = 1.25 + 0.8 * climb;
       } else {
         const dir = directionFromAltAz(moonUp ? m.altitude : 0.3, moonUp ? m.azimuth : s.azimuth);
         directionalLight.position.copy(dir).multiplyScalar(10000);
-        directionalLight.intensity = moonUp ? 0.22 + 0.18 * illum.fraction : 0.12;
+        // Keep ambient visibility and local city lights, but no
+        // unshadowed lunar directional light leaking through the skyline.
+        directionalLight.intensity = 0;
         directionalLight.color.set('#aebfe6');
         if (hemisphereLight) hemisphereLight.intensity = 0.55;
       }
@@ -381,5 +483,5 @@ export function createSky({ scene, manifest, directionalLight, hemisphereLight, 
   }
 
   update(now);
-  return { state, update, registerWater, registerBuildings };
+  return { state, update, registerWater, registerBuildings, registerRoads };
 }

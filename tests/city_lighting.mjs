@@ -1,0 +1,23 @@
+// node --loader ./tests/three-loader.mjs tests/city_lighting.mjs
+import assert from 'node:assert/strict';
+import * as THREE from '../3d/vendor/three.module.js';
+import {createCityLighting} from '../3d/city-lighting.js';
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera();
+camera.position.set(0,300,500);
+const controls={target:new THREE.Vector3()},sky={state:{cityLights:1}};
+const root=new THREE.Group(),positions=[];
+for(let i=0;i<12;i++)positions.push(i*100-500,0,0);
+const road=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(positions,3)),new THREE.LineBasicMaterial());road.name='major';root.add(road);scene.add(root);
+const originalHook=road.material.onBeforeCompile;
+const lighting=createCityLighting({scene,camera,controls,sky});lighting.register(root);
+assert.equal(road.material.onBeforeCompile,originalHook,'no shadow shader injection');
+lighting.update(1000);assert.equal(lighting.state.activeLights,8);
+const lamps=scene.children.filter(o=>o.isSpotLight);
+assert.equal(lamps.length,8);assert(lamps.every(o=>o.position.y===26),'lamps positioned above the roads, including at the origin');assert(lamps.every(o=>!o.castShadow && !o.shadow.map),'no shadow rendering or maps');
+lighting.state.lights=false;lighting.update(1100);assert.equal(lighting.state.activeLights,0);
+lighting.state.lights=true;sky.state.cityLights=0;lighting.update(1200);assert.equal(lighting.state.activeLights,0);
+sky.state.cityLights=1;camera.position.set(0,10000,10000);lighting.update(2000);assert.equal(lighting.state.activeLights,0);
+camera.position.set(0,300,500);lighting.unregister(root);lighting.update(3000);assert.equal(lighting.state.activeLights,0);
+lighting.dispose();assert.equal(scene.children.filter(o=>o.isSpotLight).length,0);lighting.update(4000);
+road.geometry.dispose();road.material.dispose();
+console.log('ok - local night lighting, toggles, distance limits and cleanup; no shadow maps or shader patches');
