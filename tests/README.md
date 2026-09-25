@@ -108,3 +108,11 @@ camera should re-centre near its rooftop, at a similar distance/angle to
 the other preset views, not jump to an unrelated spot. Double-clicking open
 ground, a low building, or empty sky should do nothing -- no snapping to a
 distant tower just because it was the closest thing found.
+
+For the flag on Landmark 81 (`3d/flag.js`, cloth solver in `3d/cloth.js`):
+
+```sh
+node --loader ./tests/three-loader.mjs tests/flag.mjs
+node --loader ./tests/three-loader.mjs tests/cloth.mjs
+node --loader ./tests/three-loader.mjs tests/flag_cloth.mjs
+```
