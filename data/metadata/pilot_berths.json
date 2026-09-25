@@ -1,0 +1,16 @@
+{
+  "about": "Where the berth codes in the southern pilots' daily plan (pilotcosouth.vn, HCMC area) are. Codes are matched after normalising: upper case, parenthesised qualifiers such as (NR), (NL), (NEO), (MR) removed, a trailing NR/NL removed, numbers without leading zeros. Each entry is a terminal-level location: the centre of the named OpenStreetMap feature, not the individual quay. 'confidence' says how the code was tied to the place: 'name' when the code is the terminal's own name or abbreviation, 'likely' when it rests on a naming convention that the plan itself does not confirm. Codes not listed here are left unplaced on purpose -- they include buoy berths, anchorages, oil and cement berths, and shipyard docks whose locations were not established.",
+  "source": "OpenStreetMap (© OpenStreetMap contributors, ODbL), queried 2026-09-26",
+  "berths": [
+    {"codes": ["SP.ITC", "SP.ITC 1"], "name": "SP-ITC (Phú Hữu)", "lat": 10.78439, "lon": 106.81696, "osm": "way/533426624", "confidence": "name"},
+    {"codes": ["SPCT"], "name": "SPCT (Hiệp Phước)", "lat": 10.63815, "lon": 106.75998, "osm": "way/368243701", "confidence": "name"},
+    {"prefix": "VICT", "name": "VICT (Tân Thuận)", "lat": 10.76855, "lon": 106.73765, "osm": "way/1419594543", "confidence": "name"},
+    {"codes": ["SAIGON.HPHUOC/CT03"], "name": "Cảng Sài Gòn – Hiệp Phước", "lat": 10.61050, "lon": 106.76698, "osm": "way/1419529200", "confidence": "name"},
+    {"prefix": "Q.TE LONGAN", "name": "Cảng quốc tế Long An", "lat": 10.54206, "lon": 106.73523, "osm": "way/684359494", "confidence": "name"},
+    {"codes": ["VINH HUNG"], "name": "Cảng Vĩnh Hưng", "lat": 10.68903, "lon": 106.77506, "osm": "way/1420853958", "confidence": "name"},
+    {"prefix": "P.LONG", "name": "Phước Long ICD – Port", "lat": 10.81838, "lon": 106.76041, "osm": "way/1419927304", "confidence": "name"},
+    {"pattern": "^TT\\s?\\d+$", "name": "Cảng Tân Thuận 2", "lat": 10.75212, "lon": 106.74229, "osm": "way/220688059", "confidence": "likely", "note": "TT read as Tân Thuận; the plan only shows TT2."},
+    {"prefix": "N.BE", "name": "Tổng kho Xăng dầu Nhà Bè (Petrolimex)", "lat": 10.69426, "lon": 106.74902, "osm": "way/1419412042", "confidence": "likely", "note": "N.BE read as the Nhà Bè oil depot berths. OSM maps two depot areas under that name; the other is way/1005857521 at 10.68154, 106.75808."},
+    {"pattern": "^K\\d+[A-C]?$", "name": "Cảng Sài Gòn Khánh Hội", "lat": 10.76162, "lon": 106.71424, "osm": "relation/6946894", "confidence": "likely", "note": "K berths read as Saigon Port's Khánh Hội berths (numbered K0–K18)."}
+  ]
+}

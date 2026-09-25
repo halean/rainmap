@@ -14,7 +14,7 @@ from app.config import (
     HIMAWARI_MAX_AGE_HOURS,
     HIMAWARI_RETENTION_HOURS,
 )
-from app.services import flights, himawari, lightning_vn, metro, radar_nhb, recent
+from app.services import flights, himawari, lightning_vn, metro, pilot_plan, radar_nhb, recent
 from app.services.fetch_jobs import FetchJobManager
 from app.services.vrain import rain_density
 
@@ -119,6 +119,16 @@ def register_routes(
         try:
             return metro.timetable()
         except metro.TimetableUnavailable as e:
+            raise HTTPException(status_code=503, detail=str(e))
+
+    @app.get("/api/rain-map/port/pilot-plan")
+    def port_pilot_plan() -> dict:
+        """Ships the southern maritime pilots plan to take in, out of, and
+        between HCMC-area berths today and yesterday, with berth locations
+        where known. A plan, not tracking -- see app/services/pilot_plan.py."""
+        try:
+            return pilot_plan.plan()
+        except pilot_plan.PlanUnavailable as e:
             raise HTTPException(status_code=503, detail=str(e))
 
     @app.get("/api/rain-map/radar")

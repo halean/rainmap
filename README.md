@@ -226,6 +226,26 @@ serves one recoloured. HYMETNET is plain http, which an https page cannot load
 images from, so frames are fetched and recoloured server-side, once each, and
 kept in `data/derived/radar_nhb/` for 48 hours.
 
+## Port traffic (pilot plan)
+
+`GET /api/rain-map/port/pilot-plan` returns the ships the southern maritime
+pilots (Hoa tiêu Hàng hải Miền Nam) plan to take into, out of, and between
+berths in the HCMC area, today and yesterday, from their public daily plan
+page -- see `app/services/pilot_plan.py`. Each movement has the ship, draft,
+length, GRT, berth, planned time or ETA, and flags parsed from the notes:
+time changed, cancelled, postponed, pilot changed. It is a plan, not tracking,
+and covers only ships large enough to need a pilot. The page is refetched at
+most every 30 minutes; the last good copy is served, marked `stale`, if it
+can't be reached. Pilots' names and the phone numbers some notes carry are
+dropped.
+
+Berth codes are placed with `data/metadata/pilot_berths.json`: terminal-level
+locations from OpenStreetMap, each with its OSM id and how sure the match is
+(`name` when the code is the terminal's own name, `likely` when it rests on a
+naming convention). About half of each day's movements are placed. Buoy
+berths, anchorages, oil and cement berths, and shipyard docks are left
+unplaced rather than guessed; `unplaced_berths` lists the codes seen.
+
 ## Satellite cloud tops
 
 Enable **Satellite (Himawari-9)** in the map legend. There is no band to pick:

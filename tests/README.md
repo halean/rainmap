@@ -119,4 +119,5 @@ node --loader ./tests/three-loader.mjs tests/flag_cloth.mjs
 node --loader ./tests/three-loader.mjs tests/metro_demo.mjs
 node --loader ./tests/three-loader.mjs tests/metro_timetable.mjs
 .venv/bin/python -m unittest tests.test_metro_timetable
+.venv/bin/python -m unittest tests.test_pilot_plan   # port pilot plan parser
 ```
