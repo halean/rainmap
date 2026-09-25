@@ -14,7 +14,7 @@ from app.config import (
     HIMAWARI_MAX_AGE_HOURS,
     HIMAWARI_RETENTION_HOURS,
 )
-from app.services import flights, himawari, lightning_vn, radar_nhb, recent
+from app.services import flights, himawari, lightning_vn, metro, radar_nhb, recent
 from app.services.fetch_jobs import FetchJobManager
 from app.services.vrain import rain_density
 
@@ -110,6 +110,16 @@ def register_routes(
         HIMAWARI_BBOX, the same regional box the satellite layer uses, so an
         approaching storm is visible before it reaches the city."""
         return lightning_vn.recent_strikes(lightning_vn.STRIKES_HISTORY_PATH, minutes=minutes, bbox=HIMAWARI_BBOX)
+
+    @app.get("/api/rain-map/metro/timetable")
+    def metro_timetable() -> dict:
+        """Metro Line 1's published timetable for today (ICT), per direction:
+        {stopId: ["HH:MM", ...]}, one entry per trip. Scheduled, not tracked
+        positions -- see app/services/metro.py."""
+        try:
+            return metro.timetable()
+        except metro.TimetableUnavailable as e:
+            raise HTTPException(status_code=503, detail=str(e))
 
     @app.get("/api/rain-map/radar")
     def radar_frames() -> dict:

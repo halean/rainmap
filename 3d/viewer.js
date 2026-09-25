@@ -4,7 +4,8 @@ import {createFlights} from './flights.js';
 import {createLightning,tallBuildings,nearestHighrise} from './lightning.js';
 import {createSky} from './sky-render.js';
 import {createFlag} from './flag.js';
-let weather,flights,lightning,sky,flag;
+import {createMetro} from './metro.js';
+let weather,flights,lightning,sky,flag,metro;
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const $=id=>document.getElementById(id),host=$('viewport');
@@ -29,7 +30,7 @@ const HIGHRISE_SNAP_PIXELS=45;
 function project(lon,lat){return [(lon-manifest.originLonLat[0])*111320*Math.cos(manifest.originLonLat[1]*Math.PI/180),-(lat-manifest.originLonLat[1])*111320];}
 function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(ready&&$('overview').classList.contains('active'))wholeCity();}
 new ResizeObserver(resize).observe(host);resize();
-function setActive(id){document.querySelectorAll('.views button').forEach(b=>b.classList.toggle('active',b.id===id));}
+function setActive(id){if(id!=='metro-view')stopFollowing();document.querySelectorAll('.views button').forEach(b=>b.classList.toggle('active',b.id===id));}
 function goTo(x,z,distance=1600,top=false){controls.target.set(x,0,z);camera.position.copy(controls.target).add(top?new THREE.Vector3(0,distance,1):new THREE.Vector3(.6,.85,.7).normalize().multiplyScalar(distance));controls.update();lastLoad=0;}
 // Look through the rain volume from below the schematic cloud deck.
 function centralCity(){const [x,z]=project(106.699,10.774);controls.target.set(x,120,z);camera.position.copy(controls.target).add(new THREE.Vector3(-.6,.36,.7).normalize().multiplyScalar(2600));controls.update();lastLoad=0;setActive('downtown');}
@@ -77,14 +78,46 @@ async function init(){
  updateLayer(overview);scene.add(overview);$('loading').hidden=true;ready=true;updateTiles();
  weather=createWeather({scene,project,manifest});
  flights=createFlights({scene,project,controls});
+ metro=createMetro({scene,project});
  lightning=createLightning({scene,weather,skyline,camera});
  flag=createFlag({scene,skyline,camera});
- window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get flag(){return flag?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
+ window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get flag(){return flag?.state;},get metro(){return metro?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
 }
 $('overview').onclick=()=>{if(ready)wholeCity();};
 $('downtown').onclick=()=>{if(ready)centralCity();};
 // Tân Sơn Nhất: look west along the 25 approach from above the terminals.
 $('airport').onclick=()=>{if(!ready)return;const [x,z]=project(106.6525,10.8185);controls.target.set(x,30,z);camera.position.copy(controls.target).add(new THREE.Vector3(.55,.42,.72).normalize().multiplyScalar(3600));controls.update();lastLoad=0;setActive('airport');};
+// Metro Line 1: chase the train from behind. The camera stays at a fixed
+// distance and a fixed angle above the train; only its compass direction eases
+// round (the shortest way) to stay behind the train's direction of travel, so
+// it follows curves and turns at the terminals smoothly without bobbing up and
+// down. The mouse wheel changes the distance. Panning away, Esc, or any other
+// view ends it.
+const CHASE_PITCH=0.38;          // radians above the horizontal, ~22°
+const CHASE_TURN=2.5;            // how quickly the view swings round, per second
+let following=null;
+function stopFollowing(){if(!following)return;following=null;metro?.setFollowing?.(false);}
+const behindYaw=v=>Math.atan2(-v.forward.x,-v.forward.z);        // direction from train to camera
+function placeChase(v){const {yaw,distance}=following,flat=distance*Math.cos(CHASE_PITCH);
+ controls.target.copy(v.pos);
+ camera.position.set(v.pos.x+Math.sin(yaw)*flat,v.pos.y+distance*Math.sin(CHASE_PITCH),v.pos.z+Math.cos(yaw)*flat);
+ following.last.copy(v.pos);}
+$('metro-view').onclick=()=>{if(!ready)return;metro?.setFollowing?.(false);const v=metro?.trainView(controls.target.clone());
+ if(!v){const [x,z]=project(106.744,10.803);controls.target.set(x,12,z);camera.position.copy(controls.target).add(new THREE.Vector3(-.35,.45,.82).normalize().multiplyScalar(1400));controls.update();lastLoad=0;setActive('metro-view');return;}
+ following={yaw:behindYaw(v),distance:140,last:v.pos.clone(),at:performance.now()};
+ placeChase(v);controls.update();metro.setFollowing?.(true);lastLoad=0;setActive('metro-view');};
+function followTrain(){
+ if(!following)return;const v=metro?.trainView();if(!v)return;
+ // The user panned: the target is no longer where we left it.
+ if(controls.target.distanceTo(following.last)>0.5){stopFollowing();setActive('');return;}
+ const now=performance.now(),dt=Math.min(0.1,(now-following.at)/1000);following.at=now;
+ let turn=behindYaw(v)-following.yaw;turn=Math.atan2(Math.sin(turn),Math.cos(turn));   // shortest way round
+ following.yaw+=turn*(1-Math.exp(-CHASE_TURN*dt));
+ placeChase(v);
+}
+renderer.domElement.addEventListener('wheel',e=>{if(!following)return;
+ following.distance=Math.min(2000,Math.max(40,following.distance*Math.exp(e.deltaY*0.001)));},{passive:true});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&following){stopFollowing();setActive('');}});
 $('vvk').onclick=()=>{if(!ready)return;const p=project(106.694,10.7605);goTo(...p,1900);setActive('vvk');};
 $('top').onclick=()=>{if(!ready)return;goTo(controls.target.x,controls.target.z,camera.position.distanceTo(controls.target),true);setActive('top');};
 for(const id of ['buildings','minor'])$(id).onchange=()=>{if(overview)updateLayer(overview);for(const e of tiles.values())updateLayer(e.group);updateSkyline();};
@@ -108,7 +141,7 @@ renderer.domElement.addEventListener('dblclick',e=>{
  controls.update();lastLoad=0;setActive('');
 });
 $('about').onclick=()=>$('info').showModal();$('close').onclick=()=>$('info').close();
-controls.addEventListener('start',()=>setActive(''));
-function animate(now){requestAnimationFrame(animate);controls.update();weather?.update(now);flights?.update(now);lightning?.update(now);flag?.update?.(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}renderer.render(scene,camera);}
+controls.addEventListener('start',()=>{if(!following)setActive('');});
+function animate(now){requestAnimationFrame(animate);followTrain();controls.update();weather?.update(now);flights?.update(now);lightning?.update(now);flag?.update?.(now);metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}renderer.render(scene,camera);}
 requestAnimationFrame(animate);
 init().catch(error=>{console.error(error);$('loading').innerHTML='';const title=document.createElement('strong');title.textContent='Model could not be loaded';const p=document.createElement('p');p.textContent=error.message;$('loading').append(title,p);});
