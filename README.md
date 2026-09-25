@@ -15,9 +15,12 @@ satellite cloud tops decoded straight from Himawari-9's raw instrument files.
   intensity off each one. Rate-limited to a fixed daily API budget
   regardless of how fast the source site responds.
 - **`scripts/camera_watchdog.py`** -- periodically health-checks the
-  sampled cameras directly against the traffic-camera site and swaps out
-  any that fail consistently (3+ consecutive checks) for a live
-  replacement, picked to preserve spatial spacing across the city.
+  sampled cameras directly against the traffic-camera site and rotates out
+  any that fail consistently (3+ consecutive checks), or that the site has
+  served only its offline placeholder for 30+ minutes, for the nearest live
+  camera to the same slot, so spatial spacing across the city holds. A check
+  where most cameras simply don't answer is treated as a site outage and not
+  held against the cameras; blocklisted cameras get another chance after 3 h.
 - **`app/services/himawari.py`** -- decodes Himawari-9 band 13 cloud-top
   temperature from NOAA's open mirror of the raw satellite files and renders
   it as a map overlay. Fetched on demand, not polled.

@@ -46,6 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.atomic_write import write_json_atomic
 from app.log_setup import get_logger
+from src.fetch.check import guess_extension
 
 REPO = Path(__file__).resolve().parents[1]
 SAMPLE_CAMERAS_PATH = REPO / "data" / "derived" / "sample_cameras.json"
@@ -92,6 +93,36 @@ MIN_SPACING_KM = float(os.getenv("MIN_SPACING_KM", "3.0"))
 MAX_ANCHOR_DRIFT_KM = float(os.getenv("MAX_ANCHOR_DRIFT_KM", "3.0"))
 RECENT_TTL_SEC = int(os.getenv("RECENT_TTL_SEC", str(3 * 86400)))
 PENDING_TIMEOUT_SEC = int(os.getenv("PENDING_TIMEOUT_SEC", str(30 * 60)))
+
+# Blocklist entries expire, so a camera gets another chance later. The site's
+# outages are site-wide (every request times out at once), and a candidate
+# probed during one is judged dead with the rest -- a permanent blocklist
+# turned each outage into lasting damage to the pool. A camera that really is
+# dead costs one probe per expiry and goes straight back on.
+BLOCKLIST_TTL_SEC = int(os.getenv("BLOCKLIST_TTL_SEC", str(3 * 3600)))
+
+# When at least this share of the sample fails the same check cycle, the site
+# is down, not the cameras: the cycle is discarded -- no strikes, no
+# replacements, no rotation (whose candidate probes would all "fail" too and
+# be blocklisted). Without this, an outage outlasting STRIKE_THRESHOLD cycles
+# struck out the whole sample at once and re-anchored every slot to whatever
+# replacement answered, permanently losing the farthest-point spacing.
+# Real camera deaths arrive one or two at a time, far below this share.
+OUTAGE_FAIL_FRACTION = float(os.getenv("OUTAGE_FAIL_FRACTION", "0.5"))
+OUTAGE_MIN_CAMERAS = 5  # too few cameras to tell an outage from bad luck
+
+# A camera whose stored frames have been nothing but the site's offline
+# placeholder for this long is rotated out on the next cycle, without waiting
+# out STRIKE_THRESHOLD probes (~1 h). The fetch job already asked the site
+# every few minutes and was told "offline" each time; that is stronger evidence
+# than this loop's own one probe per 20 min. Matches the map's 30-minute cut,
+# after which the camera's reading is shown stale and dropped from the field.
+OFFLINE_REPLACE_MIN = int(os.getenv("OFFLINE_REPLACE_MIN", "30"))
+# Cap on candidate probes for the farthest-point fallback, which otherwise
+# walks the whole pool -- hundreds of 25 s timeouts while the site is flaky.
+FALLBACK_MAX_PROBES = 10
+
+LIVE, OFFLINE, UNREACHABLE = "live", "offline", "unreachable"
 ROTATE_MAX_SLOT_TRIES = 5
 
 log = get_logger("watchdog")
@@ -147,15 +178,88 @@ def haversine_km(lat1, lon1, lat2, lon2):
     return 2 * R * math.asin(math.sqrt(a))
 
 
-def is_live(camera_id: str) -> bool:
+def save_frame(camera_id: str, content: bytes, content_type: str):
+    """Store a probe's frame exactly where and as the fetch job would.
+
+    Same <id>/YYYY/MM/DD/YYYYMMDD_HHMMSS<ext> layout and the same clock
+    (src/fetch/check.py's download_image), so rain_annotator.py treats it as an
+    ordinary new frame. Written to a temporary name first: the annotator lists
+    these folders every minute and must never be handed half a JPEG.
+    """
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    cdir = RAW_ROOT / camera_id / ts[:4] / ts[4:6] / ts[6:8]
+    try:
+        cdir.mkdir(parents=True, exist_ok=True)
+        out = cdir / f"{ts}{guess_extension(content_type)}"
+        tmp = out.with_name(out.name + ".part")
+        tmp.write_bytes(content)
+        os.replace(tmp, out)
+        return out
+    except OSError as e:
+        log.warning("could not save probe frame for %s: %s", camera_id, e)
+        return None
+
+
+def probe(camera_id: str, save: bool = False) -> str:
+    """LIVE, OFFLINE or UNREACHABLE.
+
+    With save=True a LIVE frame is kept (see save_frame) rather than discarded.
+    Used when probing a camera about to join the sample: the fetch job only
+    re-reads its camera list at the start of a lap, which takes 20-30 min while
+    the site is flaky, so without this a newly swapped-in camera left a hole in
+    the map that long. With it, the annotator reads the camera within a minute
+    -- and at no cost, since this request was being made anyway.
+
+    OFFLINE means the site answered and said so for this camera (its small
+    placeholder image, an error page, a 4xx). UNREACHABLE means no usable answer
+    at all -- a timeout, a dropped connection, a 5xx -- which is evidence about
+    the site, not the camera, and must never get a camera blocklisted.
+    """
     try:
         resp = session.get(f"{BASE_IMG}?id={camera_id}", timeout=CHECK_TIMEOUT)
-        ctype = resp.headers.get("Content-Type", "")
-        if resp.status_code != 200 or "text" in ctype.lower():
-            return False
-        return len(resp.content) >= OFFLINE_THRESHOLD
     except Exception:
-        return False
+        return UNREACHABLE
+    if resp.status_code >= 500:
+        return UNREACHABLE
+    ctype = resp.headers.get("Content-Type", "")
+    if resp.status_code != 200 or "text" in ctype.lower():
+        return OFFLINE
+    if len(resp.content) < OFFLINE_THRESHOLD:
+        return OFFLINE
+    if save:
+        save_frame(camera_id, resp.content, ctype)
+    return LIVE
+
+
+def is_live(camera_id: str) -> bool:
+    return probe(camera_id) == LIVE
+
+
+def offline_minutes(camera_id: str, now=None) -> float:
+    """How long the stored frames have been nothing but offline placeholders.
+
+    0 if the newest frame is a real picture. Needs at least two placeholders in
+    a row, so one bad fetch is never enough. Measured from the oldest
+    placeholder in the trailing run to now, using file times.
+    """
+    cdir = RAW_ROOT / camera_id
+    if not cdir.is_dir():
+        return 0.0
+    try:
+        frames = sorted(cdir.rglob("*.jpg"))[-60:]
+        run = []
+        for f in reversed(frames):
+            if f.stat().st_size >= OFFLINE_THRESHOLD:
+                break
+            run.append(f)
+        if len(run) < 2:
+            return 0.0
+        since = run[-1].stat().st_mtime
+    except OSError as e:
+        log.warning("could not read frames for %s: %s", camera_id, e)
+        return 0.0
+    now = time.time() if now is None else now
+    return max(0.0, (now - since) / 60)
 
 
 def frozen_run(camera_id: str) -> int:
@@ -253,12 +357,47 @@ def prune_recent(recent):
             if datetime.fromisoformat(v).timestamp() > cutoff}
 
 
+def load_blocklist():
+    """{camera_id: iso time blocked}, with expired entries released.
+
+    The file used to be a bare list of ids with no times; those are stamped
+    now, so they come up for a retry one TTL after this version first runs.
+    """
+    raw = load_json(BLOCKLIST_PATH, {})
+    if isinstance(raw, list):
+        stamp = now_utc().isoformat()
+        raw = {cid: stamp for cid in raw}
+    cutoff = now_utc().timestamp() - BLOCKLIST_TTL_SEC
+    kept = {k: v for k, v in raw.items() if datetime.fromisoformat(v).timestamp() > cutoff}
+    released = sorted(set(raw) - set(kept))
+    if released:
+        log.info("blocklist: releasing %d camera(s) after %dh: %s",
+                 len(released), BLOCKLIST_TTL_SEC // 3600, released)
+    return kept
+
+
+def site_outage(results):
+    """True when this cycle looks like the site, not the cameras, failing.
+
+    results: {camera_id: LIVE | OFFLINE | UNREACHABLE}. Only UNREACHABLE counts:
+    a camera the site reported offline is a real answer even mid-outage.
+    """
+    if len(results) < OUTAGE_MIN_CAMERAS:
+        return False
+    unreachable = sum(1 for state in results.values() if state == UNREACHABLE)
+    return unreachable / len(results) >= OUTAGE_FAIL_FRACTION
+
+
+def block(blocklist, camera_id):
+    blocklist[camera_id] = now_utc().isoformat()
+
+
 def eligible_pool(locations, current_ids, blocklist, recent):
-    block, rec = set(blocklist), set(recent)
+    blocked, rec = set(blocklist), set(recent)
     return [l for l in locations
             if l.get("lat") is not None
             and l["camera_id"] not in current_ids
-            and l["camera_id"] not in block
+            and l["camera_id"] not in blocked
             and l["camera_id"] not in rec
             and l.get("cam_status") != "NOT_IMAGE"]
 
@@ -266,9 +405,9 @@ def eligible_pool(locations, current_ids, blocklist, recent):
 def pick_incoming(anchor_lat, anchor_lon, pool, others, blocklist):
     """Nearest eligible camera to the slot's anchor, subject to the two guards.
 
-    Candidates are tried nearest-first; each is liveness-probed before being
-    accepted, and a candidate that fails the probe is genuinely dead so it goes to
-    the blocklist (same meaning as always).
+    Candidates are tried nearest-first; each is probed before being accepted. One
+    the site reports offline goes to the blocklist (until BLOCKLIST_TTL_SEC
+    releases it); one that just doesn't answer is skipped, not blocklisted.
     """
     ranked = sorted(
         ((haversine_km(anchor_lat, anchor_lon, c["lat"], c["lon"]), c) for c in pool),
@@ -283,10 +422,14 @@ def pick_incoming(anchor_lat, anchor_lon, pool, others, blocklist):
             continue  # would crowd a neighbouring slot
         log.info("rotation candidate %s (%.2fkm from anchor, %.2fkm to nearest other)",
                  cand["camera_id"], dist, spacing)
-        if is_live(cand["camera_id"]):
+        state = probe(cand["camera_id"], save=True)
+        if state == LIVE:
             return cand
-        log.info("  -> candidate dead, blocklisting %s", cand["camera_id"])
-        blocklist.append(cand["camera_id"])
+        if state == OFFLINE:
+            log.info("  -> candidate offline, blocklisting %s", cand["camera_id"])
+            block(blocklist, cand["camera_id"])
+        else:
+            log.info("  -> candidate unreachable, skipping %s (not blocklisted)", cand["camera_id"])
         time.sleep(0.3)
     return None
 
@@ -368,12 +511,14 @@ def settle_pending(cameras, recent, readings):
     return keep if changed else None
 
 
-def find_replacement(current_cameras, blocklist):
+def find_replacement(current_cameras, blocklist, max_probes=None):
     locations = load_json(LOCATIONS_PATH, [])
     current_ids = {c["camera_id"] for c in current_cameras}
     pool = [r for r in locations if r["lat"] is not None and r["camera_id"] not in current_ids and r["camera_id"] not in blocklist]
 
-    while pool:
+    probes = 0
+    while pool and (max_probes is None or probes < max_probes):
+        probes += 1
         best, best_d = None, -1
         for c in pool:
             d = min(haversine_km(c["lat"], c["lon"], s["lat"], s["lon"]) for s in current_cameras)
@@ -381,17 +526,75 @@ def find_replacement(current_cameras, blocklist):
                 best_d, best = d, c
         pool = [c for c in pool if c["camera_id"] != best["camera_id"]]
         log.info("trying replacement %s (min-dist %.1fkm)", best["camera_id"], best_d)
-        if is_live(best["camera_id"]):
+        state = probe(best["camera_id"], save=True)
+        if state == LIVE:
             log.info("  -> live, keeping %s", best["camera_id"])
             return {
                 "camera_id": best["camera_id"], "title": best.get("title", ""),
                 "district": best.get("district") or "", "display_name": best.get("display_name", ""),
                 "lat": best["lat"], "lon": best["lon"], "image_path": None,
             }
-        log.info("  -> dead, blocklisting %s", best["camera_id"])
-        blocklist.append(best["camera_id"])
+        if state == OFFLINE:
+            log.info("  -> offline, blocklisting %s", best["camera_id"])
+            block(blocklist, best["camera_id"])
+        else:
+            log.info("  -> unreachable, skipping %s (not blocklisted)", best["camera_id"])
         time.sleep(0.3)
     return None
+
+
+def replace_dead(cameras, dead_id, blocklist, allow_fallback):
+    """Rotate a dead camera out for a live one near its slot, in place.
+
+    Picks the nearest live camera to the slot's fixed anchor, under the same
+    spacing and drift guards as rotation, and leaves the anchor where it is --
+    the set keeps the farthest-point coverage it was built with. Only when
+    nothing near the anchor answers does it fall back to the farthest-point pick
+    (re-anchoring the slot there), and that is capped at FALLBACK_MAX_PROBES.
+
+    Returns the new camera list, or None if no replacement answered: the dead
+    camera then stays in its slot and is retried next cycle, rather than the
+    sample silently shrinking by one.
+    """
+    dead = next(c for c in cameras if c["camera_id"] == dead_id)
+    slots = load_slots(cameras)
+    slot = next((s for s in slots if s["camera_id"] == dead_id), None)
+    anchor_lat, anchor_lon = (slot["anchor_lat"], slot["anchor_lon"]) if slot else (dead["lat"], dead["lon"])
+    others = [c for c in cameras if c["camera_id"] != dead_id]
+    # Unlike routine rotation, recently rotated-out cameras are fair game: they
+    # were healthy, and a dead slot needs a working camera more than variety.
+    pool = eligible_pool(load_json(LOCATIONS_PATH, []), {c["camera_id"] for c in cameras}, blocklist, {})
+
+    cand = pick_incoming(anchor_lat, anchor_lon, pool, others, blocklist)
+    if cand is not None:
+        incoming = {
+            "camera_id": cand["camera_id"], "title": cand.get("title", ""),
+            "district": cand.get("district") or "", "display_name": cand.get("display_name", ""),
+            "lat": cand["lat"], "lon": cand["lon"], "image_path": None,
+        }
+        log.warning("rotated out %s -> nearby %s (%s, %.2fkm from the slot's anchor)",
+                    dead_id, incoming["camera_id"], incoming["display_name"][:40],
+                    haversine_km(anchor_lat, anchor_lon, cand["lat"], cand["lon"]))
+        if slot:
+            slot["camera_id"] = incoming["camera_id"]
+    elif allow_fallback:
+        log.info("no live camera within %.1fkm of %s's anchor, trying farthest-point",
+                 MAX_ANCHOR_DRIFT_KM, dead_id)
+        incoming = find_replacement(others, blocklist, max_probes=FALLBACK_MAX_PROBES)
+        if incoming is None:
+            return None
+        log.warning("replaced %s -> %s (%s), slot re-anchored there",
+                    dead_id, incoming["camera_id"], incoming["district"])
+        if slot:
+            slot.update(camera_id=incoming["camera_id"],
+                        anchor_lat=incoming["lat"], anchor_lon=incoming["lon"])
+    else:
+        return None
+
+    if slot:
+        incoming["slot"] = slot["slot"]
+        save_json(SLOTS_PATH, slots)
+    return [incoming if c["camera_id"] == dead_id else c for c in cameras]
 
 
 def commit(cameras, strikes, blocklist, recent):
@@ -434,16 +637,19 @@ def commit(cameras, strikes, blocklist, recent):
 def main():
     log.info("watchdog: checking %s every %ds, replacing after %d consecutive failed checks; "
              "stall detection %s (>= %d identical frames); "
-             "rotation %s (spacing >= %.1fkm, drift <= %.1fkm, recent TTL %dh)",
+             "rotation %s (spacing >= %.1fkm, drift <= %.1fkm, recent TTL %dh); "
+             "blocklist entries expire after %dh; "
+             "cycles with >= %.0f%% failing treated as a site outage",
              SAMPLE_CAMERAS_PATH.name, CHECK_INTERVAL_SEC, STRIKE_THRESHOLD,
              "on" if STALL_ENABLED else "off", STALL_FRAMES,
              "on" if ROTATE_ENABLED else "off", MIN_SPACING_KM, MAX_ANCHOR_DRIFT_KM,
-             RECENT_TTL_SEC // 3600)
+             RECENT_TTL_SEC // 3600, BLOCKLIST_TTL_SEC // 3600,
+             OUTAGE_FAIL_FRACTION * 100)
 
     while True:
         cameras = load_json(SAMPLE_CAMERAS_PATH, [])
         strikes = load_json(STRIKES_PATH, {})
-        blocklist = load_json(BLOCKLIST_PATH, [])
+        blocklist = load_blocklist()
         recent = prune_recent(load_json(ROTATION_RECENT_PATH, {}))
 
         if not cameras:
@@ -456,12 +662,29 @@ def main():
             cameras = settled
             commit(cameras, strikes, blocklist, recent)
 
+        # Probe everything first, and only then decide what the failures mean.
+        results = {}
+        for cam in cameras:
+            results[cam["camera_id"]] = probe(cam["camera_id"])
+            time.sleep(0.3)
+
+        outage = site_outage(results)
+        if outage:
+            unreachable = sum(1 for st in results.values() if st == UNREACHABLE)
+            log.warning("site outage: %d/%d cameras unreachable this check -- counting only "
+                        "cameras the site reported offline; no rotation this cycle",
+                        unreachable, len(results))
+
+        # Cameras in a staged rotation are settle_pending()'s to resolve.
+        pending_ids = {c["camera_id"] for c in cameras if c.get("retiring_since")} | \
+                      {c.get("replaced_by") for c in cameras if c.get("retiring_since")}
+
         dead_this_round = []
         stalled_this_round = []
         for cam in cameras:
             cid = cam["camera_id"]
-            ok = is_live(cid)
-            if ok:
+            state = results[cid]
+            if state == LIVE:
                 strikes[cid] = 0
                 # Reachable but possibly frozen. Judged on the frames already on
                 # disk, so this costs no extra request to a service we are trying
@@ -474,50 +697,50 @@ def main():
                         stalled_this_round.append(cid)
                     elif run > 1:
                         log.info("%s briefly frozen (%d identical frames), watching", cid, run)
-            else:
+                continue
+            if state == OFFLINE or not outage:
                 strikes[cid] = strikes.get(cid, 0) + 1
-                log.warning("%s (%s) failed check, strikes=%d", cid, cam.get("district", ""), strikes[cid])
-                if strikes[cid] >= STRIKE_THRESHOLD:
-                    dead_this_round.append(cid)
-            time.sleep(0.3)
+                log.warning("%s (%s) failed check (%s), strikes=%d",
+                            cid, cam.get("district", ""), state, strikes[cid])
+            offline_for = offline_minutes(cid)
+            if strikes.get(cid, 0) >= STRIKE_THRESHOLD:
+                dead_this_round.append(cid)
+            elif offline_for >= OFFLINE_REPLACE_MIN:
+                log.warning("%s (%s) has served only the offline placeholder for %.0f min",
+                            cid, cam.get("district", ""), offline_for)
+                dead_this_round.append(cid)
 
         save_json(STRIKES_PATH, strikes)
 
         # Stalled cameras join the dead: from here the handling is identical --
-        # dropped from the sample, blocklisted so rotation cannot pick them back
-        # up, replaced by one live camera, and commit() carries that through
-        # sample_cameras.json, the fetch CSV, rain_sample.json and the annotator
-        # state in a single pass.
+        # rotated out for a live camera near the same slot, blocklisted so
+        # nothing picks them back up until BLOCKLIST_TTL_SEC releases them, and
+        # commit() carries that through sample_cameras.json, the fetch CSV,
+        # rain_sample.json and the annotator state in a single pass.
         if stalled_this_round:
             log.warning("replacing frozen feeds (>= %d identical frames): %s",
                         STALL_FRAMES, stalled_this_round)
             dead_this_round.extend(stalled_this_round)
+        dead_this_round = [cid for cid in dict.fromkeys(dead_this_round) if cid not in pending_ids]
 
         if dead_this_round:
-            log.warning("confirmed dead (>= %d consecutive strikes) or frozen: %s",
-                        STRIKE_THRESHOLD, dead_this_round)
+            log.warning("rotating out dead, offline or frozen cameras: %s", dead_this_round)
+            changed = False
             for dead_id in dead_this_round:
-                cameras = [c for c in cameras if c["camera_id"] != dead_id]
-                blocklist.append(dead_id)
-                strikes.pop(dead_id, None)
-
-                replacement = find_replacement(cameras, blocklist)
-                if replacement is None:
-                    log.error("no live replacement found for %s, sample shrinks by one", dead_id)
+                swapped = replace_dead(cameras, dead_id, blocklist, allow_fallback=not outage)
+                if swapped is None:
+                    log.error("no replacement answered for %s; keeping it in its slot, "
+                              "retrying next cycle", dead_id)
                     continue
-                cameras.append(replacement)
-                log.warning("replaced %s -> %s (%s)", dead_id, replacement["camera_id"], replacement["district"])
+                cameras = swapped
+                block(blocklist, dead_id)
+                strikes.pop(dead_id, None)
+                changed = True
+            if changed:
+                commit(cameras, strikes, blocklist, recent)
 
-                # Re-anchor this slot: the farthest-point pick was deliberate, so the
-                # replacement's position becomes the new anchor rather than dragging
-                # the old one around.
-                slots = [s for s in load_json(SLOTS_PATH, []) if s["camera_id"] != dead_id]
-                slots.append({"slot": len(slots), "anchor_lat": replacement["lat"],
-                              "anchor_lon": replacement["lon"],
-                              "camera_id": replacement["camera_id"]})
-                save_json(SLOTS_PATH, slots)
-
-            commit(cameras, strikes, blocklist, recent)
+        elif outage:
+            pass  # rotation's candidate probes would only time out too
 
         elif ROTATE_ENABLED and not any(c.get("retiring_since") for c in cameras):
             # Only rotate on a quiet cycle: never two blind slots at once, and only
