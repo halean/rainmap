@@ -56,6 +56,21 @@ export function tallBuildings(skyline, keepTop = 160) {
     .slice(0, keepTop);
 }
 
+/** Whichever of a list of {x, z, ...} points is nearest (x, z), within
+ * maxDistance -- or null if nothing is that close. Coordinate-space
+ * agnostic (world metres or screen pixels, whatever the caller passes);
+ * viewer.js's double-click-a-highrise teleport calls it with each known
+ * tower's top point projected to screen space, so a click has to actually
+ * land near where a tower visibly is, not merely near its footprint. */
+export function nearestHighrise(highrises, x, z, maxDistance) {
+  let nearest = null, nearestDist = maxDistance;
+  for (const b of highrises) {
+    const d = Math.hypot(b.x - x, b.z - z);
+    if (d < nearestDist) { nearestDist = d; nearest = b; }
+  }
+  return nearest;
+}
+
 // ---------------------------------------------------------------------------
 // Channel geometry
 

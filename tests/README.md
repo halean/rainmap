@@ -82,3 +82,29 @@ correct, not a bug); a strike close to the camera cracks sharply while a
 distant one only rumbles; it rolls for as long as the channel's near-to-far
 spread; it pans to the side the channel is on; and no two sound alike,
 because no two channels or viewpoints are.
+
+For the real sun/moon and its water reflection:
+```bash
+node --loader ./tests/three-loader.mjs tests/sky_astronomy.mjs
+node --loader ./tests/three-loader.mjs tests/sky_render.mjs
+```
+In the browser, `window.cityModel.sky` reports which body is up, its real
+altitude/azimuth, and the moon's illuminated fraction/phase -- cross-check
+against an actual almanac for today's date rather than eyeballing it. Only
+one body renders at a time; its on-screen height is capped near the
+horizon regardless of true altitude (see `DISPLAY_ALTITUDE_CAP` in
+`3d/sky-render.js`), since the default camera presets look down at street
+level rather than at the sky.
+
+For double-clicking a high-rise to teleport to its roof (`tests/highrise_teleport.mjs`
+covers `tallBuildings()`'s clustering and `nearestHighrise()`'s snap-radius
+matching directly, without a browser):
+```bash
+node --loader ./tests/three-loader.mjs tests/highrise_teleport.mjs
+```
+In the browser, double-click a tall building (roughly 40 m+; skyline.py's
+`minimum_height`) in either the overview or a loaded detail tile. The
+camera should re-centre near its rooftop, at a similar distance/angle to
+the other preset views, not jump to an unrelated spot. Double-clicking open
+ground, a low building, or empty sky should do nothing -- no snapping to a
+distant tower just because it was the closest thing found.

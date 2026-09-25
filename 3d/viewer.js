@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import {createWeather} from './weather.js';
 import {createFlights} from './flights.js';
-import {createLightning} from './lightning.js';
-let weather,flights,lightning;
+import {createLightning,tallBuildings,nearestHighrise} from './lightning.js';
+import {createSky} from './sky-render.js';
+let weather,flights,lightning,sky;
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const $=id=>document.getElementById(id),host=$('viewport');
@@ -13,8 +14,17 @@ try{renderer=new THREE.WebGLRenderer({antialias:true,logarithmicDepthBuffer:true
 catch(error){$('loading').textContent='This 3D model needs a WebGL-capable browser.';throw error;}
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);
 const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.1;controls.maxPolarAngle=Math.PI/2-.08;controls.minDistance=25;controls.maxDistance=220000;
-scene.add(new THREE.HemisphereLight('#e7f1ee','#769080',2.6));const sun=new THREE.DirectionalLight('#fff3da',2.7);sun.position.set(-10000,20000,5000);scene.add(sun);
-const loader=new GLTFLoader(),tiles=new Map(),pending=new Set(),failed=new Set();let manifest,overview,skyline,streets=[],cameraMarkers,ready=false,lastLoad=0,desired=new Set(),focusTile=null;
+const hemiLight=new THREE.HemisphereLight('#e7f1ee','#769080',2.6);scene.add(hemiLight);const sunLight=new THREE.DirectionalLight('#fff3da',2.7);sunLight.position.set(-10000,20000,5000);scene.add(sunLight);
+const loader=new GLTFLoader(),tiles=new Map(),pending=new Set(),failed=new Set();let manifest,overview,skyline,cameraMarkers,ready=false,lastLoad=0,desired=new Set(),focusTile=null,highrises=[];
+// tallBuildings() clusters skyline vertices into approximate individual
+// towers (the same list lightning.js favours for strikes); reused here so a
+// double-click can snap to the tower nearest the click. Matched in SCREEN
+// space (project each known tower's top point, compare pixel distance to
+// the click), not by raycasting the scene: skyline.glb deliberately keeps
+// only each tower's upper portion (its walls below minimum_height are
+// dropped for size), so a ray aimed at the visible lower two-thirds of a
+// tall building's facade would miss that geometry entirely and hit nothing.
+const HIGHRISE_SNAP_PIXELS=45;
 function project(lon,lat){return [(lon-manifest.originLonLat[0])*111320*Math.cos(manifest.originLonLat[1]*Math.PI/180),-(lat-manifest.originLonLat[1])*111320];}
 function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(ready&&$('overview').classList.contains('active'))wholeCity();}
 new ResizeObserver(resize).observe(host);resize();
@@ -40,7 +50,7 @@ function updateTiles(){
  for(const t of selected){
   if(tiles.has(t.id)||pending.has(t.id)||failed.has(t.id)||pending.size>=3)continue;
   pending.add(t.id);
-  loader.load(t.url,gltf=>{pending.delete(t.id);updateLayer(gltf.scene);gltf.scene.visible=desired.has(t.id);scene.add(gltf.scene);tiles.set(t.id,{group:gltf.scene,lastSeen:performance.now()});updateSkyline();lastLoad=0;},undefined,error=>{pending.delete(t.id);failed.add(t.id);console.error('Tile load failed',t.id,error);lastLoad=0;});
+  loader.load(t.url,gltf=>{pending.delete(t.id);sky?.registerWater(gltf.scene);sky?.registerBuildings(gltf.scene);updateLayer(gltf.scene);gltf.scene.visible=desired.has(t.id);scene.add(gltf.scene);tiles.set(t.id,{group:gltf.scene,lastSeen:performance.now()});updateSkyline();lastLoad=0;},undefined,error=>{pending.delete(t.id);failed.add(t.id);console.error('Tile load failed',t.id,error);lastLoad=0;});
  }
  updateSkyline();
  const visible=[...tiles.keys()].filter(id=>desired.has(id)).length;
@@ -50,23 +60,24 @@ function updateTiles(){
 }
 async function init(){
  const response=await fetch('assets/manifest.json');if(!response.ok)throw new Error('The model manifest is not available yet');manifest=await response.json();
- const [streetData,cameraData]=await Promise.all([fetch('assets/streets.json').then(r=>r.json()),fetch('assets/cameras.json').then(r=>r.json())]);streets=streetData;
+ const cameraData=await fetch('assets/cameras.json').then(r=>r.json());
  $('road-km').textContent=Math.round(manifest.statistics.roadLengthMetres/1000).toLocaleString();$('building-count').textContent=manifest.statistics.buildingFeatures.toLocaleString();
  const b=manifest.boundsXZ;$('extent').textContent=`${((b[2]-b[0])/1000).toFixed(0)} × ${((b[3]-b[1])/1000).toFixed(0)} km · ${manifest.cameraCount} camera locations · static 3D model`;
  const ground=new THREE.Mesh(new THREE.PlaneGeometry(600000,600000),new THREE.MeshStandardMaterial({color:'#455d52',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.5;scene.add(ground);
  const positions=[];for(const c of cameraData)positions.push(c.x,14,c.z);
  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));cameraMarkers=new THREE.Points(geometry,new THREE.PointsMaterial({color:'#ffc777',size:5,sizeAttenuation:false,depthTest:false}));cameraMarkers.visible=false;cameraMarkers.renderOrder=5;scene.add(cameraMarkers);
- const options=document.createDocumentFragment();for(const r of streets){const o=document.createElement('option');o.value=r.name;options.appendChild(o);}$('street-list').appendChild(options);
  centralCity();
  const gltf=await loader.loadAsync(manifest.overview.url,event=>{$('loading-progress').textContent=`${(event.loaded/1e6).toFixed(1)} MB received`;});overview=gltf.scene;
  // Overview lines are a cartographic guide. Use a light colour so narrow streets remain legible at city scale.
  overview.traverse(o=>{if(o.isLineSegments){o.material.color.set(o.name==='major'?'#c1d1b6':o.name==='street'?'#90aaa0':'#88a294');o.material.transparent=true;o.material.opacity=o.name==='major'?.95:.65;}});
- if(manifest.skyline){const layer=await loader.loadAsync(manifest.skyline.url);skyline=layer.scene;scene.add(skyline);updateSkyline();}
+ if(manifest.skyline){const layer=await loader.loadAsync(manifest.skyline.url);skyline=layer.scene;scene.add(skyline);updateSkyline();highrises=tallBuildings(skyline,Infinity);}
+ sky=createSky({scene,manifest,directionalLight:sunLight,hemisphereLight:hemiLight});
+ sky.registerWater(overview);sky.registerBuildings(skyline);
  updateLayer(overview);scene.add(overview);$('loading').hidden=true;ready=true;updateTiles();
  weather=createWeather({scene,project,manifest});
  flights=createFlights({scene,project,controls});
  lightning=createLightning({scene,weather,skyline,camera});
- window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
+ window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
 }
 $('overview').onclick=()=>{if(ready)wholeCity();};
 $('downtown').onclick=()=>{if(ready)centralCity();};
@@ -74,12 +85,28 @@ $('downtown').onclick=()=>{if(ready)centralCity();};
 $('airport').onclick=()=>{if(!ready)return;const [x,z]=project(106.6525,10.8185);controls.target.set(x,30,z);camera.position.copy(controls.target).add(new THREE.Vector3(.55,.42,.72).normalize().multiplyScalar(3600));controls.update();lastLoad=0;setActive('airport');};
 $('vvk').onclick=()=>{if(!ready)return;const p=project(106.694,10.7605);goTo(...p,1900);setActive('vvk');};
 $('top').onclick=()=>{if(!ready)return;goTo(controls.target.x,controls.target.z,camera.position.distanceTo(controls.target),true);setActive('top');};
-function search(){if(!ready)return;const clean=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/g,'d').toLowerCase().trim();const q=clean($('search').value);if(!q)return;const r=streets.find(s=>clean(s.name)===q)||streets.find(s=>clean(s.name).includes(q));if(!r){$('search-status').textContent='No matching mapped street. Try another name.';return;}goTo(r.x,r.z,1300);setActive('');$('search-status').textContent=r.name+' · OSM way '+r.id;}
-$('go').onclick=search;$('search').addEventListener('keydown',e=>{if(e.key==='Enter')search();});
 for(const id of ['buildings','minor'])$(id).onchange=()=>{if(overview)updateLayer(overview);for(const e of tiles.values())updateLayer(e.group);updateSkyline();};
 $('cameras').onchange=()=>{if(cameraMarkers)cameraMarkers.visible=$('cameras').checked;};
+renderer.domElement.addEventListener('dblclick',e=>{
+ if(!ready||!highrises.length)return;
+ const rect=renderer.domElement.getBoundingClientRect();
+ const v=new THREE.Vector3(),onScreen=[];
+ for(const b of highrises){
+  v.set(b.x,b.height,b.z).project(camera);
+  if(v.z<-1||v.z>1)continue; // behind the camera or past the far plane
+  onScreen.push({x:(v.x+1)/2*rect.width,z:(1-v.y)/2*rect.height,building:b});
+ }
+ const nearest=nearestHighrise(onScreen,e.clientX-rect.left,e.clientY-rect.top,HIGHRISE_SNAP_PIXELS);
+ if(!nearest)return;
+ const b=nearest.building;
+ // Hover just off the roof corner, looking back across it, rather than
+ // straight down from directly above -- matches the other presets' angle.
+ controls.target.set(b.x,b.height,b.z);
+ camera.position.copy(controls.target).add(new THREE.Vector3(.6,.3,.7).normalize().multiplyScalar(190));
+ controls.update();lastLoad=0;setActive('');
+});
 $('about').onclick=()=>$('info').showModal();$('close').onclick=()=>$('info').close();
 controls.addEventListener('start',()=>setActive(''));
-function animate(now){requestAnimationFrame(animate);controls.update();weather?.update(now);flights?.update(now);lightning?.update(now);if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}renderer.render(scene,camera);}
+function animate(now){requestAnimationFrame(animate);controls.update();weather?.update(now);flights?.update(now);lightning?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}renderer.render(scene,camera);}
 requestAnimationFrame(animate);
 init().catch(error=>{console.error(error);$('loading').innerHTML='';const title=document.createElement('strong');title.textContent='Model could not be loaded';const p=document.createElement('p');p.textContent=error.message;$('loading').append(title,p);});
