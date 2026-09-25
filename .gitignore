@@ -10,26 +10,9 @@ data/raw/
 # same reasoning as data/raw/, large and reproducible via scripts/storm_snapshot.py
 data/test_sets/
 
-# service logs (rotated in place) and the append-only reading history: both grow
-# continuously, so they're operational data rather than anything to version
+# service logs, rotated in place -- operational data, not anything to version
 logs/
-data/derived/rain_history.csv
-data/derived/vrain_history.csv
-data/derived/lightning_vn_history.csv
-data/derived/lightning_vn_strikes_history.csv
-# cached model perceptions keyed by frame path -- regenerated on demand by
-# scripts/perception_eval.py, and it grows with every frame ever scored
-data/derived/perception_cache.json
 NOTES.md
-
-# rendered satellite frames -- a rolling window, refetched from NOAA on demand
-data/derived/himawari/
-
-# recoloured radar frames -- a rolling 48 h window, refetched from HYMETNET on demand
-data/derived/radar_nhb/
-
-# today's Metro Line 1 timetable, refetched from the HURC API once a day
-data/derived/metro_timetable.json
 
 # Generated 3D map models and build inputs; rebuild with 3d/tools/build.py.
 /3d/assets/
@@ -37,10 +20,9 @@ data/derived/metro_timetable.json
 /3d/.venv-build/
 /3d/**/*.osm.pbf
 
-# arrivals/departures cache for the 3D airport animation -- refetched from the METAR API
-# and rebuilt continuously by scripts/tia_poller.py's scrape of the live flight board
-data/derived/flights/
-data/derived/flights_tia.json
-
-# per-camera recent-readings index, rebuilt from rain_history.csv by scripts/backfill_recent.py
-data/derived/recent/
+# everything the services produce as they run: readings and their histories,
+# the camera sample and watchdog state, satellite/radar frames, flight and metro
+# caches. Operational data kept on disk, not versioned. camera_locations.json is
+# the exception -- the city's full camera list, an input nothing regenerates.
+data/derived/*
+!data/derived/camera_locations.json
