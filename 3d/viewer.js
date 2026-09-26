@@ -191,7 +191,18 @@ function followTrain(){
  // The user panned: the target is no longer where we left it.
  if(controls.target.distanceTo(following.last)>0.5){stopFollowing();setActive('');return;}
  const now=performance.now(),dt=Math.min(0.1,(now-following.at)/1000);following.at=now;
- let turn=behindYaw(v)-following.yaw;turn=Math.atan2(Math.sin(turn),Math.cos(turn));   // shortest way round
+ // While the user drags (and the orbit's damping settles), carry the camera
+ // and target along with the vehicle and let the drag turn and tilt the view;
+ // the angle they leave it at -- round from astern, and up -- is kept.
+ if(following.dragging||now<following.settle){
+  const move=v.pos.clone().sub(following.last);controls.target.add(move);camera.position.add(move);following.last.copy(v.pos);
+  const rel=camera.position.clone().sub(controls.target),d=rel.length();
+  following.pitch=Math.asin(Math.max(-1,Math.min(1,rel.y/d)));
+  const yaw=Math.atan2(rel.x,rel.z);following.yaw=yaw;
+  const off=yaw-behindYaw(v);following.offset=Math.atan2(Math.sin(off),Math.cos(off));
+  return;
+ }
+ let turn=behindYaw(v)+(following.offset||0)-following.yaw;turn=Math.atan2(Math.sin(turn),Math.cos(turn));   // shortest way round
  following.yaw+=turn*(1-Math.exp(-CHASE_TURN*dt));
  placeChase(v);
 }
@@ -220,7 +231,9 @@ renderer.domElement.addEventListener('dblclick',e=>{
  controls.update();lastLoad=0;setActive('');
 });
 $('about').onclick=()=>$('info').showModal();$('close').onclick=()=>$('info').close();
-controls.addEventListener('start',()=>{if(!following)setActive('');});
+controls.addEventListener('start',()=>{if(!following)setActive('');else following.dragging=true;});
+// After a drag the orbit keeps turning a little (damping): hold the chase off until it settles.
+controls.addEventListener('end',()=>{if(following){following.dragging=false;following.settle=performance.now()+600;}});
 function animate(now){requestAnimationFrame(animate);followTrain();controls.update();if(camera.position.y<3)camera.position.y=3;   // zooming to the cursor must not take the camera below the ground
  weather?.update(now,camera);flights?.update(now);lightning?.update(now);flag?.update?.(now);riverTour?.update(Date.now());flagSet?.update(now);for(const l of Object.values(landmarks))l.update?.(camera,now);openTour?.update(Date.now());metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}cityLighting?.update(now);renderer.render(scene,camera);}
 requestAnimationFrame(animate);
