@@ -162,6 +162,17 @@ For the river tours (`3d/rivertour.js`: continuous loop, 35 knots, on the water)
 node --loader ./tests/three-loader.mjs tests/rivertour.mjs
 ```
 
+For the city towers (`3d/citytowers.js`: 50 more towers, detailed near):
+```sh
+node --loader ./tests/three-loader.mjs tests/citytowers.mjs
+```
+
+For the river water (`3d/riverwater.js`: waves, Kelvin wake, wake ribbons
+through turns, the surface grid, yachts riding the surface):
+```sh
+node --loader ./tests/three-loader.mjs tests/riverwater.mjs
+```
+
 For the riverfront towers (`3d/riverfront.js`: detailed near, blocks far):
 ```sh
 node --loader ./tests/three-loader.mjs tests/riverfront.mjs

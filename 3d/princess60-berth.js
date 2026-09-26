@@ -11,6 +11,7 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {YACHT} from './yacht.js';
+import {REFLECT_LAYER} from './riverwater.js';
 
 // Camera distances (m) to the yacht's centre. The full model is requested
 // inside full, kept until beyond release for keepMs, then freed.
@@ -75,7 +76,7 @@ export function createMooredPrincess60({scene,project}) {
   for(const level of ['lod1','lod2']){
     const url=new URL(`./assets/princess60-nharong-${level}.glb`,import.meta.url).href;
     loader.loadAsync(url).then(gltf=>{if(disposed)return;const o=gltf.scene;o.name=`princess60-${level}`;o.visible=false;
-      o.traverse(m=>{if(m.isMesh){m.material.side=THREE.DoubleSide;}});levels[level]=o;yacht.add(o);}).catch(e=>{state.lodError=String(e.message||e);});
+      o.traverse(m=>{if(m.isMesh){m.material.side=THREE.DoubleSide;}});levels[level]=o;yacht.add(o);if(level==='lod2')show(state.lod);}).catch(e=>{state.lodError=String(e.message||e);});
   }
   // The full model: from the worker, or built here where there is no Worker.
   function adopt({meshes,materials:json,userData}){
@@ -108,8 +109,11 @@ export function createMooredPrincess60({scene,project}) {
   }
   function releaseGroup(o){o.removeFromParent();o.traverse(m=>{if(m.isMesh)m.geometry.dispose();});for(const m of o.userData.materials||[])m.dispose();}
   function releaseFull(){if(!levels.full)return;releaseGroup(levels.full);levels.full=null;}
+  // LOD2 is also the yacht's reflection in the river (riverwater.js): kept
+  // on the reflection layer alone while a finer level is drawn.
   function show(level){
-    for(const [k,o] of Object.entries(levels))if(o)o.visible=k===level;
+    for(const [k,o] of Object.entries(levels))if(o)o.visible=k===level||(k==='lod2'&&level!=='none');
+    if(levels.lod2)levels.lod2.traverse(m=>{if(m.isMesh){m.layers.set(level==='lod2'?0:REFLECT_LAYER);m.layers.enable(REFLECT_LAYER);}});
     state.lod=level;state.triangles=level==='none'?0:triangles(levels[level])+state.ropeTriangles;
   }
   const eye=new THREE.Vector3();

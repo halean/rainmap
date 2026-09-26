@@ -7,7 +7,9 @@
 // to the right of the river's centreline (river-lines.js) and runs flat out
 // at 35 knots, the Princess 60's top speed, bow up on the plane, slowing
 // only for the two turns. followView() gives the chase camera a yacht to
-// follow. See RIVERTOUR.md.
+// follow. With a water surface (riverwater.js, setSurface) each yacht rides
+// it -- heave, pitch and roll from the waves and the other's wake under her
+// hull -- instead of a scripted bob. See RIVERTOUR.md.
 import * as THREE from 'three';
 import {RIVER} from './river-lines.js';
 
@@ -17,6 +19,10 @@ export const RIVER_TOUR = Object.freeze({
   turnSpeed: 4.0,      // m/s round each turn
   brake: 0.02,         // how fast speed builds away from a turn (m/s per metre)
 });
+// A Princess 60's hull on the water, about the model's origin: stern, bow,
+// beam (m); where she is felt on the surface (bow, stern, either side); and
+// how quickly she follows it (s).
+export const HULL = Object.freeze({aft: -9.2, bow: 9.3, beam: 4.9, probe: {along: 6, across: 2}, lag: 0.35});
 
 /** Offset a polyline sideways (right of travel positive) and resample it every step metres. */
 function lane(points, offset, step = 8) {
@@ -87,6 +93,7 @@ export function createRiverTour({project, boats}) {
   }
   function update(nowMs = Date.now()) {
     const clock = nowMs / 1000;                    // continuous time: laps run on round the clock, no jump at midnight
+    const dt = lastClock === null ? 0 : Math.max(0, Math.min(0.5, clock - lastClock)); lastClock = clock;
     state.underway = [];
     for (const tour of tours) {
       const {object} = tour.boat, tt = clock + tour.phase * lap, {p, dir, speed, s} = pose(tt);
@@ -96,13 +103,31 @@ export function createRiverTour({project, boats}) {
       // settling to ~2.5° on the plane -- and a slow roll and pitch in the chop.
       const bob = tt * 0.9 + tour.index * 2, kn = speed / 0.514444;
       const trim = 0.075 * Math.exp(-(((kn - 13) / 6) ** 2)) + 0.045 * Math.min(1, kn / 22);
-      object.position.copy(parent.worldToLocal(p.clone().setY(tour.boat.waterY + 0.04 * Math.sin(bob * 1.3))));
-      object.rotation.set(0.012 * Math.sin(bob), yaw - worldYaw(parent), trim + 0.006 * Math.sin(bob * 0.7), 'YXZ');
+      let heave = 0.04 * Math.sin(bob * 1.3), roll = 0.012 * Math.sin(bob), pitch = 0.006 * Math.sin(bob * 0.7);
+      // Felt at bow and stern, port and starboard; followed with a lag, as a hull's weight does.
+      const {along, across} = HULL.probe, rx = -dir.z, rz = dir.x;               // right of travel: the model's +z
+      const h = (a, c) => surface?.(p.x + dir.x * a + rx * c, p.z + dir.z * a + rz * c, tour.index) ?? null;
+      const fore = h(along, 0);
+      if (fore === null) tour.motion = null;
+      else {
+        const aft = h(-along, 0), right = h(0, across), left = h(0, -across);
+        const want = {heave: (fore + aft + right + left) / 4, pitch: Math.atan2(fore - aft, 2 * along), roll: -Math.atan2(right - left, 2 * across)};
+        const m = tour.motion ??= {...want}, k = 1 - Math.exp(-dt / HULL.lag);
+        for (const key of ['heave', 'pitch', 'roll']) m[key] += (want[key] - m[key]) * k;
+        ({heave, pitch, roll} = m);
+      }
+      object.position.copy(parent.worldToLocal(p.clone().setY(tour.boat.waterY + heave)));
+      object.rotation.set(roll, yaw - worldYaw(parent), trim + pitch, 'YXZ');
       object.userData.velocity = {x: dir.x * speed, z: dir.z * speed};
       tour.pose = {p, dir, speed, s};
       state.underway.push({name: tour.boat.name, lapKm: +(s / 1000).toFixed(1), knots: +kn.toFixed(1)});
     }
   }
+  let surface = null, lastClock = null;
+  /** fn(x, z, skipIndex) -> the water's height there (riverwater.js sample), or null for the scripted bob. */
+  function setSurface(fn) { surface = fn; }
+  /** Each hull where the water needs it: position, heading, speed, size. */
+  function hulls() { return tours.filter(t => t.pose).map(({pose: {p, dir, speed}}) => ({x: p.x, z: p.z, dx: dir.x, dz: dir.z, speed, aft: HULL.aft, bow: HULL.bow, beam: HULL.beam})); }
   let followIndex = null;
   function followView(near = null) {
     if (!tours[0].pose) update();
@@ -112,7 +137,7 @@ export function createRiverTour({project, boats}) {
     return {pos: tour.pose.p.clone().setY(9), forward: tour.pose.dir.clone()};   // aim above the flybridge: the view looks up the river
   }
   function setFollowing(on) { if (!on) { followIndex = null; state.following = null; } }
-  return {state, update, followView, setFollowing, tours, route: r, lap};
+  return {state, update, followView, setFollowing, setSurface, hulls, tours, route: r, lap};
 }
 
 function worldYaw(o) { const q = o.getWorldQuaternion(new THREE.Quaternion()), x = new THREE.Vector3(1, 0, 0).applyQuaternion(q); return Math.atan2(-x.z, x.x); }

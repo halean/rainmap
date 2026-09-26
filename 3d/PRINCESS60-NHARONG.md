@@ -153,5 +153,8 @@ wherever it is on the river:
   flag is left out of the worker build and the proxies; the standalone
   inspection page still shows it.
 
+The LOD2 proxy is also her reflection in the river (`riverwater.js`). While
+a finer level is drawn, LOD2 stays on the reflection layer alone.
+
 `state.lod`, `state.triangles` and `state.cameraDistance` report the current
 level.

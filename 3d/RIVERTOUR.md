@@ -41,6 +41,16 @@ This is **simulated**: positions follow the clock, not a real operator.
   motion, so it streams aft at speed.
 - ***Nha Rong*'s detail levels:** they follow it along the river.
 
+## On the water
+
+With the moving river (`riverwater.js`, see `RIVERWATER.md`) active round the
+camera, each yacht rides it: `setSurface(fn)` gives the tour the water's
+height, felt 6 m fore and aft and 2 m either side. Heave, pitch and roll
+follow it with a 0.35 s lag, on top of the bow-up trim. The other yacht's
+wake rocks her, and her own does not. Away from the moving water the
+scripted bob returns. `hulls()` gives the water each hull's position,
+heading, speed and size, for the wakes, the foam line and the cut-out.
+
 ## Camera
 
 **River tour** follows the yacht nearest the view: 48 m astern, low (4°),

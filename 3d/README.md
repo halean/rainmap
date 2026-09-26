@@ -139,9 +139,24 @@ The two yachts from the Vinhomes marina circle the Saigon River continuously
 at 35 knots (`rivertour.js`, see `RIVERTOUR.md`); the **River tour** button
 follows one.
 
+Near the river the water moves: wind waves, the yachts' wakes (Kelvin arms,
+propeller wash, foam, bubbles and spray), reflections of the skyline, rain
+rings, and light streaks at night; the yachts ride the waves
+(`riverwater.js`, see `RIVERWATER.md`). The **River water** menu in the
+legend sets its quality (auto by default); `?water=` sets it from the URL,
+and `?perf=1` shows its cost.
+
 Along the river tour, 27 riverfront towers are modelled in detail -- every
 floor and bay, ~100k triangles each, built only near the camera
 (`riverfront.js`, see `RIVERFRONT.md`).
+
+Fifty more towers across the city are modelled the same way:
+- District 1 (Saigon Centre, Lim Tower);
+- Vinhomes Golden River, Thủ Thiêm, Thảo Điền;
+- Hà Đô Centrosa, City Garden, District 7.
+
+They average 78k triangles each, built only near the camera
+(`citytowers.js`, see `CITYTOWERS.md`).
 
 The **Walking tour** strolls down Đồng Khởi among close-up shopfronts and tall
 trees, built only while the tour runs (`walktour.js`, see `WALKTOUR.md`).

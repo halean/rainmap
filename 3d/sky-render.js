@@ -111,6 +111,9 @@ function makeGlintUniforms() {
     uGlintTime: { value: 0 },
     uGlintIntensity: { value: 0 },
     uFacadeGlintIntensity: { value: 0 },
+    // Where the river's moving surface (riverwater.js) takes over near the
+    // camera, the flat tile water is cut away: (x, z, radius); radius 0 = none.
+    uWaterHole: { value: new THREE.Vector3(0, 0, 0) },
   };
 }
 
@@ -127,6 +130,7 @@ function applyWaterGlint(material, uniforms) {
     shader.uniforms.uGlintColor = uniforms.uGlintColor;
     shader.uniforms.uGlintTime = uniforms.uGlintTime;
     shader.uniforms.uGlintIntensity = uniforms.uGlintIntensity;
+    shader.uniforms.uWaterHole = uniforms.uWaterHole;
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vGlintWorldPos;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGlintWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
@@ -136,7 +140,10 @@ function applyWaterGlint(material, uniforms) {
         uniform vec3 uGlintDir;
         uniform vec3 uGlintColor;
         uniform float uGlintTime;
-        uniform float uGlintIntensity;`)
+        uniform float uGlintIntensity;
+        uniform vec3 uWaterHole;`)
+      .replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
+        if (uWaterHole.z > 0.0 && distance(vGlintWorldPos.xz, uWaterHole.xy) < uWaterHole.z) discard;`)
       .replace('#include <dithering_fragment>', `
         if (uGlintIntensity > 0.0) {
           // Widely separated frequencies, not four close ones: near-equal
@@ -483,5 +490,5 @@ export function createSky({ scene, manifest, directionalLight, hemisphereLight, 
   }
 
   update(now);
-  return { state, update, registerWater, registerBuildings, registerRoads };
+  return { state, update, registerWater, registerBuildings, registerRoads, glint: glintUniforms, night: nightUniform };
 }

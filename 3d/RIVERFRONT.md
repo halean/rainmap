@@ -47,6 +47,16 @@ Bay widths are chosen so each tower comes to about 100k triangles (15k-100k,
   nearest first and one per frame (20-70 ms each), so the page never stalls.
 - **Released:** it is freed once the camera has stayed beyond 2.4 km for
   30 s.
+- **In the river:** the far block is also the tower's reflection
+  (`riverwater.js`). While the detailed model is drawn, the block stays on
+  the reflection layer alone, so the reflection costs a few hundred
+  triangles, not 100k.
+
+The machinery is `createTowerSet` (spec list, outlines, name prefix);
+`citytowers.js` uses it for 50 more towers (`CITYTOWERS.md`). A spec with
+`calibrate` is rebuilt once if its first build comes out well off
+DETAIL.target. The riverfront's specs don't set it, so their counts are
+unchanged.
 
 On a river tour the detail follows the yacht along the bank. Each tower
 replaces its generic block in the city tiles.

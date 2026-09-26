@@ -11,6 +11,7 @@
 // and freed once the camera has stayed beyond DETAIL.far for DETAIL.keepMs.
 // See RIVERFRONT.md.
 import * as THREE from 'three';
+import {REFLECT_LAYER} from './riverwater.js';
 import {genericReplacer} from './landmark-kit.js';
 import {emitter, shaft, roof, band, inset, roundCorners} from './tower-kit.js';
 import {RIVERFRONT_OUTLINES as O} from './riverfront-lines.js';
@@ -31,8 +32,8 @@ function palette(p) {
 
 // Per-building looks, from photographs (see RIVERFRONT.md). `body` is the
 // top of the main shaft; `crown` adds what stands above it.
-const CURTAIN = (o = {}) => ({kind: 'curtain', bay: 1.2, mullion: 0.22, mullionDepth: 0.14, ledge: 0.25, spandrel: 0.24, ...o});
-const RESIDENTIAL = (o = {}) => ({kind: 'residential', bay: 2.4, window: 0.62, balconyEvery: 2, balconyDepth: 1.3, stagger: false, pier: 3, ...o});
+export const CURTAIN = (o = {}) => ({kind: 'curtain', bay: 1.2, mullion: 0.22, mullionDepth: 0.14, ledge: 0.25, spandrel: 0.24, ...o});
+export const RESIDENTIAL = (o = {}) => ({kind: 'residential', bay: 2.4, window: 0.62, balconyEvery: 2, balconyDepth: 1.3, stagger: false, pier: 3, ...o});
 const SPECS = [
   // Upstream: Vinhomes Central Park, nine cream towers of 180 m.
   ...['Park1', 'Park2', 'Park3', 'Park4', 'Park5', 'Park6', 'Park7', 'Central1', 'Central2'].map(n => ({key: `vinhomes${n}`, name: `Vinhomes Central Park – ${n.replace(/(\d)/, ' $1')}`,
@@ -66,12 +67,22 @@ const SPECS = [
 ];
 
 /** Build one tower's detailed model in its local frame (centre at origin). */
-function buildDetail(spec, local, height, materials) {
-  const e = emitter(materials, `rf-${spec.key}`), outline = spec.round ? roundCorners(local, spec.round) : local;
+function buildDetail(spec, local, height, materials, prefix) {
+  const first = buildOnce(spec, local, height, materials, prefix, 1);
+  // Well off the target (the per-bay estimate is rough; balconies on every
+  // floor cost more): once more, with the bays scaled to match -- unless too
+  // few already at the narrowest bay. Only where the spec asks.
+  const r = first.triangles / DETAIL.target;
+  if (!spec.calibrate || (r > 0.8 && r < 1.15) || (r <= 0.8 && first.bay <= spec.style.bay + 1e-6)) return first;
+  first.group.traverse(o => { if (o.isMesh) o.geometry.dispose(); });
+  return buildOnce(spec, local, height, materials, prefix, first.triangles / DETAIL.target);
+}
+function buildOnce(spec, local, height, materials, prefix, scale) {
+  const e = emitter(materials, `${prefix}-${spec.key}`), outline = spec.round ? roundCorners(local, spec.round) : local;
   const perim = outline.reduce((s, p, i) => s + Math.hypot(outline[(i + 1) % outline.length][0] - p[0], outline[(i + 1) % outline.length][1] - p[1]), 0);
   // Bay width chosen so the facade comes to about DETAIL.target triangles.
   const perBay = spec.style.kind === 'curtain' ? (spec.style.transom ? 14 : 12) : 16;
-  const bay = Math.max(spec.style.bay, perim * spec.floors * perBay / DETAIL.target);
+  const bay = Math.max(spec.style.bay, perim * spec.floors * perBay / DETAIL.target * scale);
   let y = 0;
   if (spec.podium) {
     const pod = inset(outline, -0.6);                                  // the podium stands a little proud
@@ -81,9 +92,9 @@ function buildDetail(spec, local, height, materials) {
   }
   shaft(e, outline, {y0: y, y1: spec.body, floors: Math.max(1, Math.round(spec.floors * (spec.body - y) / spec.body)), style: {...spec.style, bay}});
   crown(e, spec, outline, height);
-  const group = new THREE.Group(); group.name = `riverfront-${spec.key}-detail`;
+  const group = new THREE.Group(); group.name = `${prefix}-${spec.key}-detail`;
   const triangles = e.finish(group);
-  return {group, triangles};
+  return {group, triangles, bay};
 }
 function crown(e, spec, o, height) {
   const B = spec.body;
@@ -137,34 +148,41 @@ function crown(e, spec, o, height) {
 const area2 = pts => pts.reduce((s, [x0, z0], i) => { const [x1, z1] = pts[(i + 1) % pts.length]; return s + x0 * z1 - x1 * z0; }, 0) / 2;
 
 export function createRiverfront({scene, project}) {
-  const root = new THREE.Group(); root.name = 'landmark-riverfront';
-  const buildings = SPECS.map(spec => {
-    const src = O[spec.key], height = spec.height ?? src.height ?? src.levels * 3.2;
+  return createTowerSet({scene, project, specs: SPECS, outlines: O, prefix: 'riverfront'});
+}
+
+/** A set of towers, each a far block until the camera comes near, then its
+ *  detailed model (built one a frame, freed when left). Also used by
+ *  citytowers.js. `outlines[key]`: {outline: [[lon, lat]], height, levels}. */
+export function createTowerSet({scene, project, specs, outlines, prefix}) {
+  const root = new THREE.Group(); root.name = `landmark-${prefix}`;
+  const buildings = specs.map(spec => {
+    const src = outlines[spec.key], height = spec.height ?? src.height ?? src.levels * 3.2;
     const world = src.outline.map(([lon, lat]) => project(lon, lat));
     const cx = world.reduce((s, p) => s + p[0], 0) / world.length, cz = world.reduce((s, p) => s + p[1], 0) / world.length;
     const local = world.map(([x, z]) => [x - cx, z - cz]);
-    const group = new THREE.Group(); group.name = `riverfront-${spec.key}`; group.position.set(cx, 0, cz); root.add(group);
+    const group = new THREE.Group(); group.name = `${prefix}-${spec.key}`; group.position.set(cx, 0, cz); root.add(group);
     const s = {...spec, body: Math.min(spec.body, height)};
     // The far block: the footprint extruded in the facade's main colour.
     const farMat = M(spec.colours.wall && spec.style.kind === 'residential' ? spec.colours.wall : spec.colours.glass, {roughness: 0.5, metalness: spec.style.kind === 'curtain' ? 0.35 : 0});
     const shape = new THREE.Shape(local.map(([x, z]) => new THREE.Vector2(x, -z)));
     const g = new THREE.ExtrudeGeometry(shape, {depth: height, bevelEnabled: false}); g.rotateX(-Math.PI / 2);
-    const far = new THREE.Mesh(g, farMat); far.name = `riverfront-${spec.key}-far`; group.add(far);
+    const far = new THREE.Mesh(g, farMat); far.name = `${prefix}-${spec.key}-far`; far.layers.enable(REFLECT_LAYER); group.add(far);
     return {spec: s, src, height, local, group, far, detail: null, materials: null, away: 0, center: new THREE.Vector3(cx, height / 2, cz)};
   });
   scene.add(root);
   root.updateMatrixWorld(true);
-  const replacers = buildings.map(b => genericReplacer(b.group, b.local, {flag: `riverfront-${b.spec.key}`, top: b.height + 30}));
+  const replacers = buildings.map(b => genericReplacer(b.group, b.local, {flag: `${prefix}-${b.spec.key}`, top: b.height + 30}));
   const state = {buildings: buildings.length, detailed: [], triangles: 0};
 
   function build(b) {
     b.materials = palette(b.spec.colours);
-    const {group, triangles} = buildDetail(b.spec, b.local, b.height, b.materials);
-    b.detail = group; b.triangles = triangles; b.group.add(group); b.far.visible = false;
+    const {group, triangles} = buildDetail(b.spec, b.local, b.height, b.materials, prefix === 'riverfront' ? 'rf' : prefix);
+    b.detail = group; b.triangles = triangles; b.group.add(group); b.far.layers.set(REFLECT_LAYER);   // the far block stays, for the river's reflection only
   }
   function release(b) {
     b.detail.removeFromParent(); b.detail.traverse(o => { if (o.isMesh) o.geometry.dispose(); });
-    Object.values(b.materials).forEach(m => m.dispose()); b.detail = null; b.materials = null; b.far.visible = true;
+    Object.values(b.materials).forEach(m => m.dispose()); b.detail = null; b.materials = null; b.far.layers.set(0); b.far.layers.enable(REFLECT_LAYER);
   }
   const eye = new THREE.Vector3();
   function update(camera, nowMs = performance.now()) {

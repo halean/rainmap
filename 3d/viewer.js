@@ -31,12 +31,14 @@ import {createMooredPrincess60} from './princess60-berth.js';
 import {createOpenTour} from './opentour.js';
 import {createRiverTour} from './rivertour.js';
 import {createRiverfront} from './riverfront.js';
+import {createCityTowers} from './citytowers.js';
+import {createRiverWater} from './riverwater.js';
 // Landmark models built on OSM outlines: each replaces its generic block as
 // tiles stream in, and follows the Buildings checkbox.
-const LANDMARKS=[['opera',createOperaHouse],['stateBank',createStateBank],['postOffice',createPostOffice],['cityHall',createCityHall],['bitexco',createBitexco],['landmark81',createLandmark81],['nhaRong',createNhaRong],['hoConRua',createHoConRua],['continental',createContinental],['cityMuseum',createCityMuseum],['tanDinh',createTanDinh],['jadeEmperor',createJadeEmperor],['binhTay',createBinhTay],['thienHau',createThienHau],['bridges',createBridges],['yacht',createYacht],['riverfront',createRiverfront],['princess60',createMooredPrincess60]];
+const LANDMARKS=[['opera',createOperaHouse],['stateBank',createStateBank],['postOffice',createPostOffice],['cityHall',createCityHall],['bitexco',createBitexco],['landmark81',createLandmark81],['nhaRong',createNhaRong],['hoConRua',createHoConRua],['continental',createContinental],['cityMuseum',createCityMuseum],['tanDinh',createTanDinh],['jadeEmperor',createJadeEmperor],['binhTay',createBinhTay],['thienHau',createThienHau],['bridges',createBridges],['yacht',createYacht],['riverfront',createRiverfront],['cityTowers',createCityTowers],['princess60',createMooredPrincess60]];
 const landmarks={};
 import {createRex} from './rex.js';
-let weather,flights,lightning,sky,flag,flagSet,railway,openTour,riverTour,metro,cityLighting,cathedral,market,palace,majestic,rex;
+let water,weather,flights,lightning,sky,flag,flagSet,railway,openTour,riverTour,metro,cityLighting,cathedral,market,palace,majestic,rex;
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const $=id=>document.getElementById(id),host=$('viewport');
@@ -90,11 +92,11 @@ function updateTiles(){
  for(const [id,entry] of tiles){entry.group.visible=desired.has(id);if(entry.group.visible)entry.lastSeen=performance.now();}
  // At most 28 resident detailed tiles. Dispose off-screen GPU buffers, not just scene objects.
  const evict=[...tiles.entries()].filter(([id])=>!desired.has(id)).sort((a,b)=>a[1].lastSeen-b[1].lastSeen);
- while(tiles.size>28&&evict.length){const [id,entry]=evict.shift();scene.remove(entry.group);dispose(entry.group);tiles.delete(id);}
+ while(tiles.size>28&&evict.length){const [id,entry]=evict.shift();scene.remove(entry.group);water?.unregister(entry.group);dispose(entry.group);tiles.delete(id);}
  for(const t of selected){
   if(tiles.has(t.id)||pending.has(t.id)||failed.has(t.id)||pending.size>=3)continue;
   pending.add(t.id);
-  loader.load(t.url,gltf=>{pending.delete(t.id);cathedral?.replaceGeneric(gltf.scene);market?.replaceGeneric(gltf.scene);palace?.replaceGeneric(gltf.scene);majestic?.replaceGeneric(gltf.scene);rex?.replaceGeneric(gltf.scene);for(const l of Object.values(landmarks))l.replaceGeneric(gltf.scene);sky?.registerWater(gltf.scene);sky?.registerBuildings(gltf.scene);sky?.registerRoads(gltf.scene);cityLighting?.register(gltf.scene);updateLayer(gltf.scene);gltf.scene.visible=desired.has(t.id);scene.add(gltf.scene);tiles.set(t.id,{group:gltf.scene,lastSeen:performance.now()});updateSkyline();lastLoad=0;},undefined,error=>{pending.delete(t.id);failed.add(t.id);console.error('Tile load failed',t.id,error);lastLoad=0;});
+  loader.load(t.url,gltf=>{pending.delete(t.id);cathedral?.replaceGeneric(gltf.scene);market?.replaceGeneric(gltf.scene);palace?.replaceGeneric(gltf.scene);majestic?.replaceGeneric(gltf.scene);rex?.replaceGeneric(gltf.scene);for(const l of Object.values(landmarks))l.replaceGeneric(gltf.scene);sky?.registerWater(gltf.scene);water?.register(gltf.scene);sky?.registerBuildings(gltf.scene);sky?.registerRoads(gltf.scene);cityLighting?.register(gltf.scene);updateLayer(gltf.scene);gltf.scene.visible=desired.has(t.id);scene.add(gltf.scene);tiles.set(t.id,{group:gltf.scene,lastSeen:performance.now()});updateSkyline();lastLoad=0;},undefined,error=>{pending.delete(t.id);failed.add(t.id);console.error('Tile load failed',t.id,error);lastLoad=0;});
  }
  updateSkyline();
  const visible=[...tiles.keys()].filter(id=>desired.has(id)).length;
@@ -107,7 +109,8 @@ async function init(){
  const cameraData=await fetch('assets/cameras.json').then(r=>r.json());
  $('road-km').textContent=Math.round(manifest.statistics.roadLengthMetres/1000).toLocaleString();$('building-count').textContent=manifest.statistics.buildingFeatures.toLocaleString();
  const b=manifest.boundsXZ;$('extent').textContent=`${((b[2]-b[0])/1000).toFixed(0)} × ${((b[3]-b[1])/1000).toFixed(0)} km · ${manifest.cameraCount} camera locations · static 3D model`;
- const ground=new THREE.Mesh(new THREE.PlaneGeometry(600000,600000),new THREE.MeshStandardMaterial({color:'#455d52',roughness:1}));ground.name='ground';ground.rotation.x=-Math.PI/2;ground.position.y=-.5;scene.add(ground);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(600000,600000,64,64),   // split: two 600 km triangles were clipped wrongly from low down (the ground then covered everything)
+  new THREE.MeshStandardMaterial({color:'#455d52',roughness:1}));ground.name='ground';ground.rotation.x=-Math.PI/2;ground.position.y=-.5;scene.add(ground);
  const positions=[];for(const c of cameraData)positions.push(c.x,14,c.z);
  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));cameraMarkers=new THREE.Points(geometry,new THREE.PointsMaterial({color:'#ffc777',size:5,sizeAttenuation:false,depthTest:false}));cameraMarkers.visible=false;cameraMarkers.renderOrder=5;scene.add(cameraMarkers);
  centralCity();
@@ -145,10 +148,25 @@ async function init(){
    {name:'Nha Rong',object:nha.yacht,waterY:-0.12},
   ]});
  }
+ // The river near the camera: waves, the yachts' wakes, foam, spray and reflections (riverwater.js).
+ try{
+  water=createRiverWater({scene,renderer,project,glint:sky.glint,night:sky.night,rainAt:(x,z)=>{let best=null,d=2500;for(const p of weather.rainPoints())if(Math.hypot(p.x-x,p.z-z)<d){d=Math.hypot(p.x-x,p.z-z);best=p;}return best?best.classIndex/3:0;}});
+  water.register(overview);
+  water.reflect(skyline);for(const key of ['bitexco','landmark81','nhaRong','bridges'])water.reflect(landmarks[key]?.group);water.reflect(landmarks.yacht?.yacht);
+  for(const o of scene.children)if(o.isSprite)o.layers.enable(5);   // the sun and moon
+  riverTour?.setSurface((x,z,skip)=>water.state.active?water.sample(x,z,skip):null);
+  const q=new URLSearchParams(location.search).get('water'),select=$('water-quality');
+  if(q&&[...select.options].some(o=>o.value===q))select.value=q;
+  water.setQuality(select.value);select.onchange=()=>water.setQuality(select.value);
+  if(new URLSearchParams(location.search).get('perf')==='1'){   // ?perf=1: the water's cost, live
+   const box=document.createElement('pre');box.style.cssText='position:fixed;left:8px;bottom:40px;z-index:9;margin:0;padding:6px 8px;font:11px/1.35 monospace;color:#dfe;background:#0009;border-radius:4px;pointer-events:none';document.body.appendChild(box);
+   setInterval(()=>{const w=water.state;box.textContent=`water ${w.active?'on':'idle'} · ${w.quality} (${w.mode}) · px ${w.pixelRatio}\nframe ${w.frameMs??'-'} ms · gpu ${w.gpuMs??'n/a'} ms\nsurface ${w.surfaceTriangles} tris · wake ${w.wakeMap}² · particles ${w.particles}\nreflection ${w.reflection?'on':'off'} · rain ${w.rain.toFixed(2)}`;},500);
+  }
+ }catch(error){console.error('River water unavailable',error);water=null;}
  // Every landmark's flag: the same flag, turned by the same wind, waving when near.
  flagSet=createFlagSet({scene,camera});
  for(const l of [palace,majestic,rex,...Object.values(landmarks)])for(const f of l?.flags??[])flagSet.add({parent:l.group,...f});
- window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get lighting(){return cityLighting?.state;},get flag(){return flag?.state;},get flags(){return flagSet?.state;},get railway(){return railway?.state;},get openTour(){return openTour?.state;},get riverTour(){return riverTour?.state;},get walkTour(){return walkTour?.state??null;},get metro(){return metro?.state;},get palace(){return palace?.state;},get majestic(){return majestic?.state;},get rex(){return rex?.state;},get landmarks(){return Object.fromEntries(Object.entries(landmarks).map(([key,l])=>[key,l.state]));},get cathedral(){return cathedral?.state;},get market(){return market?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
+ window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get lighting(){return cityLighting?.state;},get flag(){return flag?.state;},get flags(){return flagSet?.state;},get railway(){return railway?.state;},get openTour(){return openTour?.state;},get riverTour(){return riverTour?.state;},get water(){return water?.state??null;},get walkTour(){return walkTour?.state??null;},get metro(){return metro?.state;},get palace(){return palace?.state;},get majestic(){return majestic?.state;},get rex(){return rex?.state;},get landmarks(){return Object.fromEntries(Object.entries(landmarks).map(([key,l])=>[key,l.state]));},get cathedral(){return cathedral?.state;},get market(){return market?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
 }
 $('overview').onclick=()=>{if(ready)wholeCity();};
 $('downtown').onclick=()=>{if(ready)centralCity();};
@@ -249,9 +267,10 @@ controls.addEventListener('start',()=>{if(!following)setActive('');else followin
 // After a drag the orbit keeps turning a little (damping): hold the chase off until it settles.
 controls.addEventListener('end',()=>{if(following){following.dragging=false;following.settle=performance.now()+600;}});
 function animate(now){requestAnimationFrame(animate);followTrain();controls.update();if(camera.position.y<(following?.button==='walk-tour'?0.9:3))camera.position.y=following?.button==='walk-tour'?0.9:3;   // zooming to the cursor must not take the camera below the ground
- weather?.update(now,camera);flights?.update(now);lightning?.update(now);flag?.update?.(now);riverTour?.update(Date.now());flagSet?.update(now);for(const l of Object.values(landmarks))l.update?.(camera,now);openTour?.update(Date.now());metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}cityLighting?.update(now);renderer.render(scene,camera);}
+ weather?.update(now,camera);flights?.update(now);lightning?.update(now);flag?.update?.(now);riverTour?.update(Date.now());flagSet?.update(now);for(const l of Object.values(landmarks))l.update?.(camera,now);openTour?.update(Date.now());metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}cityLighting?.update(now);if(water){water.update({camera,focus:controls.target,now,boats:riverTour?.hulls()??[]});water.render(scene,camera);}else renderer.render(scene,camera);}
 requestAnimationFrame(animate);
 init().catch(error=>{console.error(error);$('loading').innerHTML='';const title=document.createElement('strong');title.textContent='Model could not be loaded';const p=document.createElement('p');p.textContent=error.message;$('loading').append(title,p);});
 
 
 $('turtle-lake-view').onclick=()=>{const l=landmarks.hoConRua;if(!l)return;setActive('turtle-lake-view');controls.target.copy(l.view.target);camera.position.copy(l.view.eye);controls.update();lastLoad=0;};
+
