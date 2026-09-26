@@ -5,7 +5,7 @@ import {createFlights} from './flights.js';
 import {createLightning,tallBuildings,nearestHighrise} from './lightning.js';
 import {createSky} from './sky-render.js';
 import {createCityLighting} from './city-lighting.js';
-import {createFlag,createFlagSet} from './flag.js';
+import {createFlag,createFlagSet,windFeed,downwind} from './flag.js';
 import {createMetro} from './metro.js';
 import {createNotreDame} from './notre-dame.js';
 import {createBenThanh} from './ben-thanh.js';
@@ -156,6 +156,11 @@ async function init(){
  const fireworkSound=createFireworkSound();fireworks=createFireworks({scene,project,sound:fireworkSound});
  const soundBox=$('fireworks-sound');fireworkSound.setEnabled(soundBox.checked);soundBox.onchange=()=>{fireworkSound.setEnabled(soundBox.checked);if(soundBox.checked)fireworkSound.resume();};
  fireworks.sound=fireworkSound;
+ // What the sound echoes off: the modelled towers (facade area ~ height × width), and the wind it travels in.
+ {const refl=[];for(const set of [landmarks.riverfront,landmarks.cityTowers])for(const b of set?.buildings??[]){const a=Math.abs(b.local.reduce((s,[x0,z0],i)=>{const [x1,z1]=b.local[(i+1)%b.local.length];return s+x0*z1-x1*z0;},0)/2);refl.push({x:b.center.x,y:b.height/2,z:b.center.z,area:b.height*Math.sqrt(a)});}
+  for(const key of ['bitexco','landmark81']){const g=landmarks[key]?.group;if(!g)continue;const box=new THREE.Box3().setFromObject(g),c=box.getCenter(new THREE.Vector3()),sz=box.getSize(new THREE.Vector3());refl.push({x:c.x,y:c.y,z:c.z,area:sz.y*Math.max(sz.x,sz.z)});}
+  fireworkSound.setReflectors(refl);
+  windFeed().subscribe(({wind:w})=>{if(!w||!Number.isFinite(w.dir))return;const d=downwind(w.dir),u=(w.speed_kt||0)*0.514444;fireworkSound.setWind([d.x*u,d.z*u]);});}
  // The river near the camera: waves, the yachts' wakes, foam, spray and reflections (riverwater.js).
  try{
   water=createRiverWater({scene,renderer,project,glint:sky.glint,night:sky.night,rainAt:(x,z)=>{let best=null,d=2500;for(const p of weather.rainPoints())if(Math.hypot(p.x-x,p.z-z)<d){d=Math.hypot(p.x-x,p.z-z);best=p;}return best?best.classIndex/3:0;}});

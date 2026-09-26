@@ -21,7 +21,6 @@ export const FIREWORKS = Object.freeze({
   // The middle barge: on the river off Bạch Đằng wharf, toward Thủ Thiêm.
   anchor: [106.7082, 10.7742], spacing: 260, stars: 90000, lights: 3, showSeconds: 180,
 });
-const G = 9.81;
 // Colours: [r, g, b], bright enough for additive glow.
 const COLOURS = {
   red: [1.0, 0.16, 0.12], gold: [1.0, 0.72, 0.28], green: [0.3, 1.0, 0.35], blue: [0.3, 0.45, 1.0],
@@ -29,23 +28,8 @@ const COLOURS = {
 };
 const NAMES = Object.keys(COLOURS);
 
-/** Position of a point launched at p0 with velocity v under drag k and gravity, t seconds on. */
-export function starAt(p0, v, k, t) {
-  const e = (1 - Math.exp(-k * t)) / k;
-  return [p0[0] + v[0] * e, p0[1] + (v[1] + G / k) * e - G * t / k, p0[2] + v[2] * e];
-}
-/** When a shell launched straight up at v0 (drag k) reaches its apex, and how high. */
-export function apex(v0, k) {
-  const t = Math.log((v0 + G / k) / (G / k)) / k;
-  return {t, h: starAt([0, 0, 0], [0, v0, 0], k, t)[1]};
-}
-/** The launch speed for a burst h metres up (bisection on apex()). */
-export function launchSpeed(h, k) {
-  let lo = 1, hi = 400;
-  for (let i = 0; i < 50; i++) { const m = (lo + hi) / 2; if (apex(m, k).h < h) lo = m; else hi = m; }
-  return (lo + hi) / 2;
-}
-const RISE_DRAG = 0.05;
+export {starAt, apex, launchSpeed, RISE_DRAG} from './fireworks-ballistics.js';
+import {starAt, apex, launchSpeed, RISE_DRAG} from './fireworks-ballistics.js';
 
 function starMaterial(u) {
   return new THREE.ShaderMaterial({
@@ -237,7 +221,7 @@ export function createFireworks({scene, project, now: nowFn = () => performance.
       if (s.launch > t) break;
       if (!s.launched) {                                                          // the comet: a gold spark rising, with its trail
         s.launched = true;
-        sound?.launch(s.from, s.launch - t, s.burstAt - s.launch, s.whistle);
+        sound?.launch(s.from, s.launch - t, s.burstAt - s.launch, s.whistle, s.v);
         for (let j = 0; j < 8; j++) put(s.from, s.v, RISE_DRAG, s.launch, [1, 0.75, 0.4], 3, s.burstAt - s.launch, j * 0.03, 3.6 - j * 0.3, 0.9 * Math.pow(0.75, j));
       }
       if (!s.burst && s.burstAt <= t) {

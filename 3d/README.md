@@ -144,9 +144,10 @@ at 35 knots (`rivertour.js`, see `RIVERTOUR.md`); the **River tour** button
 follows one.
 
 The **Fireworks** button puts on a three-minute show over the river from
-three barges off Bạch Đằng, seen from the Thủ Thiêm bank, with its sound
-arriving late by the distance (`fireworks.js`, `fireworks-sound.js`, see
-`FIREWORKS.md`).
+three barges off Bạch Đằng, seen from the Thủ Thiêm bank. Its sound is
+computed from physics: blast waves, the river's reflection, echoes off the
+towers, air absorption and the wind (`fireworks.js`, `fireworks-sound.js`,
+`fireworks-acoustics.js`, see `FIREWORKS.md`).
 
 Near the river the water moves: wind waves, the yachts' wakes (Kelvin arms,
 propeller wash, foam, bubbles and spray), reflections of the skyline, rain

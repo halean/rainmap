@@ -35,30 +35,64 @@ apex, 90-260 m up, into:
 Every burst starts with a white flash. The stars are white-hot, then their
 colour, then fade.
 
-## Sound
+## Sound, from physics
 
-`fireworks-sound.js` synthesises the sound with the Web Audio API; there are
-no recordings.
+The sound is computed, not recorded or hand-shaped:
+- `fireworks-acoustics.js`: the physics;
+- `fireworks-render.js`: renders each event with it, in a Web Worker
+  (`fireworks-sound-worker.js`);
+- `fireworks-sound.js`: plays the results.
 
-- **Launch:** each mortar's thump; a quarter of the shells whistle as they
-  rise.
-- **Burst:** each burst's boom, with a low rumble.
-- **Effects:**
-  - crackles scatter tiny sharp pops;
-  - salutes bang;
-  - willows and palms hiss as the embers fall.
+**Sources** (acoustic yield in kg of TNT equivalent):
 
-The camera is the listener:
-- **Travel time:** every sound arrives late by the time it takes to cross
-  the distance (343 m/s). From the default view a burst ~700 m off is
-  heard about two seconds after it is seen.
-- **Distance:** it grows quieter (1 at 150 m, falling as 150/d), and duller,
-  since the air takes the high notes first (a low-pass from 16 kHz down to
-  900 Hz).
-- **Panning:** left or right by where it is in the view.
-- **Echo:** a 3-second echo off the city is mixed in, more of it the
-  further off.
-- **Loudness:** a compressor keeps the finale from clipping.
+| Event | Waveform | Yield |
+|---|---|---|
+| burst | a blast wave: the Friedlander pulse, overpressure then a weaker suction phase | ~4 g for an 80 m burst, scaling with size³ |
+| salute | the same, from flash powder, sharper | 30 g |
+| mortar | a muzzle blast, and the tube ringing at its quarter-wave resonance c/4L (0.9 m tube, ~95 Hz) | 0.3 g; most of the lift's energy drives the shell |
+| crackling star | a micro-blast from each star, where it is, when it pops | 0.3 g |
+| whistle | a rising note (1.4 to 3.2 kHz, ~120 dB at 1 m), Doppler-shifted by the shell's climb | |
+| willow, palm | combustion hiss of ~150 burning stars | |
+
+- **Blast peak:** from Kinney and Graham's scaled distance; far out it
+  falls as 1/R.
+- **Blast duration:** the positive phase lengthens slowly with distance, as
+  a weak shock's does.
+- **Whistle:** each output sample is the tone as emitted at its retarded
+  time, found by solving t_arrival = t_emit + |x(t_emit) − ear| / c.
+
+A burst 700 m off peaks at ~120 dB at the listener, in line with
+measurements at displays.
+
+**Paths.** Each event reaches the listener (the camera) along several paths:
+- **Direct.**
+- **Off the river:** an image source below the water, reflection
+  coefficient 0.95. Over the river it arrives some tens of milliseconds
+  after the direct sound.
+- **Off the tall buildings:** the riverfront and city towers, Bitexco and
+  Landmark 81, each a scatterer of cross-section ~0.3 × its facade area.
+  The four strongest echoes are kept. This is an approximation: real
+  facades reflect specularly, and only some face the right way.
+
+**Along each path:**
+- **Delay:** its length at the speed of sound for the air temperature,
+  plus the wind's component along it (the live wind feed).
+- **Spreading:** 1/R.
+- **Absorption:** ISO 9613-1 at the hour's typical HCMC air (27.5 ± 3.5 °C,
+  78 ∓ 14 % humidity). At 20:30 over 700 m it takes 5 dB off 1 kHz, 15 dB
+  off 4 kHz and 60 dB off 10 kHz, which is why a distant firework booms
+  rather than cracks.
+- **Upwind:** the path also loses up to 6 dB, a crude stand-in for
+  refraction.
+- **Panning:** each arrival is panned from its own direction.
+
+A diffuse tail, the sound scattered again and again among the buildings,
+is added by a convolver.
+
+**Rendering.** Each event is rendered in the Web Worker and scheduled for
+its first arrival. On the main thread each event costs well under a
+millisecond; in the worker a burst takes 15-40 ms, and a whistling launch
+about 100 ms on the test machine.
 
 Browsers allow sound only after a click, so the Fireworks button starts
 it: `resume()` runs first in the tap's handler.
@@ -113,13 +147,29 @@ The checks cover:
   bursts at the expected heights;
 - the view;
 - the sound hooks: every launch and burst is heard, timed from when it
-  happened;
-- the delay and loudness for a distance;
+  happened, with the shell's velocity passed for the whistle;
+- ISO 9613-1 absorption against its table at 20 °C and 70 % humidity
+  (5.0 / 23.1 / 77.6 dB/km at 1 / 4 / 8 kHz; the table has
+  5.0 / 22.9 / 76.6);
+- the speed of sound;
+- the blast's 1/R fall and slowly lengthening pulse, and its level;
+- the Friedlander pulse's two phases;
+- the air rounding off a crack;
+- the arrivals: direct first, then the river's reflection 30-120 ms later,
+  then an echo, later and quieter;
+- wind: downwind sooner and louder;
+- Doppler for a receding source;
+- the renderers: a burst's first arrival at the right time and level, with
+  its echo later; crackling stars after the burst; the mortar and its
+  whistle;
 - the sound staying silent (not failing) without Web Audio.
 
-In Chromium it was watched at night from the default view. The sound was
-rendered offline and its levels checked:
-- a mortar 200 m off is heard at 0.6 s;
-- a crackle 700 m off at 2.0 s, its pops following;
-- a salute 320 m off, fired at 3.5 s, at 4.4 s;
-- the peak is 0.59, so nothing clips.
+In Chromium it was watched at night from the default view, the sound
+running through the worker. The sound was rendered offline and its levels
+checked:
+- a mortar 640 m off is heard at 1.85 s, its whistle following;
+- a crackle 700 m off at 2.0 s, its stars popping from 3.2 s;
+- a salute 330 m off, fired at 3.5 s, at 4.45 s;
+- a willow at 4.9 s;
+- the loudest peak is 0.71 of full scale (the salute, nearest), so
+  nothing clips.
