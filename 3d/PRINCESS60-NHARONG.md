@@ -133,7 +133,7 @@ wherever it is on the river:
 
 | Distance | Drawn | Triangles |
 |---|---|---|
-| under 180 m | the full model | ~1.72 M |
+| under 180 m | the full model, with the touring crew | ~1.40 M |
 | 180-700 m (and while the full model is building) | LOD1 proxy | ~42 k |
 | 700 m-3 km | LOD2 proxy | ~9 k |
 | beyond 3 km | nothing | 0 |
@@ -155,6 +155,25 @@ wherever it is on the river:
 
 The LOD2 proxy is also her reflection in the river (`riverwater.js`). While
 a finer level is drawn, LOD2 stays on the reflection layer alone.
+
+**Crew.** `createPrincess60NhaRong({crew})` chooses who is aboard:
+- **'sunbathing'** (the default; the standalone model, the GLB and the
+  inspection page): the three sunbathers above.
+- **'underway'** (the city, where she is always on tour): no sunbathers.
+  - One is seated at the helm, leaning in, both hands on the wheel's rim.
+  - Two stand on the flybridge between the lounge and the helm seats: one
+    faces out to port, pointing at the bank, with a straw hat and long
+    hair; one faces starboard with a phone held up.
+
+  They're dressed for 35 knots (polo, linen and coral shirts, shorts, deck
+  shoes, a cap) and built in the sunbathers' manner: sectioned torsos,
+  tapered limbs, a face, sunglasses and hair. Arms are placed by a two-bone
+  reach from shoulder to hand. That model is ~1.40 M triangles (about 43k
+  per figure).
+
+The city's worker build and both proxies use the touring crew. Rebuild the
+proxies after changing it: `build-princess60-lod.mjs` passes
+`{crew: 'underway'}`.
 
 `state.lod`, `state.triangles` and `state.cameraDistance` report the current
 level.

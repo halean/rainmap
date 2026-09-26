@@ -33,7 +33,9 @@ function topsideZ(x,y) {
   return breadth(x)*(1-0.105*v+0.012*Math.sin(v*Math.PI));
 }
 
-export function createPrincess60NhaRong() {
+/** crew: 'sunbathing' (three sunbathers, as moored) or 'underway' (a helmsman at the wheel and two
+ *  guests standing on the flybridge, sightseeing), for the city's river tour. */
+export function createPrincess60NhaRong({crew='sunbathing'}={}) {
   const group=new THREE.Group(); group.name=PRINCESS60_NHARONG.id;
   group.userData={...PRINCESS60_NHARONG, waterline:0, bowAxis:'+X', revision:3};
   const mat=(color,props={})=>new THREE.MeshStandardMaterial({color,roughness:0.48,...props});
@@ -56,6 +58,9 @@ export function createPrincess60NhaRong() {
     swimCoral:mat('#bf5447',{roughness:0.88}), swimTeal:mat('#257e85',{roughness:0.88}), swimNavy:mat('#253e61',{roughness:0.88}),
     lip:mat('#a56359',{roughness:0.85}), towelCream:mat('#e5d6b3',{roughness:1}),
     rope:mat('#c7c1ab',{roughness:1}), towel:mat('#597f90',{roughness:1}),
+    // Clothes for the crew underway (crew: 'underway').
+    shirtLinen:mat('#f1ede4',{roughness:0.95}), shirtCoral:mat('#d9674f',{roughness:0.92}), poloNavy:mat('#1f3550',{roughness:0.9}),
+    shortsKhaki:mat('#b9a57c',{roughness:0.92}), shortsNavy:mat('#2b3f5c',{roughness:0.92}), shoe:mat('#eeeeec',{roughness:0.7}), straw:mat('#d8c08a',{roughness:0.95}),
   };
   const components={}; let b, total=0;
   function component(name,fn) {
@@ -485,10 +490,109 @@ export function createPrincess60NhaRong() {
     });
     components[`sunbather-${id}`].userData={...components[`sunbather-${id}`].userData,adult:true,pose:bent?'reclining-bent-knees':'reclining',triangles:total-start};
   }
-  sunbather({id:'foredeck-port',x:4.32,y:2.30,z:0.54,skin:'skinWarm',hair:'hairDark',swim:'swimCoral',onePiece:true});
-  sunbather({id:'foredeck-starboard',x:4.32,y:2.30,z:-0.54,skin:'skinTan',hair:'hairDark',swim:'swimNavy'});
-  sunbather({id:'flybridge',x:-5.59,y:4.29,z:0.91,skin:'skinLight',hair:'hairBrown',swim:'swimTeal',onePiece:true,bent:true});
-  group.userData.sunbathers=3;
+
+  // Underway: an adult seated at the helm with both hands on the wheel, and two guests standing on
+  // the flybridge between the lounge and the helm seats -- one pointing out at the bank, one taking a
+  // photo. Built in the sunbathers' manner: sectioned torsos, tapered limbs, a head with face,
+  // hair and sunglasses; dressed for 35 knots, in shirts, shorts and deck shoes.
+  const FLY=3.777;                                   // the flybridge's teak, top
+  function crewFigure({id,x,z,yaw,seated=false,skin,hair,shirt,shorts,longHair=false,hat=null,arms,lean=0}) {
+    const start=total;
+    component(`crew-${id}`,()=>{
+      const ca=Math.cos(yaw),sa=Math.sin(yaw);
+      const W=(a,h,c)=>[x+a*ca+c*sa,FLY+h,z-a*sa+c*ca];                 // local (forward, up, side) to the yacht's frame
+      const P0=seated?0.70:0.93;                                          // pelvis height
+      const U=(a,h,c)=>W(a+(h-P0)*lean+(seated?0.05:0),h,c);             // upper body: leans forward from the pelvis
+      const limbW=(m,A,B,r0,r1,seg=24)=>{
+        const pa=V(A),pb=V(B),d=pb.clone().sub(pa);
+        const g=new THREE.CylinderGeometry(r1,r0,d.length(),seg,4);
+        g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize()));
+        g.translate(...pa.add(pb).multiplyScalar(0.5).toArray());b.add(m,g);
+        const s0=new THREE.SphereGeometry(r0,seg,Math.round(seg*0.6));s0.translate(...A);b.add(m,s0);
+        const s1=new THREE.SphereGeometry(r1,seg,Math.round(seg*0.6));s1.translate(...B);b.add(m,s1);
+      };
+      // An ellipsoid in the figure's own axes (so it turns with the figure).
+      const blobL=(m,F,a,h,c,ra,rh,rc,nu=24,nv=36)=>surface(m,nu,nv,(u,v)=>{const ph=u*Math.PI,la=v*Math.PI*2;return F(a+ra*Math.sin(ph)*Math.cos(la),h+rh*Math.cos(ph),c+rc*Math.sin(ph)*Math.sin(la));},true);
+      // Two-bone reach: the elbow between shoulder S and wrist T, bent toward `pole`.
+      const elbowFor=(S,T,l1,l2,pole)=>{
+        const s=V(S),t=V(T),d=t.clone().sub(s),D=Math.min(d.length(),l1+l2-1e-4);d.normalize();
+        const a=(l1*l1-l2*l2+D*D)/(2*D),h=Math.sqrt(Math.max(0,l1*l1-a*a));
+        const n=V(pole).sub(s);n.addScaledVector(d,-n.dot(d)).normalize();
+        return s.addScaledVector(d,a).addScaledVector(n,h).toArray();
+      };
+      // Legs: standing, or seated with the thighs forward and the feet on the deck.
+      for(const sign of [-1,1]) {
+        const hip=W(seated?0.05:0,P0-0.02,sign*0.092);
+        const knee=seated?W(0.47,0.70,sign*0.11):W(0.015,0.49,sign*0.10);
+        const ankle=seated?W(0.50,0.09,sign*0.12):W(-0.01,0.085,sign*0.105);
+        limbW(skin,hip,knee,0.084,0.057);limbW(skin,knee,ankle,0.057,0.036);
+        const kneeV=V(knee),hipV=V(hip);
+        limbW(shorts,hip,hipV.clone().lerp(kneeV,0.55).toArray(),0.097,0.086);  // the shorts' leg
+        blobL('shoe',W,seated?0.56:0.05,0.045,sign*(seated?0.12:0.105),0.125,0.045,0.048,16,24);
+        blobL('shoe',W,seated?0.52:0.01,0.075,sign*(seated?0.12:0.105),0.06,0.035,0.04,12,18);
+      }
+      blobL(shorts,U,-0.005,P0+0.005,0,0.102,0.085,0.162);                // the seat of the shorts, under the shirt's hem
+      // Torso: elliptical sections from the waist to the shoulders, in the shirt.
+      const st=[[0.02,0.108,0.168],[0.13,0.094,0.146],[0.25,0.108,0.158],[0.37,0.118,0.172],[0.47,0.104,0.188],[0.52,0.07,0.15]];
+      surface(shirt,48,56,(u,v)=>{
+        const q=u*(st.length-1),i=Math.min(st.length-2,Math.floor(q)),t=q-i,k=st[i].map((n,j)=>n+(st[i+1][j]-n)*t),la=v*Math.PI*2;
+        return U(k[1]*Math.cos(la),P0+k[0],k[2]*Math.sin(la));
+      });
+      blobL(shirt,U,0,P0+0.515,0,0.072,0.034,0.152,16,28);                 // across the shoulders
+      // Neck and head: skull, jaw, nose, ears; sunglasses; hair.
+      limbW(skin,U(0,P0+0.50,0),U(0.012,P0+0.62,0),0.052,0.05);
+      blobL(skin,U,0.012,P0+0.71,0,0.093,0.115,0.08);
+      blobL(skin,U,0.045,P0+0.65,0,0.07,0.06,0.066);
+      blobL(skin,U,0.104,P0+0.705,0,0.02,0.03,0.016,10,14);
+      for(const sign of [-1,1])blobL(skin,U,0.0,P0+0.71,sign*0.079,0.02,0.03,0.012,8,12);
+      for(const sign of [-1,1]){blobL('black',U,0.097,P0+0.728,sign*0.035,0.011,0.019,0.027,8,14);tube('black',[U(0.095,P0+0.73,sign*0.06),U(0.06,P0+0.73,sign*0.081),U(-0.03,P0+0.72,sign*0.082)],0.0035,false,6);}
+      rod('black',U(0.101,P0+0.732,-0.011),U(0.101,P0+0.732,0.011),0.004,6);
+      blobL(hair,U,-0.004,P0+0.745,0,0.099,0.092,0.086);
+      if(longHair)for(let j=0;j<9;j++){const c=-0.06+j*0.015;tube(hair,[U(-0.05,P0+0.77,c),U(-0.1,P0+0.68,c*1.1),U(-0.09,P0+0.55,c*1.2)],0.009,false,8);}
+      if(hat==='straw'){const brim=new THREE.CylinderGeometry(0.2,0.21,0.012,40);brim.translate(...U(0.0,P0+0.79,0));b.add('straw',brim);
+        const top=new THREE.CylinderGeometry(0.095,0.105,0.09,32);top.translate(...U(-0.005,P0+0.835,0));b.add('straw',top);
+        const band=new THREE.CylinderGeometry(0.106,0.106,0.02,32);band.translate(...U(-0.005,P0+0.8,0));b.add('navy',band);}
+      if(hat==='cap'){blobL('navy',U,-0.005,P0+0.77,0,0.1,0.07,0.09,16,28);rounded('navy',0.11,0.012,0.17,...U(0.12,P0+0.785,0),0.005,0,yaw,-0.12);}
+      // Arms: short sleeves, forearms, hands -- posed per figure.
+      for(const sign of [-1,1]) {
+        const S=U(0,P0+0.47,sign*0.2),{wrist,pole,grip='open'}=arms[sign>0?'right':'left'];
+        const T=seated?wrist:W(...wrist),E=elbowFor(S,T,0.29,0.26,W(...pole));
+        limbW(skin,S,E,0.049,0.04);limbW(skin,E,T,0.04,0.03);
+        limbW(shirt,S,V(S).lerp(V(E),0.45).toArray(),0.062,0.055);
+        // The hand: palm continuing the forearm; fingers open, gripping, or one pointing.
+        const f=V(T).sub(V(E)).normalize(),palm=V(T).addScaledVector(f,0.055).toArray();
+        limbW(skin,T,palm,0.03,0.026,14);
+        if(grip==='point'){limbW(skin,palm,V(palm).addScaledVector(f,0.075).toArray(),0.0095,0.008,10);blobL(skin,(a,h,c)=>[palm[0]+a,palm[1]+h,palm[2]+c],-f.x*0.01,-0.012,-f.z*0.01,0.03,0.022,0.03,10,14);}
+        else if(grip==='fist')blobL(skin,(a,h,c)=>[palm[0]+a,palm[1]+h,palm[2]+c],0,0,0,0.035,0.032,0.035,10,14);
+        else for(let k=0;k<4;k++){const o=(k-1.5)*0.016;limbW(skin,V(palm).add(new THREE.Vector3(0,o,0)).toArray(),V(palm).addScaledVector(f,0.065-Math.abs(k-1.5)*0.008).add(new THREE.Vector3(0,o,0)).toArray(),0.009,0.007,8);}
+      }
+    });
+    components[`crew-${id}`].userData={...components[`crew-${id}`].userData,adult:true,pose:seated?'seated-at-helm':'standing',triangles:total-start};
+  }
+  if(crew==='underway') {
+    // At the helm: the starboard-side helm seat (x -0.73, z 0.21), facing the wheel (centre
+    // x -0.12, y 4.39, z 0.20, radius 0.195, upright), hands on its rim at ten and two.
+    const rim=t=>[-0.12,4.39+0.195*Math.sin(t),0.20+0.195*Math.cos(t)];
+    crewFigure({id:'helm',x:-0.73,z:0.21,yaw:0,seated:true,lean:0.22,skin:'skinTan',hair:'hairDark',shirt:'poloNavy',shorts:'shortsKhaki',hat:'cap',
+      arms:{right:{wrist:rim(Math.PI*0.28),pole:[0.1,0.5,0.5],grip:'fist'},left:{wrist:rim(Math.PI*0.72),pole:[0.1,0.5,-0.5],grip:'fist'}}});
+    // Standing, between the lounge and the helm seats: one facing out to port, pointing at the
+    // bank; one facing out to starboard, holding a phone up to take a photo.
+    crewFigure({id:'guest-pointing',x:-1.55,z:0.8,yaw:-Math.PI/2,skin:'skinLight',hair:'hairBrown',shirt:'shirtLinen',shorts:'shortsNavy',longHair:true,hat:'straw',
+      arms:{right:{wrist:[0.52,1.53,0.33],pole:[0,1.2,0.8],grip:'point'},left:{wrist:[0.04,0.86,-0.25],pole:[-0.3,1.1,-0.4]}}});
+    crewFigure({id:'guest-photo',x:-1.5,z:-0.6,yaw:Math.PI/2,skin:'skinWarm',hair:'hairDark',shirt:'shirtCoral',shorts:'shortsKhaki',
+      arms:{right:{wrist:[0.3,1.43,0.055],pole:[0.1,1.0,0.5],grip:'fist'},left:{wrist:[0.3,1.43,-0.055],pole:[0.1,1.0,-0.5],grip:'fist'}}});
+    component('crew-phone',()=>{
+      const ca=Math.cos(Math.PI/2),sa=Math.sin(Math.PI/2),W=(a,h,c)=>[-1.5+a*ca+c*sa,FLY+h,-0.6-a*sa+c*ca];
+      rounded('black',0.012,0.15,0.075,...W(0.36,1.47,0),0.004,0,Math.PI/2,0);
+      rounded('screen',0.004,0.135,0.064,...W(0.354,1.47,0),0.002,0,Math.PI/2,0);
+    });
+    group.userData.sunbathers=0; group.userData.crew={helm:1,standing:2};
+  } else {
+    sunbather({id:'foredeck-port',x:4.32,y:2.30,z:0.54,skin:'skinWarm',hair:'hairDark',swim:'swimCoral',onePiece:true});
+    sunbather({id:'foredeck-starboard',x:4.32,y:2.30,z:-0.54,skin:'skinTan',hair:'hairDark',swim:'swimNavy'});
+    sunbather({id:'flybridge',x:-5.59,y:4.29,z:0.91,skin:'skinLight',hair:'hairBrown',swim:'swimTeal',onePiece:true,bent:true});
+    group.userData.sunbathers=3; group.userData.crew={sunbathing:3};
+  }
 
   group.userData.triangles=total;
   group.userData.components=Object.keys(components);

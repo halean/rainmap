@@ -6,7 +6,7 @@ import {createMooredPrincess60,PRINCESS60_BERTH} from '../3d/princess60-berth.js
 const project=(lon,lat)=>[(lon-106.65)*111320*Math.cos(10.81*Math.PI/180),-(lat-10.81)*111320];
 const scene=new THREE.Scene(),first=createYacht({scene,project}),second=createMooredPrincess60({scene,project});
 assert.equal(second.group.parent,scene);assert.equal(second.state.status,'moored');
-assert.equal(second.state.sunbathers,3);assert.equal(second.group.rotation.y,first.yacht.rotation.y);
+assert.equal(second.state.sunbathers,0);assert.deepEqual(second.state.crew,{helm:1,standing:2});   // in the city she is always on tourassert.equal(second.group.rotation.y,first.yacht.rotation.y);
 assert.equal(second.yacht.position.y,-0.12);
 // Level of detail: nothing heavy is built up front; the full model comes on demand.
 assert.equal(second.levels.full,null,'full model not built at start');
@@ -34,4 +34,4 @@ second.group.visible=false;assert.equal(first.group.visible,true,'Visibility doe
 let disposed=0;second.ropes.children.forEach(m=>m.geometry.addEventListener('dispose',()=>disposed++));
 second.dispose();second.dispose();assert.equal(disposed,4);assert.equal(second.group.parent,null);assert.equal(first.group.parent,scene);
 first.dispose();assert.equal(scene.children.length,0);
-console.log(JSON.stringify({berth:PRINCESS60_BERTH.marina,separation:5.8,minimumClearanceMetres:clearance,waterline:-0.12,lines:4,sunbathers:3,disposal:'passed'}));
+console.log(JSON.stringify({berth:PRINCESS60_BERTH.marina,separation:5.8,minimumClearanceMetres:clearance,waterline:-0.12,lines:4,crew:second.state.crew,disposal:'passed'}));

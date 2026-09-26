@@ -2,9 +2,27 @@
 
 `yacht.js` builds a Princess 60 flybridge motor yacht, *Saigon Star*, moored
 at the Vinhomes Central Park Marina (Tam Sơn Yachting) on the Saigon River,
-just south of Landmark 81, with three people sunbathing. It also draws the
+just south of Landmark 81. It also draws the
 marina's floating pontoons, which the city model does not have. It is listed
 in `LANDMARKS` in `viewer.js` and follows the Buildings checkbox.
+
+## People aboard
+
+The yacht carries two sets of people, as separate groups; `setMoored()`
+shows one or the other:
+- **Moored:** three sunbathing, two on the foredeck sunpad and one on the
+  flybridge with a book.
+- **Underway** (the river tour, `rivertour.js`, so always, in the city):
+  - one seated at the helm, leaning in, both hands on the wheel's rim at ten
+    and two;
+  - two standing on the flybridge behind the helm seat, dressed for 35
+    knots: one facing out to port pointing at the bank, one facing
+    starboard holding a phone up to take a photo.
+
+  Each arm is placed by a two-bone reach from shoulder to hand, so the hands
+  land where they should: on the wheel, on the phone.
+
+`state.crew` says which set is showing.
 
 ## Placement
 

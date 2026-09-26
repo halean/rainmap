@@ -61,7 +61,7 @@ export function createMooredPrincess60({scene,project}) {
   const center=group.localToWorld(new THREE.Vector3(0,0,PRINCESS60_BERTH.separation));
   const state={name:'Princess 60 Nha Rong beside Saigon Star',status:'moored',marina:PRINCESS60_BERTH.marina,
     beside:PRINCESS60_BERTH.beside,center:center.toArray(),separation:PRINCESS60_BERTH.separation,
-    waterline:PRINCESS60_BERTH.waterline,sunbathers:3,fullTriangles:1723097,ropeTriangles:4*96*12*2,lod:'none',triangles:0,lines:endpoints};
+    waterline:PRINCESS60_BERTH.waterline,sunbathers:0,crew:{helm:1,standing:2},fullTriangles:1398721,ropeTriangles:4*96*12*2,lod:'none',triangles:0,lines:endpoints};
   // The ensign: the shared flag (flag.js), at the top of the raked staff.
   const flags=[{top:yacht.localToWorld(new THREE.Vector3(-8.12,3.06,0)),length:0.82,parent:yacht}];   // on the yacht: it sails (rivertour.js)
   const view={target:group.localToWorld(new THREE.Vector3(0,2,2.9)),eye:group.localToWorld(new THREE.Vector3(-27,19,35))};
@@ -99,7 +99,7 @@ export function createMooredPrincess60({scene,project}) {
     fullPromise=(typeof Worker!=='undefined'
       ? new Promise((resolve,reject)=>{const w=new Worker(new URL('./princess60-worker.js',import.meta.url),{type:'module'});
           w.onmessage=e=>{w.terminate();e.data.error?reject(new Error(e.data.error)):resolve(adopt(e.data));};w.onerror=e=>{w.terminate();reject(e);};w.postMessage('build');})
-      : import('./princess60-nharong.js').then(({createPrincess60NhaRong})=>{const m=createPrincess60NhaRong();const full=m.group;full.traverse(o=>{if(o.isMesh&&(o.material===m.materials.flag||o.material===m.materials.star))o.visible=false;});full.name='princess60-full';full.userData.materials=Object.values(m.materials);return full;})
+      : import('./princess60-nharong.js').then(({createPrincess60NhaRong})=>{const m=createPrincess60NhaRong({crew:'underway'});const full=m.group;full.traverse(o=>{if(o.isMesh&&(o.material===m.materials.flag||o.material===m.materials.star))o.visible=false;});full.name='princess60-full';full.userData.materials=Object.values(m.materials);return full;})
     ).then(full=>{
       fullPromise=null;state.building=false;
       if(disposed){releaseGroup(full);return null;}

@@ -2,13 +2,14 @@
 // model (princess60-nharong.js, ~1.72M triangles) simplified by vertex
 // clustering and merged into one mesh per material, written as a small GLB.
 // node --loader ./tests/three-loader.mjs 3d/tools/build-princess60-lod.mjs <cell metres> <level>
-// The viewer uses level 1 (0.14 m cells) and level 2 (0.35 m cells).
+// The viewer uses level 1 (0.14 m cells) and level 2 (0.35 m cells). Built with the crew
+// underway (at the helm, two sightseeing), as she always is in the city.
 import fs from 'node:fs';
 import * as THREE from '../vendor/three.module.js';
 import {createPrincess60NhaRong} from '../princess60-nharong.js';
 
 const CELL = Number(process.argv[2] || 0.14), LEVEL = process.argv[3] || '1';
-const yacht = createPrincess60NhaRong();
+const yacht = createPrincess60NhaRong({crew: 'underway'});
 yacht.group.updateMatrixWorld(true);
 const root = yacht.group.matrixWorld.clone().invert();
 // Gather every triangle in the yacht's own frame, by material.

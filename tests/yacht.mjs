@@ -12,12 +12,23 @@ assert(Math.abs(hull.max.x - hull.min.x - YACHT.hull) < 0.05, `hull length ${hul
 const below = y.yacht.getObjectByName('yacht-antifoul').geometry; below.computeBoundingBox();
 assert(Math.abs(-0.12 - below.boundingBox.min.y - YACHT.draft) < 0.02, 'draft');
 assert(Math.abs(Math.max(hull.max.z, -hull.min.z) - YACHT.beam / 2) < 0.12, `beam ${2 * Math.max(hull.max.z, -hull.min.z)}`);
-// Three sunbathers' towels.
-for (const k of ['towel1', 'towel2', 'towel3']) assert(y.yacht.getObjectByName(`yacht-${k}`), k);
+// Moored: three sunbathers (their towels). Underway: one seated at the helm with both hands on the
+// wheel, two standing on the flybridge -- and the sunbathers gone.
+const sun = y.yacht.getObjectByName('yacht-sunbathers'), crew = y.yacht.getObjectByName('yacht-crew');
+for (const k of ['towel1', 'towel2', 'towel3']) assert(sun.getObjectByName(`yacht-sunbathers-${k}`), k);
+assert(sun.visible && !crew.visible && y.state.crew === 'sunbathing');
+y.setMoored(false);
+assert(!sun.visible && crew.visible && y.state.crew === 'underway');
+crew.traverse(o => { if (o.isMesh) assert(o.geometry.attributes.position.array.every(Number.isFinite), o.name); });
+const cb = new THREE.Box3();                                     // in the yacht's own frame (the meshes sit at its origin)
+crew.children.forEach(m => { m.geometry.computeBoundingBox(); cb.union(m.geometry.boundingBox); });
+assert(cb.max.y - cb.min.y > 1.6 && cb.max.y - cb.min.y < 2.1, `crew height span ${cb.max.y - cb.min.y}`);
+assert(Math.max(-cb.min.z, cb.max.z) < 1.86, 'the crew stays inside the flybridge');
+y.setMoored(true);
 // The ensign is the shared flag (flag.js), hung at the staff's top.
 assert.equal(y.flags.length, 1); assert(y.flags[0].top.y > 2.5 && y.flags[0].length > 0.5);
 // Moored alongside the pontoon: its edge 3 m off the centreline, clear of the hull, which floats in the water.
 const w = new THREE.Box3().setFromObject(y.yacht);
 assert(w.min.y < -1 && w.max.y > 7, 'afloat, arch above');
-console.log(`ok - Princess 60: ${YACHT.hull} m hull, ${YACHT.beam} m beam, ${YACHT.draft} m draft; ${y.state.triangles} triangles; three sunbathers; moored`);
+console.log(`ok - Princess 60: ${YACHT.hull} m hull, ${YACHT.beam} m beam, ${YACHT.draft} m draft; ${y.state.triangles} triangles; three sunbathers moored, helm and two sightseers underway`);
 y.dispose();

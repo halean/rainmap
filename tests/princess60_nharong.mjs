@@ -53,3 +53,20 @@ if(fs.existsSync(artifact)) {
  assert.equal(loaded.scene.children[0].userData.status,'moored-alongside-saigon-star');
  console.log(`GLB round-trip passed: ${exportedTriangles} triangles, ${(buffer.length/1048576).toFixed(2)} MiB`);
 } else console.log('GLB not generated: run the exporter to include round-trip verification.');
+// Underway (the city's river tour): no sunbathers; one seated at the helm with both hands on the
+// wheel, two standing on the flybridge's teak, sightseeing; a phone held up.
+{
+  const u=createPrincess60NhaRong({crew:'underway'});
+  assert.equal(u.group.userData.sunbathers,0);assert.deepEqual(u.group.userData.crew,{helm:1,standing:2});
+  assert(!Object.keys(u.components).some(k=>k.startsWith('sunbather')));
+  const box=k=>new THREE.Box3().setFromObject(u.components[k]),FLY=3.777;
+  for(const k of ['crew-helm','crew-guest-pointing','crew-guest-photo']) {
+    u.components[k].traverse(o=>{if(o.isMesh)assert(o.geometry.attributes.position.array.every(Number.isFinite),`${k}: finite`);});
+    const b=box(k);assert(Math.abs(b.min.y-FLY)<0.01,`${k}: feet on the flybridge deck (${b.min.y})`);assert(Math.max(-b.min.z,b.max.z)<1.6,`${k}: inside the rails`);
+  }
+  for(const k of ['crew-guest-pointing','crew-guest-photo']){const h=box(k).max.y-FLY;assert(h>1.65 && h<1.9,`${k}: standing ${h}`);}
+  const helm=box('crew-helm');assert(helm.max.y-FLY<1.6,'seated');assert(Math.abs(helm.max.x-(-0.12))<0.12,`hands reach the wheel (${helm.max.x})`);
+  const phone=box('crew-phone'),photo=box('crew-guest-photo');assert(phone.min.y>FLY+1.3 && phone.max.y<photo.max.y,'the phone held up at eye level');
+  console.log(`ok - underway crew: ${u.triangles} triangles (at the helm, pointing, taking a photo)`);
+  u.dispose();
+}

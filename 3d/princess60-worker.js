@@ -17,7 +17,7 @@ async function link(url) {
 self.onmessage = async () => {
   try {
     const {createPrincess60NhaRong} = await import(await link(new URL('./princess60-nharong.js', self.location.href).href));
-    const yacht = createPrincess60NhaRong();
+    const yacht = createPrincess60NhaRong({crew: 'underway'});   // in the city she is always on tour: helm and sightseers, not sunbathers
     yacht.group.updateMatrixWorld(true);
     const materials = [], materialIndex = new Map(), meshes = [], transfer = new Set();
     // Its static flag is left out: in the city the ensign is the shared,

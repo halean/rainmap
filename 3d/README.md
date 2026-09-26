@@ -134,7 +134,9 @@ The North-South railway and its yards, which the generic model leaves out,
 are drawn by `railway.js` (see `RAILWAY.md`); Metro Line 1 by `metro.js`.
 
 A Princess 60 motor yacht lies at the Vinhomes Central Park Marina below
-Landmark 81, with sunbathers aboard (`yacht.js`, see `YACHT.md`).
+Landmark 81 (`yacht.js`, see `YACHT.md`). On tour, as the yachts always are,
+one of its crew is at the helm and two are standing on the flybridge,
+sightseeing; moored, it would have sunbathers aboard.
 
 The open-top tour bus runs the Red Route on its timetable (`opentour.js`, see
 `OPENTOUR.md`); the **Open tour** button follows one.

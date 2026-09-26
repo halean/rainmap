@@ -85,6 +85,9 @@ export function createYacht({scene, project}) {
     suitA: M('#1f5fa8'), suitB: M('#c0392b'), suitC: M('#23303a'),
     towel1: M('#f2c14e', {roughness: 1}), towel2: M('#2a9d8f', {roughness: 1}), towel3: M('#e76f51', {roughness: 1}), stripe: M('#fbf7ee', {roughness: 1}),
     book: M('#3c6e91'), drink: M('#f39c12', {transparent: true, opacity: 0.85}), straw: M('#dcb86a', {roughness: 0.9}),
+    // Clothes for the crew underway.
+    polo: M('#1d3557', {roughness: 0.9}), linen: M('#f4f1ea', {roughness: 0.95}), coral: M('#e07a5f', {roughness: 0.9}),
+    khaki: M('#c2b280', {roughness: 0.9}), shorts: M('#264653', {roughness: 0.9}), shoe: M('#f5f5f2', {roughness: 0.7}),
   };
   const {add, box, finish} = builder(materials, 'yacht');
   const raw = (key, positions) => { if (!positions.length) return; const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); g.computeVertexNormals(); add(key, g); };
@@ -340,10 +343,14 @@ export function createYacht({scene, project}) {
   // The flag itself is the shared one (flag.js createFlagSet), hung from
   // the staff's top via `flags` below.
 
-  // ================= People sunbathing ==========================================
-  // Two on the foredeck sunpad, head to the backrest; one on the flybridge
-  // sunpad with a book; a drink on the flybridge table.
+  // ================= People =======================================================
+  // Moored: two sunbathing on the foredeck sunpad, head to the backrest, one
+  // on the flybridge sunpad with a book. Underway (rivertour.js): one at the
+  // helm, two standing on the flybridge sightseeing. Each set is its own
+  // group; setMoored() shows one or the other. A drink on the flybridge table.
+  const sun = builder(materials, 'yacht-sunbathers'), crew = builder(materials, 'yacht-crew');
   function person({px, py, pz, yaw, skin, hair, suit, towel, bikini = false, knee = 0, arms = 0, book = false, hat = false}) {
+    const add = sun.add;
     const frame = new THREE.Matrix4().makeRotationY(yaw).setPosition(px, py, pz);
     const at = (a, y, b) => new THREE.Vector3(a, y, b).applyMatrix4(frame);
     const put = (key, g) => { g.applyMatrix4(frame); add(key, g); };
@@ -389,6 +396,59 @@ export function createYacht({scene, project}) {
   person({px: 5.3, py: padTop, pz: -0.62, yaw: Math.PI, skin: 'skin1', hair: 'hair2', suit: 'suitB', towel: 'towel1', bikini: true, arms: 1, hat: true});
   person({px: 5.3, py: padTop, pz: 0.62, yaw: Math.PI, skin: 'skin2', hair: 'hair1', suit: 'suitA', towel: 'towel2', knee: 1});
   person({px: FB1 - 1.3, py: FY + 0.39, pz: -1.0, yaw: 0, skin: 'skin3', hair: 'hair1', suit: 'suitC', towel: 'towel3', book: true});
+  // Underway: seated at the helm, hands on the wheel (radius 0.2, upright, tilted 0.4 rad), and two
+  // standing on the flybridge behind the helm seat -- one facing out to port, pointing at the bank,
+  // one to starboard, holding a phone up.
+  function crewman({px, pz, yaw, seated = false, lean = 0, skin, hair, shirt, shorts, hat = null, longHair = false, arms}) {
+    const add = crew.add, frame = new THREE.Matrix4().makeRotationY(yaw).setPosition(px, FY, pz);
+    const P0 = seated ? 0.64 : 0.93;
+    const at = (a, h, c) => new THREE.Vector3(a, h, c).applyMatrix4(frame);
+    const up = (a, h, c) => at(a + (h - P0) * lean + (seated ? 0.05 : 0), h, c);            // the upper body leans from the pelvis
+    const limb = (key, pa, pb, r0, r1 = r0) => {
+      const len = pa.distanceTo(pb), g = new THREE.CylinderGeometry(r1, r0, len, 12, 1, true);
+      g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), pb.clone().sub(pa).normalize())); g.translate((pa.x + pb.x) / 2, (pa.y + pb.y) / 2, (pa.z + pb.z) / 2); add(key, g);
+      for (const [p, r] of [[pa, r0], [pb, r1]]) add(key, new THREE.SphereGeometry(r, 12, 8), p.x, p.y, p.z);
+    };
+    const blob = (key, p, r, sx, sy, sz, seg = 18) => { const g = new THREE.SphereGeometry(r, seg, Math.round(seg * 0.7)); g.scale(sx, sy, sz); g.applyMatrix4(new THREE.Matrix4().makeRotationY(yaw)); g.translate(p.x, p.y, p.z); add(key, g); };
+    const elbowFor = (S, T, l1, l2, pole) => {                                                 // two-bone reach, bent toward the pole
+      const d = T.clone().sub(S), D = Math.min(d.length(), l1 + l2 - 1e-4); d.normalize();
+      const a = (l1 * l1 - l2 * l2 + D * D) / (2 * D), h = Math.sqrt(Math.max(0, l1 * l1 - a * a)), n = pole.clone().sub(S);
+      n.addScaledVector(d, -n.dot(d)).normalize(); return S.clone().addScaledVector(d, a).addScaledVector(n, h);
+    };
+    for (const s of [-1, 1]) {                                                                 // legs, shorts, shoes
+      const hip = at(seated ? 0.05 : 0, P0 - 0.02, s * 0.092), knee = seated ? at(0.46, P0, s * 0.11) : at(0.015, 0.49, s * 0.1), ankle = seated ? at(0.5, 0.09, s * 0.12) : at(-0.01, 0.085, s * 0.105);
+      limb(skin, hip, knee, 0.082, 0.056); limb(skin, knee, ankle, 0.056, 0.036); limb(shorts, hip, hip.clone().lerp(knee, 0.55), 0.095, 0.085);
+      blob('shoe', at(seated ? 0.55 : 0.05, 0.045, s * (seated ? 0.12 : 0.105)), 1, 0.125, 0.045, 0.05, 12);
+    }
+    blob(shorts, up(0, P0, 0), 1, 0.105, 0.085, 0.162);
+    blob(shirt, up(0, P0 + 0.13, 0), 1, 0.1, 0.16, 0.15); blob(shirt, up(0, P0 + 0.33, 0), 1, 0.12, 0.17, 0.18);   // waist, chest
+    blob(shirt, up(0, P0 + 0.48, 0), 1, 0.08, 0.05, 0.19);                                      // across the shoulders
+    limb(skin, up(0, P0 + 0.5, 0), up(0.012, P0 + 0.62, 0), 0.05);                             // neck
+    blob(skin, up(0.012, P0 + 0.71, 0), 1, 0.093, 0.115, 0.08); blob(skin, up(0.045, P0 + 0.65, 0), 1, 0.07, 0.06, 0.066);
+    blob(hair, up(-0.004, P0 + 0.745, 0), 1, 0.099, 0.092, 0.086);
+    if (longHair) blob(hair, up(-0.07, P0 + 0.6, 0), 1, 0.05, 0.15, 0.08);
+    for (const s of [-1, 1]) blob('dark', up(0.097, P0 + 0.728, s * 0.035), 1, 0.012, 0.02, 0.028, 10);   // sunglasses
+    if (hat === 'straw') { const brim = new THREE.CylinderGeometry(0.2, 0.21, 0.012, 32), c = up(0, P0 + 0.79, 0); brim.translate(c.x, c.y, c.z); add('straw', brim); const top = new THREE.CylinderGeometry(0.095, 0.105, 0.09, 24), t = up(-0.005, P0 + 0.835, 0); top.translate(t.x, t.y, t.z); add('straw', top); }
+    if (hat === 'cap') { blob('polo', up(-0.005, P0 + 0.77, 0), 1, 0.1, 0.07, 0.09); blob('polo', up(0.12, P0 + 0.78, 0), 1, 0.07, 0.008, 0.085); }
+    for (const s of [-1, 1]) {                                                                 // arms, sleeves, hands
+      const S = up(0, P0 + 0.47, s * 0.2), {wrist, pole, grip = 'fist'} = arms[s > 0 ? 'right' : 'left'];
+      const T = wrist.isVector3 ? wrist : at(...wrist), E = elbowFor(S, T, 0.29, 0.26, at(...pole));
+      limb(skin, S, E, 0.047, 0.04); limb(skin, E, T, 0.04, 0.03); limb(shirt, S, S.clone().lerp(E, 0.45), 0.06, 0.054);
+      const f = T.clone().sub(E).normalize(), palm = T.clone().addScaledVector(f, 0.055);
+      limb(skin, T, palm, 0.03, 0.026);
+      if (grip === 'point') limb(skin, palm, palm.clone().addScaledVector(f, 0.075), 0.01, 0.008);
+      else { const g = new THREE.SphereGeometry(0.035, 10, 8); g.translate(palm.x, palm.y, palm.z); add(skin, g); }
+    }
+  }
+  { const wheelAt = t => V(HX - 0.42 - 0.2 * Math.sin(t) * Math.sin(0.4), FY + 1.02 + 0.2 * Math.sin(t) * Math.cos(0.4), HZ + 0.2 * Math.cos(t));
+    crewman({px: HX - 1.05, pz: HZ, yaw: 0, seated: true, lean: 0.2, skin: 'skin2', hair: 'hair1', shirt: 'polo', shorts: 'khaki', hat: 'cap',
+      arms: {right: {wrist: wheelAt(Math.PI * 0.28), pole: [0.1, 0.45, 0.5]}, left: {wrist: wheelAt(Math.PI * 0.72), pole: [0.1, 0.45, -0.5]}}});
+    crewman({px: -1.0, pz: 1.05, yaw: -Math.PI / 2, skin: 'skin1', hair: 'hair2', shirt: 'linen', shorts: 'shorts', hat: 'straw', longHair: true,
+      arms: {right: {wrist: [0.52, 1.53, 0.33], pole: [0, 1.2, 0.8], grip: 'point'}, left: {wrist: [0.04, 0.86, -0.25], pole: [-0.3, 1.1, -0.4]}}});
+    crewman({px: -1.05, pz: -0.75, yaw: Math.PI / 2, skin: 'skin3', hair: 'hair1', shirt: 'coral', shorts: 'khaki',
+      arms: {right: {wrist: [0.3, 1.43, 0.055], pole: [0.1, 1.0, 0.5]}, left: {wrist: [0.3, 1.43, -0.055], pole: [0.1, 1.0, -0.5]}}});
+    const ph = new THREE.BoxGeometry(0.075, 0.15, 0.012); ph.translate(-1.05, FY + 1.47, -0.75 - 0.36); crew.add('dark', ph);   // the phone, held up
+  }
   { add('drink', new THREE.CylinderGeometry(0.035, 0.03, 0.14, 16), U0 + 1.2, FY + 0.81, 0.3); add('steel', new THREE.CylinderGeometry(0.004, 0.004, 0.2, 4), U0 + 1.21, FY + 0.88, 0.31, 0.2); }
 
   // ================= Moored ======================================================
@@ -403,7 +463,11 @@ export function createYacht({scene, project}) {
   line(V(0.3, gunY(tOf(0.3)) + 0.1, -2.2), V(-2.8, 0.45, -3.05), 0.2);
   line(V(AFT + 0.5, gunY(0) + 0.1, -2.2), V(AFT - 3.5, 0.45, -3.05));
 
+  const sunbathers = new THREE.Group(); sunbathers.name = 'yacht-sunbathers';
+  const underway = new THREE.Group(); underway.name = 'yacht-crew';
+  const crewTriangles = crew.finish(underway), sunTriangles = sun.finish(sunbathers);
   const triangles = finish(group);
+  group.add(sunbathers, underway);
   group.updateMatrixWorld(true);
   const flags = [{top: group.localToWorld(V(AFT + 0.2, 2.72, -1.95)), length: 0.75, parent: group}];   // on the yacht: it sails (rivertour.js)
 
@@ -427,10 +491,10 @@ export function createYacht({scene, project}) {
   outer.add(group, marina);
   scene.add(outer);
   const view = {target: group.localToWorld(V(0, 2, 0)), eye: group.localToWorld(V(-22, 14, 26))};
-  const state = {name: 'Princess 60 at the Vinhomes Central Park Marina', lon: YACHT.lon, lat: YACHT.lat, length: YACHT.length, beam: YACHT.beam, sunbathers: 3, triangles, pontoonTriangles, drawCalls: group.children.length + marina.children.length, schematic: false};
+  const state = {name: 'Princess 60 at the Vinhomes Central Park Marina', lon: YACHT.lon, lat: YACHT.lat, length: YACHT.length, beam: YACHT.beam, sunbathers: 3, crewUnderway: 3, triangles: triangles + sunTriangles, crewTriangles, pontoonTriangles, drawCalls: group.children.length + marina.children.length, schematic: false};
   const all = {...materials, ...pm};
   // Moored: lines ashore and fenders out; underway (rivertour.js) both are in.
-  const setMoored = on => { for (const n of ['yacht-rope', 'yacht-fender']) { const m = group.getObjectByName(n); if (m) m.visible = on; } state.moored = on; };
-  state.moored = true;
-  return {group: outer, yacht: group, state, view, flags, setMoored, replaceGeneric: () => 0, dispose() { scene.remove(outer); for (const g of [group, marina]) for (const m of g.children) m.geometry.dispose(); for (const m of Object.values(all)) m.dispose(); }};
+  const setMoored = on => { for (const n of ['yacht-rope', 'yacht-fender']) { const m = group.getObjectByName(n); if (m) m.visible = on; } sunbathers.visible = on; underway.visible = !on; state.moored = on; state.crew = on ? 'sunbathing' : 'underway'; };
+  setMoored(true);
+  return {group: outer, yacht: group, state, view, flags, setMoored, replaceGeneric: () => 0, dispose() { scene.remove(outer); for (const g of [group, marina]) g.traverse(m => { if (m.isMesh) m.geometry.dispose(); }); for (const m of Object.values(all)) m.dispose(); }};
 }
