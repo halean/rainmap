@@ -8,7 +8,27 @@ import {createFlag} from './flag.js';
 import {createMetro} from './metro.js';
 import {createNotreDame} from './notre-dame.js';
 import {createBenThanh} from './ben-thanh.js';
-let weather,flights,lightning,sky,flag,metro,cityLighting,cathedral,market;
+import {createIndependencePalace} from './independence-palace.js';
+import {createMajestic} from './majestic.js';
+import {createOperaHouse} from './opera-house.js';
+import {createStateBank} from './state-bank.js';
+import {createPostOffice} from './post-office.js';
+import {createCityHall} from './city-hall.js';
+import {createBitexco} from './bitexco.js';
+import {createLandmark81} from './landmark81.js';
+import {createNhaRong} from './nha-rong.js';
+import {createContinental} from './continental.js';
+import {createCityMuseum} from './city-museum.js';
+import {createTanDinh} from './tan-dinh.js';
+import {createJadeEmperor} from './jade-emperor.js';
+import {createBinhTay} from './binh-tay.js';
+import {createThienHau} from './thien-hau.js';
+// Landmark models built on OSM outlines: each replaces its generic block as
+// tiles stream in, and follows the Buildings checkbox.
+const LANDMARKS=[['opera',createOperaHouse],['stateBank',createStateBank],['postOffice',createPostOffice],['cityHall',createCityHall],['bitexco',createBitexco],['landmark81',createLandmark81],['nhaRong',createNhaRong],['continental',createContinental],['cityMuseum',createCityMuseum],['tanDinh',createTanDinh],['jadeEmperor',createJadeEmperor],['binhTay',createBinhTay],['thienHau',createThienHau]];
+const landmarks={};
+import {createRex} from './rex.js';
+let weather,flights,lightning,sky,flag,metro,cityLighting,cathedral,market,palace,majestic,rex;
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const $=id=>document.getElementById(id),host=$('viewport');
@@ -55,7 +75,7 @@ function updateTiles(){
  for(const t of selected){
   if(tiles.has(t.id)||pending.has(t.id)||failed.has(t.id)||pending.size>=3)continue;
   pending.add(t.id);
-  loader.load(t.url,gltf=>{pending.delete(t.id);cathedral?.replaceGeneric(gltf.scene);market?.replaceGeneric(gltf.scene);sky?.registerWater(gltf.scene);sky?.registerBuildings(gltf.scene);sky?.registerRoads(gltf.scene);cityLighting?.register(gltf.scene);updateLayer(gltf.scene);gltf.scene.visible=desired.has(t.id);scene.add(gltf.scene);tiles.set(t.id,{group:gltf.scene,lastSeen:performance.now()});updateSkyline();lastLoad=0;},undefined,error=>{pending.delete(t.id);failed.add(t.id);console.error('Tile load failed',t.id,error);lastLoad=0;});
+  loader.load(t.url,gltf=>{pending.delete(t.id);cathedral?.replaceGeneric(gltf.scene);market?.replaceGeneric(gltf.scene);palace?.replaceGeneric(gltf.scene);majestic?.replaceGeneric(gltf.scene);rex?.replaceGeneric(gltf.scene);for(const l of Object.values(landmarks))l.replaceGeneric(gltf.scene);sky?.registerWater(gltf.scene);sky?.registerBuildings(gltf.scene);sky?.registerRoads(gltf.scene);cityLighting?.register(gltf.scene);updateLayer(gltf.scene);gltf.scene.visible=desired.has(t.id);scene.add(gltf.scene);tiles.set(t.id,{group:gltf.scene,lastSeen:performance.now()});updateSkyline();lastLoad=0;},undefined,error=>{pending.delete(t.id);failed.add(t.id);console.error('Tile load failed',t.id,error);lastLoad=0;});
  }
  updateSkyline();
  const visible=[...tiles.keys()].filter(id=>desired.has(id)).length;
@@ -78,6 +98,10 @@ async function init(){
  if(manifest.skyline){const layer=await loader.loadAsync(manifest.skyline.url);skyline=layer.scene;scene.add(skyline);updateSkyline();highrises=tallBuildings(skyline,Infinity);}
  cathedral=createNotreDame({scene,project});cathedral.group.visible=$('buildings').checked;cathedral.replaceGeneric(skyline);
  market=createBenThanh({scene,project});market.group.visible=$('buildings').checked;market.replaceGeneric(skyline);
+ palace=createIndependencePalace({scene,project});palace.group.visible=$('buildings').checked;palace.replaceGeneric(skyline);
+ majestic=createMajestic({scene,project});majestic.group.visible=$('buildings').checked;majestic.replaceGeneric(skyline);
+ rex=createRex({scene,project});rex.group.visible=$('buildings').checked;rex.replaceGeneric(skyline);
+ for(const [key,create] of LANDMARKS){const l=landmarks[key]=create({scene,project});l.group.visible=$('buildings').checked;l.replaceGeneric(skyline);}
  sky=createSky({scene,manifest,directionalLight:sunLight,hemisphereLight:hemiLight});
  sky.registerWater(overview);sky.registerBuildings(skyline);sky.registerRoads(overview);
  cityLighting=createCityLighting({scene,camera,controls,sky});
@@ -91,8 +115,8 @@ async function init(){
  flights=createFlights({scene,project,controls});
  metro=createMetro({scene,project});
  lightning=createLightning({scene,weather,skyline,camera});
- flag=createFlag({scene,skyline,camera});
- window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get lighting(){return cityLighting?.state;},get flag(){return flag?.state;},get metro(){return metro?.state;},get cathedral(){return cathedral?.state;},get market(){return market?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
+ flag=createFlag({scene,skyline,camera,roof:landmarks.landmark81?.roof});
+ window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get lighting(){return cityLighting?.state;},get flag(){return flag?.state;},get metro(){return metro?.state;},get palace(){return palace?.state;},get majestic(){return majestic?.state;},get rex(){return rex?.state;},get landmarks(){return Object.fromEntries(Object.entries(landmarks).map(([key,l])=>[key,l.state]));},get cathedral(){return cathedral?.state;},get market(){return market?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
 }
 $('overview').onclick=()=>{if(ready)wholeCity();};
 $('downtown').onclick=()=>{if(ready)centralCity();};
@@ -131,7 +155,7 @@ renderer.domElement.addEventListener('wheel',e=>{if(!following)return;
 addEventListener('keydown',e=>{if(e.key==='Escape'&&following){stopFollowing();setActive('');}});
 $('vvk').onclick=()=>{if(!ready)return;const p=project(106.694,10.7605);goTo(...p,1900);setActive('vvk');};
 $('top').onclick=()=>{if(!ready)return;goTo(controls.target.x,controls.target.z,camera.position.distanceTo(controls.target),true);setActive('top');};
-for(const id of ['buildings','minor'])$(id).onchange=()=>{if(cathedral)cathedral.group.visible=$('buildings').checked;if(market)market.group.visible=$('buildings').checked;if(overview)updateLayer(overview);for(const e of tiles.values())updateLayer(e.group);updateSkyline();};
+for(const id of ['buildings','minor'])$(id).onchange=()=>{if(cathedral)cathedral.group.visible=$('buildings').checked;if(market)market.group.visible=$('buildings').checked;if(palace)palace.group.visible=$('buildings').checked;if(majestic)majestic.group.visible=$('buildings').checked;if(rex)rex.group.visible=$('buildings').checked;for(const l of Object.values(landmarks))l.group.visible=$('buildings').checked;if(overview)updateLayer(overview);for(const e of tiles.values())updateLayer(e.group);updateSkyline();};
 $('cameras').onchange=()=>{if(cameraMarkers)cameraMarkers.visible=$('cameras').checked;};
 renderer.domElement.addEventListener('dblclick',e=>{
  if(!ready||!highrises.length)return;

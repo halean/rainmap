@@ -101,6 +101,24 @@ terrain is flat. The manifest documents the assumptions. The camera rain field
 is spatial interpolation of ordinal readings, not measured mm/h. Cloud imagery
 is shown at a schematic 2.5 km height, not a measured cloud altitude.
 
+## Landmark models
+
+Some landmarks are modelled rather than extruded, each from its OSM outline
+and photographs, and each replaces its generic block when that block's tile
+streams in (and in the skyline layer). Their notes, with sources and what is
+approximate, are beside them:
+- **Built on rectangles:** `notre-dame.js`, `ben-thanh.js` and
+  `independence-palace.js`.
+- **Built on outlines with `landmark-kit.js`:** `majestic.js`, `rex.js`,
+  `opera-house.js`, `state-bank.js`, `post-office.js`, `city-hall.js`,
+  `bitexco.js`, `landmark81.js`, `nha-rong.js`, `continental.js`,
+  `city-museum.js`, `tan-dinh.js`, `jade-emperor.js`, `binh-tay.js` and
+  `thien-hau.js`, listed in `LANDMARKS` in `viewer.js`.
+
+Bitexco was missing from the generic model (only its podium was there), and
+Landmark 81 was a slab over its whole site. The flag now stands on Landmark
+81's modelled spire.
+
 ## Persistent skyline
 
 `assets/skyline.glb` keeps building roofs and walls reaching at least 40 m

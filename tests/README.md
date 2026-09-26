@@ -121,3 +121,13 @@ node --loader ./tests/three-loader.mjs tests/metro_timetable.mjs
 .venv/bin/python -m unittest tests.test_metro_timetable
 .venv/bin/python -m unittest tests.test_pilot_plan   # port pilot plan parser
 ```
+
+For the Independence Palace (`3d/independence-palace.js`, see `3d/INDEPENDENCE-PALACE.md`):
+```sh
+node --loader ./tests/three-loader.mjs tests/independence_palace.mjs
+```
+
+For the landmarks built on OSM outlines with `3d/landmark-kit.js` (the Majestic, the Rex, the Opera House, the State Bank, the Post Office, City Hall, Bitexco, Landmark 81, Nhà Rồng, the Continental, the City Museum, Tân Định Church, the Jade Emperor Pagoda, Bình Tây Market and the Thiên Hậu Temple):
+```sh
+node --loader ./tests/three-loader.mjs tests/outline_landmarks.mjs
+```

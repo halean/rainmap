@@ -101,10 +101,12 @@ function flagTexture(width = 480) {
   return texture;
 }
 
-export function createFlag({scene, skyline, camera = null}) {
+/** `roof` ({x, y, z, side}) places the flag on a modelled tower's top;
+ *  without it the flag goes on the tallest roof in the skyline layer. */
+export function createFlag({scene, skyline, camera = null, roof: given = null}) {
   const state = {placed: false, roof: null, length: null, height: null, windFrom: null, windKt: null, yawDeg: null, windObserved: null};
   const status = text => { if ($('flag-status')) $('flag-status').textContent = text; };
-  const roof = tallestRoof(skyline);
+  const roof = given ?? tallestRoof(skyline);
   if (!roof) { status('Tallest tower not found in the skyline model.'); return {state, group: null, update() {}}; }
 
   // Preserve the existing pole dimensions. A collision plane above the roof
