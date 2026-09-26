@@ -58,6 +58,11 @@ apex, 90-260 m up, into one of 23 effects:
   angle: sometimes square to the audience, often side-on, a line or a
   squashed oval, as at a real display. They go up three at a time, one
   per barge, so one is likely to read.
+  They are rough, as hand-packed shells are: each is stretched and sheared
+  a little, pushed off-centre by a lopsided break, its stars scattered in
+  position, speed and drag, with some thickness out of the plane, and about
+  one in seven stars a dud. The shape reads at first and softens as it
+  spreads.
 - **Fans** are aimed, and face the Thủ Thiêm bank.
 - **Sound:** crossettes pop as they split, glitter crackles softly, and
   kamuro and horsetails hiss as they fall. A cluster's little bursts are

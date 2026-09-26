@@ -209,14 +209,28 @@ export function createFireworks({scene, project, now: nowFn = () => performance.
         }
         break;
       }
-      case 'heart': {                                                            // pattern shells: the shape, at whatever angle the shell tumbled to
-        for (let i = 0; i < 110; i++) { const th = i / 110 * Math.PI * 2, x = 16 * Math.sin(th) ** 3, y = 13 * Math.cos(th) - 5 * Math.cos(2 * th) - 2 * Math.cos(3 * th) - Math.cos(4 * th); star(tumbled(x, y), v * Math.hypot(x, y) / 17, rnd() < 0.8 ? COLOURS.pink : COLOURS.red, 0, 2.3, 2); }
-        break;
-      }
-      case 'smiley': {
-        for (let i = 0; i < 70; i++) { const th = i / 70 * Math.PI * 2; star(tumbled(Math.cos(th), Math.sin(th)), v, COLOURS.yellow, 0, 2.3, 2); }
-        for (const ex of [-0.35, 0.35]) for (let i = 0; i < 8; i++) { const th = i / 8 * Math.PI * 2; const x = ex + 0.06 * Math.cos(th), y = 0.3 + 0.08 * Math.sin(th); star(tumbled(x, y), v * Math.hypot(x, y), COLOURS.yellow, 0, 2.3, 1); }
-        for (let i = 0; i < 26; i++) { const th = Math.PI * (1.18 + 0.64 * i / 25), x = 0.55 * Math.cos(th), y = 0.55 * Math.sin(th) + 0.05; star(tumbled(x, y), v * Math.hypot(x, y), COLOURS.yellow, 0, 2.3, 1); }
+      case 'heart': case 'smiley': {                                             // pattern shells: the shape, at whatever angle the shell tumbled to
+        // Real ones are rough: stars packed by hand and pushed about as the shell breaks, a break
+        // that is stronger on one side, some stars that never light, and drag that differs star to
+        // star -- so the shape comes out lopsided and ragged, and softens as it spreads.
+        const sx = 0.8 + 0.4 * rnd(), sy = 0.8 + 0.4 * rnd(), shear = (rnd() - 0.5) * 0.35;   // this shell's distortion
+        const push = [(rnd() - 0.5) * 0.25, (rnd() - 0.5) * 0.25];                             // the break's lopsided push
+        const tnorm = tn;
+        const rough = (x, y, col, trail) => {
+          if (rnd() < 0.14) return;                                                              // a dud
+          const jx = x + (rnd() - 0.5) * 0.09 + push[0], jy = y + (rnd() - 0.5) * 0.09 + push[1];
+          const X = (jx + shear * jy) * sx, Y = jy * sy, depth = (rnd() - 0.5) * 0.18;           // and some thickness out of the plane
+          const d = norm(add(tumbled(X, Y), scale(tnorm, depth))), r = Math.hypot(X, Y, depth);
+          star(d, v * r * (0.88 + 0.24 * rnd()), col, 0, 2.1 + rnd() * 0.5, trail, 0.7 + 0.5 * rnd(), k * (0.85 + 0.3 * rnd()));
+        };
+        if (type === 'heart') {
+          const col = rnd() < 0.7 ? COLOURS.pink : COLOURS.red;
+          for (let i = 0; i < 90; i++) { const th = (i + rnd() * 0.6) / 90 * Math.PI * 2, x = 16 * Math.sin(th) ** 3, y = 13 * Math.cos(th) - 5 * Math.cos(2 * th) - 2 * Math.cos(3 * th) - Math.cos(4 * th); rough(x / 17, y / 17, rnd() < 0.85 ? col : COLOURS.gold, 2); }
+        } else {
+          for (let i = 0; i < 60; i++) { const th = (i + rnd() * 0.6) / 60 * Math.PI * 2; rough(Math.cos(th), Math.sin(th), COLOURS.yellow, 2); }
+          for (const ex of [-0.35, 0.35]) for (let i = 0; i < 6; i++) { const th = i / 6 * Math.PI * 2; rough(ex + 0.06 * Math.cos(th), 0.3 + 0.08 * Math.sin(th), COLOURS.yellow, 1); }
+          for (let i = 0; i < 22; i++) { const th = Math.PI * (1.18 + 0.64 * i / 21); rough(0.55 * Math.cos(th), 0.55 * Math.sin(th) + 0.05, COLOURS.yellow, 1); }
+        }
         break;
       }
       case 'double-ring': { const n = norm(add(sphere(), [0, 1.2, 0])); for (const d of ringDirs(80, n)) star(d, v, c1, 0, 2.3, 3); for (const d of ringDirs(60, n)) star(d, v * 0.6, c2 === c1 ? COLOURS.silver : c2, 0, 2.1, 3); break; }
