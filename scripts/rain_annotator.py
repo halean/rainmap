@@ -411,6 +411,27 @@ CAMERA_NOTES = {
         "- At this camera, answer 'yes' to falling water only for what you can actually see: "
         "streaks in the lights, rings or splashes in the puddles, or drops on the lens.\n\n"
     ),
+    # Nguyen Cuu Phu - Tran Dai Nghia (681889ec6dfb4b0018f8f6cb): a two-lane road past a
+    # pavement market and shophouses, to a junction under bright signals. Two opposite errors: at
+    # 22:26 on 16 Sep, with 8 mm that hour at the nearest gauges (Le Dinh Can, Binh Chanh, 4 km),
+    # a mirror-like road and riders in raincoats were called No for want of visible streaks; at
+    # 04:38 on 27 Sep, a damp road under the market's lamps and a green signal, gauges dry all
+    # night, was called soaked, so Light.
+    "681889ec6dfb4b0018f8f6cb": (
+        "About this camera (Nguyen Cuu Phu - Tran Dai Nghia). It looks down a two-lane road past a "
+        "pavement market on the left and shophouses on the right, to a junction under bright "
+        "traffic signals.\n"
+        "- Before dawn the market stalls on the left are lit by bare lamps and their pavement is "
+        "often wet from washing down, and the green or red signal throws a coloured glow across "
+        "the junction. A road that is merely dark and damp, with glare round the lamps and the "
+        "signals, is 'damp', not 'soaked'.\n"
+        "- 'Soaked' here means water across the lanes themselves: the whole road mirror-like, "
+        "with long unbroken streaks of the signal and headlights reflected down its length.\n"
+        "- When the road is soaked like that and the riders are in raincoats or ponchos, it is "
+        "raining, even if you cannot make out streaks in the air: at this distance the drops "
+        "themselves rarely show. Answer 'yes' to falling water for streaks, splashes in the "
+        "puddles, or drops on the lens; report riders in raincoats as behaviour 'yes'.\n\n"
+    ),
     # Nut giao Cho Dem 1 (CT Trung Luong - Bui Thanh Khiet): the foreground of the junction is
     # broken, patched asphalt full of potholes that hold water for days. Production called it
     # Medium on 103 of 154 frames, all day on 22 Sep on a dry, overcast road.
