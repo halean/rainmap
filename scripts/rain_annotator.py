@@ -432,6 +432,38 @@ CAMERA_NOTES = {
         "themselves rarely show. Answer 'yes' to falling water for streaks, splashes in the "
         "puddles, or drops on the lens; report riders in raincoats as behaviour 'yes'.\n\n"
     ),
+    # Thanh Nien - Pham Van Hai (68188d586dfb4b0018f9018d; overlay "Thanh Nien - Chua Lien Hoa"): a
+    # narrow rural road between a pond and flooded field (left) and a gravel yard with water-filled
+    # potholes (right). The off-road water was read as standing water on dry mornings (Medium,
+    # 06:34 and 07:49 on 26 Sep, gauge Le Minh Xuan 1 dry); in the rain that afternoon (15:14-17:04)
+    # the fast-draining road only looked glossy, and every frame was called No.
+    "68188d586dfb4b0018f9018d": (
+        "About this camera (Thanh Nien - Pham Van Hai). It looks along a narrow rural road. On the left "
+        "is a pond and a flooded field beyond the railing; on the right a gravel yard with potholes "
+        "that hold water, and unpaved shoulders with puddles.\n"
+        "- The pond, the field, the yard's potholes and the shoulder puddles are not the road. Leave "
+        "them out when you report the water on the road; judge only the asphalt lane with the yellow "
+        "centre line.\n"
+        "- This road drains fast: even in steady rain it usually looks 'wet' (glossy, reflecting the "
+        "sky and headlights) rather than soaked. So rain here shows as the far end of the road "
+        "fading into grey haze, drops on the lens, and riders in raincoats or ponchos -- report those "
+        "(falling 'yes' for drops or streaks, behaviour 'yes' for rain gear).\n\n"
+    ),
+    # Mai Ba Huong - Le Chinh Dang (681883866dfb4b0018f8eef6): a two-lane rural road with a zebra
+    # crossing and a roadside stall under a tree. In the rain of 26 Sep (15:30-16:50, gauge Le Minh
+    # Xuan 1, 2.7 km) the frames show drops on the lens and a rider in a raincoat, yet the road was
+    # reported only 'wet', so No; on dry nights and dawns a streetlit glossy road and a shoulder
+    # puddle were reported soaked.
+    "681883866dfb4b0018f8eef6": (
+        "About this camera (Mai Ba Huong - Le Chinh Dang). It looks along a two-lane rural road with a "
+        "zebra crossing, a roadside stall under a tree on the right, and red-earth shoulders.\n"
+        "- The camera sits under the tree, so in rain drops gather on the lens: blurred round spots, "
+        "clearest against the trees and the sky. That is falling water -- answer 'yes'.\n"
+        "- Riders in raincoats or ponchos mean rain here; report behaviour 'yes'.\n"
+        "- At night the street light makes the road glossy, and puddles lie on the red-earth shoulders "
+        "and by the stall long after rain. A glossy road is 'wet', not 'soaked', and the shoulder "
+        "puddles are not the road.\n\n"
+    ),
     # Nut giao Cho Dem 1 (CT Trung Luong - Bui Thanh Khiet): the foreground of the junction is
     # broken, patched asphalt full of potholes that hold water for days. Production called it
     # Medium on 103 of 154 frames, all day on 22 Sep on a dry, overcast road.
@@ -493,7 +525,32 @@ def phase_for(hour: int) -> str:
     return "late evening, with traffic thinning out"
 
 
-def decide(result: dict) -> tuple[str, str]:
+# Cameras whose standing water outlasts the rain (see CAMERA_NOTES). Their notes cut the false
+# rain sharply, but the model still flickers: Nguyen Van Linh - duong so 1, the night of 27 Sep,
+# gauges dry throughout, called 17 of 19 frames right and two isolated ones 'soaked' (the pond
+# lit red by the signal, or by headlights). At these cameras a soaked road carries a rain verdict
+# only when the previous look (within STATE_MAX_AGE_SEC) was soaked too: real rain keeps the road
+# soaked frame after frame, a flicker does not. Falling water still counts at once. The cost is
+# one frame's delay (~5-10 min) when rain starts.
+WATER_LINGERS = frozenset({
+    "662a8b061afb9c00172d27d7",   # Nguyen Van Linh - duong so 1: the junction pond
+    "58d7b5a7c1e33c00112b320a",   # Nut giao Cho Dem 1: potholes
+    "58d7b756c1e33c00112b320d",   # Nut giao Cho Dem 2: edge puddles
+    "63b54a9ebfd3d90017ea7911",   # Nguyen Xien - Nguyen Van Tang: glare and the corner pool
+})
+
+
+# The opposite: rural cameras whose roads drain fast, so rain seldom leaves them 'soaked' -- it
+# shows as a wet road and people in rain gear. At these, a wet road with riders in raincoats is
+# rain. Both missed the whole of the 26 Sep afternoon's rain (gauge Le Minh Xuan 1) with the road
+# read only 'wet', while describing raincoats.
+RAIN_GEAR_COUNTS = frozenset({
+    "68188d586dfb4b0018f9018d",   # Thanh Nien - Pham Van Hai
+    "681883866dfb4b0018f8eef6",   # Mai Ba Huong - Le Chinh Dang
+})
+
+
+def decide(result: dict, prev_level: str | None = None, lingers: bool = False, gear: bool = False) -> tuple[str, str]:
     """Turn three observations into a verdict. Rule R2 from perception_eval.py.
 
     R2 is `falling OR water >= soaked`, which scored 33% recall at 100% dry precision
@@ -527,6 +584,11 @@ def decide(result: dict) -> tuple[str, str]:
         return "Medium", said or "Rain is falling on an already soaked road."
     if falling:
         return "Light", said or "Rain is visibly falling on the street."
+    if gear and not falling and level < soaked and level >= WATER_LEVELS.index("wet") \
+            and str(result.get("behaviour", "")).lower().strip() == "yes":
+        return "Light", said or "The road is wet and riders are in raincoats."
+    if lingers and level >= soaked and not (prev_level in WATER_LEVELS and WATER_LEVELS.index(prev_level) >= soaked):
+        return "No", said                                   # water alone, once: wait for the next look
     if level >= standing:
         return "Medium", "Water is pooling on the carriageway and vehicles are throwing up spray."
     if level >= soaked:
@@ -893,7 +955,8 @@ def main():
 
                     rec["location_text"] = display_names.get(cam_id) or cam.get("display_name") or rec.get("location_text", "")
                     if PERCEPTION_DECISION and prev_path is None:
-                        verdict, justification = decide(result)
+                        before = prior_state(rec, captured_at_from(img_path))   # rec still holds the previous look
+                        verdict, justification = decide(result, before and before["level"], cam_id in WATER_LINGERS, cam_id in RAIN_GEAR_COUNTS)
                     else:
                         verdict = result.get("rain", rec.get("rain", "No"))
                         justification = result.get("justification", "")
