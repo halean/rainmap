@@ -161,3 +161,8 @@ For the river tours (`3d/rivertour.js`: continuous loop, 35 knots, on the water)
 ```sh
 node --loader ./tests/three-loader.mjs tests/rivertour.mjs
 ```
+
+For the riverfront towers (`3d/riverfront.js`: detailed near, blocks far):
+```sh
+node --loader ./tests/three-loader.mjs tests/riverfront.mjs
+```
