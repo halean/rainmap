@@ -2,11 +2,12 @@
 // No scene attachment, map coordinates, city imports or network requests.
 import * as THREE from 'three';
 import {builder} from './landmark-kit.js';
+import {paintSevenKhoMurals} from './seven-kho-murals.js';
 export const SEVEN_KHO = Object.freeze({name:'7 Khô',address:'94–96–98 Lý Thái Tổ, P.2, Q.3 (photographed menu)',listingAddress:'98B Lý Thái Tổ',identity:'Lý Thái Tổ confirmed by user',status:'standalone-not-integrated',estimated:true});
 export function createSevenKho({city=false}={}){
  const group=new THREE.Group();group.name='seven-kho';group.userData={...SEVEN_KHO};
  const materials={};
- const colors={floor:'#c7c4b9',ceiling:'#b7b8af',conduit:'#85877d',wood:'#655440',grain:'#99816a',muralPlaster:'#aaa185',muralDoor:'#3e615a',muralTrim:'#807d63',muralInk:'#605646',brick:'#85654d',brickLight:'#a28465',shutter:'#3b9990',shutterDark:'#24655f',screen:'#777f81',thatch:'#665d48',thatchLight:'#8e8161',awning:'#29453d',bamboo:'#ab9b65',blue:'#345371',clay:'#9b8264',carrot:'#dc7830',cucumber:'#9dbb61',cabbage:'#d9dfac',crumb:'#d6b878',chili:'#b73c22',ice:'#d2e1d5',bronze:'#746447',plaster:'#797970',stone:'#b9b3a1',recess:'#45483f',trim:'#cec8b4',timber:'#443b2d',metal:'#a8b0af',iron:'#292e2b',chair:'#282d29',table:'#393b33',tile:'#928e7d',grout:'#656658',red:'#b82d24',gold:'#b18b46',paper:'#ba9870',porcelain:'#e1dbc0',sauce:'#8c381b',squid:'#b78955',food:'#be8b35',herb:'#456b2a',bottle:'#294b32',beer:'#bf8422',glass:'#b4c6b5',bark:'#62523b',leaf:'#365337',leafLight:'#61754c',bulb:'#ffe4aa',lantern:'#ec3024',water:'#668176'};
+ const colors={paintCream:'#d9c6a0',paintOchre:'#c6aa76',paintCoral:'#af6552',paintPink:'#b87586',paintTeal:'#557e73',paintSkin:'#bf9975',floor:'#c7c4b9',ceiling:'#b7b8af',conduit:'#85877d',wood:'#655440',grain:'#99816a',muralPlaster:'#aaa185',muralDoor:'#3e615a',muralTrim:'#807d63',muralInk:'#605646',brick:'#85654d',brickLight:'#a28465',shutter:'#3b9990',shutterDark:'#24655f',screen:'#777f81',thatch:'#665d48',thatchLight:'#8e8161',awning:'#29453d',bamboo:'#ab9b65',blue:'#345371',clay:'#9b8264',carrot:'#dc7830',cucumber:'#9dbb61',cabbage:'#d9dfac',crumb:'#d6b878',chili:'#b73c22',ice:'#d2e1d5',bronze:'#746447',plaster:'#797970',stone:'#b9b3a1',recess:'#45483f',trim:'#cec8b4',timber:'#443b2d',metal:'#a8b0af',iron:'#292e2b',chair:'#282d29',table:'#393b33',tile:'#928e7d',grout:'#656658',red:'#b82d24',gold:'#b18b46',paper:'#ba9870',porcelain:'#e1dbc0',sauce:'#8c381b',squid:'#b78955',food:'#be8b35',herb:'#456b2a',bottle:'#294b32',beer:'#bf8422',glass:'#b4c6b5',bark:'#62523b',leaf:'#365337',leafLight:'#61754c',bulb:'#ffe4aa',lantern:'#ec3024',water:'#668176'};
  for(const [k,color] of Object.entries(colors))materials[k]=new THREE.MeshStandardMaterial({color,roughness:['metal','glass','table','porcelain'].includes(k)?.3:.84,metalness:k==='metal'?.7:0});
  materials.glass.transparent=true;materials.glass.opacity=.28;materials.glass.depthWrite=false;materials.glass.roughness=.12;
  materials.bulb.emissive.set('#ffbf66');materials.bulb.emissiveIntensity=2;
@@ -166,33 +167,48 @@ export function createSevenKho({city=false}={}){
   cyl(b,'bottle',.035,.16,x+.17,.784,z-.43);cyl(b,'bottle',.017,.08,x+.17,.904,z-.43);cyl(b,'gold',.019,.01,x+.17,.949,z-.43);cyl(b,'paper',.0355,.064,x+.17,.78,z-.43);
   b.box('paper',.10,.018,.15,x-.25,.711,z+.40,.15);b.box('porcelain',.09,.007,.11,x-.25,.724,z+.40,.18);
  }
+ // Fixed irregular layout: stable across reloads, with angled and pulled-out chairs.
+ const outdoorScale=.65;
  section('dining',b=>{
-  let n=0;for(const z of [5.25,7.45])for(const x of (city?[-5.2,-2.65,0,2.65]:[-5.2,-2.65,0,2.65,5.2])){table(b,x,z,n++);for(const a of [-Math.PI/2,Math.PI/2,0]){const cx=x+Math.sin(a)*.92,cz=z+Math.cos(a)*.92;chair(b,cx,cz,a);}if(n%2===0){cyl(b,'red',.18,.26,x+.85,.14,z-.48);ring(b,'metal',.18,.011,x+.85,.28,z-.48,Math.PI/2);}}
-
+  const layout=[[-5.35,5.12,-.16],[-2.86,5.59,.24],[-.38,5.08,-.31],[2.28,5.43,.12],[5.12,5.17,-.23],[-4.88,7.61,.27],[-2.35,7.28,-.13],[.24,7.73,.19],[2.69,7.31,-.26],[5.31,7.66,.11]];
+  for(const [n,[x,z,turn]] of layout.entries()){
+   if(city&&(n===4||n===9))continue;
+   const add=(key,g,px=0,py=0,pz=0,rx=0,ry=0,rz=0)=>{
+    const m=new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(rx,ry,rz));m.setPosition(px,py,pz);
+    g.applyMatrix4(m);g.translate(-x,-.018,-z);g.scale(outdoorScale,outdoorScale,outdoorScale);g.rotateY(turn);g.translate(x,.018,z);b.add(key,g);
+   };
+   const scaled={add,box:(key,w,h,d,px,py,pz,yaw=0)=>add(key,new THREE.BoxGeometry(w,h,d),px,py,pz,0,yaw)};
+   table(scaled,x,z,n);
+   for(const [j,base] of [-Math.PI/2,Math.PI/2,0].entries()){
+    const a=base+.19*Math.sin(n*2.7+j*4.1),pull=.91+.13*(.5+.5*Math.sin(n*4.3+j*2.2));
+    chair(scaled,x+Math.sin(a)*pull,z+Math.cos(a)*pull,a+.16*Math.cos(n*3.2+j*1.9));
+   }
+   if(n%2===0){cyl(scaled,'red',.18,.26,x+.85,.14,z-.48);ring(scaled,'metal',.18,.011,x+.85,.28,z-.48,Math.PI/2);}
+  }
  });
  section('interior',b=>{
   // Long narrow room from the supplied interior photograph. The aisle stays clear.
-  for(let x=-1.75;x<2;x+=.5)for(let z=-9.95;z<3.4;z+=.5){b.box('floor',.493,.035,.493,x,.032,z);for(let j=0;j<3;j++)b.box('stone',.07,.001,.018,x+Math.sin(j*4+z)*.17,.050,z+Math.cos(j+x)*.17,j);}
-  b.box('ceiling',4.02,.05,13.8,0,3.14,-3.35);
-  for(const x of [-1.78,1.78])rod(b,'conduit',[x,3.07,-10.1],[x,3.07,3.5],.014);
-  for(const z of [-8.8,-5.8,-2.8,.2,2.8])rod(b,'conduit',[-1.8,3.065,z],[1.8,3.065,z],.012);
-  for(const z of [-8.5,-5.7,-2.9,-.1,2.6])for(const x of [-.9,.65]){
+  for(let x=-1.75;x<2;x+=.5)for(let z=-11.95;z<3.4;z+=.5){b.box('floor',.493,.035,.493,x,.032,z);for(let j=0;j<3;j++)b.box('stone',.07,.001,.018,x+Math.sin(j*4+z)*.17,.050,z+Math.cos(j+x)*.17,j);}
+  b.box('ceiling',4.02,.05,15.8,0,3.14,-4.35);
+  for(const x of [-1.78,1.78])rod(b,'conduit',[x,3.07,-12.1],[x,3.07,3.5],.014);
+  for(const z of [-10.8,-7.8,-4.8,-1.8,1.2,2.8])rod(b,'conduit',[-1.8,3.065,z],[1.8,3.065,z],.012);
+  for(const z of [-10.5,-7.7,-4.9,-2.1,.7,2.6])for(const x of [-.9,.65]){
    rod(b,'iron',[x,3.10,z],[x,2.78,z],.007);
    b.add('iron',new THREE.ConeGeometry(.17,.13,28,1,true),x,2.745,z);
    cyl(b,'bulb',.155,.008,x,2.682,z);ring(b,'metal',.169,.008,x,2.68,z,Math.PI/2);
   }
-  for(const z of [-6.6,-1.1]){
+  for(const z of [-8.6,-3.1]){
    rod(b,'conduit',[.25,3.13,z],[.25,2.76,z],.025);ball(b,'ceiling',.25,2.72,z,.1,.065,.1);
    for(let j=0;j<3;j++){const a=j*Math.PI*2/3+.25;const g=new THREE.BoxGeometry(.57,.014,.105);g.rotateY(a);b.add('ceiling',g,.25+Math.cos(a)*.34,2.71,z-Math.sin(a)*.34);}
   }
-  for(const x of [-1.55,1.55])for(const z of [-7,-3,1]){rod(b,'iron',[x,3.06,z-.36],[x,3.06,z+.36],.012);for(const dz of [-.25,.25]){b.add('iron',new THREE.CylinderGeometry(.028,.04,.11,12),x,2.99,z+dz,0,0,x>0?-.3:.3);ball(b,'bulb',x,2.93,z+dz,.024,.012,.024,8);}}
+  for(const x of [-1.55,1.55])for(const z of [-9,-5,-1,2]){rod(b,'iron',[x,3.06,z-.36],[x,3.06,z+.36],.012);for(const dz of [-.25,.25]){b.add('iron',new THREE.CylinderGeometry(.028,.04,.11,12),x,2.99,z+dz,0,0,x>0?-.3:.3);ball(b,'bulb',x,2.93,z+dz,.024,.012,.024,8);}}
   // Rectangular plank tables and low A-frame stools, not outdoor folding chairs.
-  for(const z of [-8.6,-6.0,-3.4,-.8,1.8]){
-   const x=-1.04;b.box('wood',1.08,.065,1.64,x,.735,z);
+  for(const z of [-10.8,-8.3,-5.8,-3.3,-.8,1.7]){
+   const x=1.04;b.box('wood',1.08,.065,1.64,x,.735,z);
    for(let a=-.48;a<.5;a+=.135){b.box('timber',.006,.003,1.63,x+a,.77,z);for(let j=0;j<5;j++)rod(b,'grain',[x+a+j*.018,.772,z-.78],[x+a+j*.018+.009,.772,z+.78],.0015,5);}
    for(const dx of [-.42,.42])for(const dz of [-.66,.66])rod(b,'timber',[x+dx,.05,z+dz],[x+dx*.87,.71,z+dz*.94],.037,6);
    for(const dz of [-.65,.65])rod(b,'timber',[x-.43,.3,z+dz],[x+.43,.3,z+dz],.027,6);
-   for(const sx of [-1.80,-.24])for(const sz of [-.46,.46]){
+   for(const sx of [1.80,.24])for(const sz of [-.46,.46]){
     b.box('wood',.32,.055,.34,sx,.44,z+sz);
     for(const dx of [-.13,.13])for(const dz of [-.13,.13])rod(b,'timber',[sx+dx*1.2,.045,z+sz+dz*1.15],[sx+dx*.75,.414,z+sz+dz*.72],.023,6);
     rod(b,'timber',[sx-.14,.17,z+sz],[sx+.14,.17,z+sz],.015,6);
@@ -202,27 +218,7 @@ export function createSevenKho({city=false}={}){
    b.box('paper',.11,.006,.07,x+.18,.775,z+.25,.12);
   }
  });
- section('murals',b=>{
-  // Original schematic wall graphics inspired by the streetscape mural;
-  // no Google photo texture is pasted onto the model.
-  for(const side of [-1,1]){
-   const x=side*1.993;
-   b.box('muralPlaster',.018,2.85,13.6,x,1.54,-3.35);
-   b.box('recess',.025,.17,13.6,x-side*.016,.16,-3.35);
-   for(let bay=0;bay<6;bay++){
-    const z=-9.12+bay*2.18;
-    // Painted brick piers, turquoise doors and faded shop sign panels.
-    for(let row=0;row<13;row++)for(let col=0;col<2;col++)b.box(row%3?'brick':'brickLight',.008,.10,.19,x-side*.016,.33+row*.19,z-.97+col*.20+(row%2)*.04);
-    b.box('muralDoor',.011,1.77,1.12,x-side*.022,1.15,z);
-    for(const dz of [-.57,0,.57])b.box('muralTrim',.012,1.87,.035,x-side*.029,1.18,z+dz);
-    for(const y of [.29,1.17,2.11])b.box('muralTrim',.012,.04,1.18,x-side*.029,y,z);
-    for(let j=0;j<7;j++)b.box('muralTrim',.012,.014,1.06,x-side*.031,1.39+j*.084,z);
-    b.box('paper',.013,.41,1.61,x-side*.022,2.49,z);
-    for(let j=0;j<9;j++){b.box('muralInk',.008,.14,.045,x-side*.032,2.49,z-.62+j*.145);b.box('muralInk',.008,.027,.11,x-side*.032,2.56,z-.60+j*.145);}
-    for(let j=0;j<20;j++)b.box(j%2?'muralPlaster':'stone',.008,.016+(j%4)*.011,.02+(j%5)*.015,x-side*.038,.5+(j%11)*.2,z+Math.sin(j*5)*.78);
-   }
-  }
- });
+ section('murals',paintSevenKhoMurals);
  section('seafood-display',b=>{
   const x=-.90,z=4.40;b.box('metal',1.46,.06,.68,x,.86,z);for(const dx of [-.67,.67])for(const dz of [-.28,.28])rod(b,'metal',[x+dx,.1,z+dz],[x+dx,.88,z+dz],.025);
   rod(b,'metal',[x-.72,.86,z],[x-.72,2.22,z],.018);rod(b,'metal',[x+.72,.86,z],[x+.72,2.22,z],.018);rod(b,'metal',[x-.72,2.22,z],[x+.72,2.22,z],.018);
@@ -240,8 +236,8 @@ export function createSevenKho({city=false}={}){
   for(const x of [-2.12,2.12])rod(b,'iron',[x,.15,3.5],[x,6.8,3.5],.035);
   for(let i=0;i<3;i++)curve(b,'iron',[[-2.15,3.6+i*.04,3.8],[0,3.49+i*.04,3.9],[2.15,3.65+i*.04,3.8]],.008,30);
  });
- for(const key of ['shell','roof'])components[key].traverse(o=>{if(!o.isMesh)return;const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++){const z=p.getZ(i);if(z<3.7)p.setZ(i,3.7-(3.7-z)*14/7.4);}p.needsUpdate=true;o.geometry.computeVertexNormals();o.geometry.computeBoundingBox();o.geometry.computeBoundingSphere();});
+ for(const key of ['shell','roof'])components[key].traverse(o=>{if(!o.isMesh)return;const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++){const z=p.getZ(i);if(z<3.7)p.setZ(i,3.7-(3.7-z)*16/7.4);}p.needsUpdate=true;o.geometry.computeVertexNormals();o.geometry.computeBoundingBox();o.geometry.computeBoundingSphere();});
  group.updateMatrixWorld(true);
  let disposed=false;
- return {group,components,materials,triangles,state:{...SEVEN_KHO,triangles,tables:city?13:15,chairs:city?24:30,stools:20,indoorTables:5},dispose(){if(disposed)return;disposed=true;group.removeFromParent();group.traverse(o=>o.geometry?.dispose());for(const m of Object.values(materials))m.dispose();}};
+ return {group,components,materials,triangles,state:{...SEVEN_KHO,triangles,tables:city?14:16,chairs:city?24:30,stools:24,indoorTables:6,buildingLength:16,outdoorScale},dispose(){if(disposed)return;disposed=true;group.removeFromParent();group.traverse(o=>o.geometry?.dispose());for(const m of Object.values(materials))m.dispose();}};
 }

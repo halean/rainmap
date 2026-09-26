@@ -7,11 +7,11 @@
   "outline": [
     [
       -2.1,
-      -10.3
+      -12.3
     ],
     [
       2.1,
-      -10.3
+      -12.3
     ],
     [
       2.1,
@@ -24,12 +24,12 @@
   ],
   "outlineLonLat": [
     [
-      106.679798349974,
-      10.766278830151668
+      106.67980376502359,
+      10.766295990975754
     ],
     [
-      106.67983503876435,
-      10.76626766034198
+      106.67984045381394,
+      10.766284821166066
     ],
     [
       106.67979713341725,
@@ -41,7 +41,7 @@
     ]
   ],
   "frontLocalZ": 3.7,
-  "depth": 14,
+  "depth": 16,
   "width": 4.2,
   "footprintStatus": "photo-constrained-estimate-not-surveyed",
   "osmBuildingId": null,
@@ -54,7 +54,7 @@
     "https://www.openstreetmap.org/way/39513492",
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
   ],
-  "notes": "User frontage photo shows a single narrow shop, turquoise shutters and thatched awnings beside the passage at no.98. Width revised to estimated 4.2 m. Depth14 m remains aerial interpretation; no OSM building polygon exists.",
+  "notes": "Narrow 4.2 m estimated width from user frontage photo. Length16 m specified by user. Geographic footprint orientation/anchor remain estimated; no OSM building polygon.",
   "roadContext": [
     {
       "id": 35114554,
@@ -213,5 +213,6 @@
         ]
       ]
     }
-  ]
+  ],
+  "lengthSource": "User specified 16 m"
 }

@@ -73,7 +73,8 @@ const HIGHRISE_SNAP_PIXELS=45;
 function project(lon,lat){return [(lon-manifest.originLonLat[0])*111320*Math.cos(manifest.originLonLat[1]*Math.PI/180),-(lat-manifest.originLonLat[1])*111320];}
 function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(manifest)limitNavigation();if(ready&&$('overview').classList.contains('active'))wholeCity();}
 new ResizeObserver(resize).observe(host);resize();
-function setActive(id){if(id!==following?.button)stopFollowing();document.querySelectorAll('.views button').forEach(b=>b.classList.toggle('active',b.id===id));}
+let restaurantCloseView=false;
+function setActive(id){if(id!==following?.button)stopFollowing();if(id){restaurantCloseView=id==='seven-kho-view';controls.minDistance=restaurantCloseView?1:25;controls.maxPolarAngle=restaurantCloseView?Math.PI/2-.02:Math.PI/2-.08;}document.querySelectorAll('.views button').forEach(b=>b.classList.toggle('active',b.id===id));}
 function goTo(x,z,distance=1600,top=false){controls.target.set(x,0,z);camera.position.copy(controls.target).add(top?new THREE.Vector3(0,distance,1):new THREE.Vector3(.6,.85,.7).normalize().multiplyScalar(distance));controls.update();lastLoad=0;}
 // Look through the rain volume from below the schematic cloud deck.
 function centralCity(){const [x,z]=project(106.699,10.774);controls.target.set(x,120,z);camera.position.copy(controls.target).add(new THREE.Vector3(-.6,.36,.7).normalize().multiplyScalar(2600));controls.update();lastLoad=0;setActive('downtown');}
@@ -279,7 +280,7 @@ $('about').onclick=()=>$('info').showModal();$('close').onclick=()=>$('info').cl
 controls.addEventListener('start',()=>{if(!following)setActive('');else following.dragging=true;});
 // After a drag the orbit keeps turning a little (damping): hold the chase off until it settles.
 controls.addEventListener('end',()=>{if(following){following.dragging=false;following.settle=performance.now()+600;}});
-function animate(now){requestAnimationFrame(animate);followTrain();controls.update();if(camera.position.y<(following?.button==='walk-tour'?0.9:3))camera.position.y=following?.button==='walk-tour'?0.9:3;   // zooming to the cursor must not take the camera below the ground
+function animate(now){requestAnimationFrame(animate);followTrain();controls.update();if(camera.position.y<(following?.button==='walk-tour'?0.9:restaurantCloseView?1.1:3))camera.position.y=following?.button==='walk-tour'?0.9:restaurantCloseView?1.1:3;   // zooming to the cursor must not take the camera below the ground
  weather?.update(now,camera);flights?.update(now);lightning?.update(now);flag?.update?.(now);riverTour?.update(Date.now());flagSet?.update(now);for(const l of Object.values(landmarks))l.update?.(camera,now);openTour?.update(Date.now());metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}cityLighting?.update(now);majestic?.setNight?.(sky?.state.cityLights??0);fireworks?.update(now,camera,renderer);if(water){water.update({camera,focus:controls.target,now,boats:riverTour?.hulls()??[]});water.render(scene,camera);}else renderer.render(scene,camera);}
 requestAnimationFrame(animate);
 init().catch(error=>{console.error(error);$('loading').innerHTML='';const title=document.createElement('strong');title.textContent='Model could not be loaded';const p=document.createElement('p');p.textContent=error.message;$('loading').append(title,p);});
