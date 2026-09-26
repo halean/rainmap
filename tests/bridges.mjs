@@ -9,7 +9,7 @@ import {createBridges} from '../3d/bridges.js';
 const project = (lon, lat) => [(lon - 106.65) * 111320 * Math.cos(10.81 * Math.PI / 180), -(lat - 10.81) * 111320];
 const scene = new THREE.Scene(), h = createBridges({scene, project});
 assert.equal(h.group.parent, scene);
-assert(h.state.triangles < 150000, `${h.state.triangles} triangles`);
+assert(h.state.triangles < 170000, `${h.state.triangles} triangles`);
 h.group.traverse(o => { if (o.isMesh) { assert(!/^(building|bridge_|major|street|path)/.test(o.name)); for (const a of Object.values(o.geometry.attributes)) assert(a.array.every(Number.isFinite)); } });
 
 // Heights: the highest point near each bridge's pylon or arch.
@@ -36,20 +36,31 @@ const {chuYNorth, chuYSouth, chuYWest, tanThuan1, tanThuan2} = h.bridges;
 for (const b of [chuYNorth, chuYSouth, chuYWest]) assert(Math.abs(hitY(b, b.line.length - 1, 30, -1) - 6.3) < 0.5, `${b.name} end`);
 for (const b of [tanThuan1, tanThuan2]) for (const s of [1, b.line.length - 1]) assert(Math.abs(hitY(b, s, 30, -1) - 12.3) < 0.5, `${b.name} end at ${s}`);
 assert(hitY(chuYNorth, 40, WATER_Y(), 1) - WATER_Y() >= 6.3 - 0.3, 'Chữ Y clearance');
+// Over the Đồng Nai: Nhơn Trạch 30.5 m clear at its main span, joining 12.3 m ramps; Đồng Nai,
+// Hóa An and Bửu Hòa joining 6.3 m ramps; Ghềnh at rail level at both ends.
+const {nhonTrachA, nhonTrachB, dongNaiOld, dongNaiNew, hoaAnOld, hoaAnNew, buuHoa, ghenh} = h.bridges;
+for (const b of [nhonTrachA, nhonTrachB]) {
+  for (let s = 1025; s <= 1055; s += 10) assert(hitY(b, s, water, 1) - water >= 30.5 - 0.3, `${b.name} clearance at ${s}: ${hitY(b, s, water, 1)}`);
+  for (const s of [1, b.line.length - 1]) assert(Math.abs(hitY(b, s, 40, -1) - 12.3) < 0.5, `${b.name} end at ${s}`);
+}
+for (const b of [dongNaiOld, dongNaiNew, hoaAnOld, hoaAnNew, buuHoa]) for (const s of [1, b.line.length - 1]) assert(Math.abs(hitY(b, s, 30, -1) - 6.3) < 0.5, `${b.name} end at ${s}: ${hitY(b, s, 30, -1)}`);
+assert(hitY(dongNaiNew, 220, water, 1) - water >= 7 - 0.3, 'Đồng Nai clearance');
+for (const s of [0.5, ghenh.line.length - 0.5]) assert(Math.abs(hitY(ghenh, s, 30, -1) - 0.45) < 0.3, `Ghềnh end at rail level: ${hitY(ghenh, s, 30, -1)}`);
+assert(highest(ghenh, 0, ghenh.line.length) > 13, 'Ghềnh trusses 13 m');
 // Every bridge clears its water.
-for (const b of Object.values(h.bridges)) { const f = b.line.length / 2; assert(hitY(b, f, 200, -1) > 5, `${b.name} deck over the middle`); }
+for (const b of Object.values(h.bridges)) { const f = b.line.length / 2; assert(hitY(b, f, 200, -1) > (b === ghenh ? 2.5 : 5), `${b.name} deck over the middle`); }   // Ghềnh meets ground-level track within 45 m
 
 // Replacement: the generic ribbons alongside go, nothing else, idempotent.
 async function tile(id) { const b = fs.readFileSync(new URL(`../3d/assets/tiles/${id}.glb`, import.meta.url)); return (await new GLTFLoader().parseAsync(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength), '')).scene; }
 const counts = t => { const c = {}; t.traverse(o => { if (o.isMesh) { const k = o.name.split('__')[0]; c[k] = (c[k] || 0) + o.geometry.attributes.position.count / 3; } }); return c; };
-for (const id of ['3_1', '4_4', '2_2', '3_0', '3_2', '1_3', '3_3']) {
+for (const id of ['3_1', '4_4', '2_2', '3_0', '3_2', '1_3', '3_3', '9_1', '10_-6', '8_-8', '9_-7']) {
   const t = await tile(id), before = counts(t), removed = h.replaceGeneric(t), after = counts(t);
   assert(removed > 0, `${id}: something replaced`);
   for (const k of Object.keys(before)) if (!/^(bridge|major|street|path)/.test(k)) assert.equal(after[k], before[k], `${id}: ${k} untouched`);
   assert.equal(h.replaceGeneric(t), 0, `${id}: idempotent`);
   // Nothing generic and elevated is left along the Ba Son / Phú Mỹ / Mống decks' middles.
   t.updateWorldMatrix(true, true);
-  for (const b of [baSon, phuMy, mong, saiGon, saiGon2, khanhHoi, ongLanh, calmette, nguyenVanCu, chuYNorth, chuYSouth, tanThuan1, tanThuan2]) {
+  for (const b of [baSon, phuMy, mong, saiGon, saiGon2, khanhHoi, ongLanh, calmette, nguyenVanCu, chuYNorth, chuYSouth, tanThuan1, tanThuan2, nhonTrachA, dongNaiNew, hoaAnOld, hoaAnNew, buuHoa]) {
     const f = b.line.at(b.line.length / 2);
     t.traverse(o => { if (!o.isMesh || !/^bridge/.test(o.name)) return; const p = o.geometry.attributes.position, v = new THREE.Vector3();
       for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld); assert(!(Math.hypot(v.x - f.x, v.z - f.z) < 3 && v.y > 1), `${id}: generic ribbon left under ${b.name}`); } });

@@ -9,6 +9,7 @@
 // height at its ends. See BRIDGES.md.
 import * as THREE from 'three';
 import {builder} from './landmark-kit.js';
+import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
 import {CENTRELINES} from './bridge-lines.js';
 
 const ROAD_Y = 6.3;              // where the generic model puts a layer-1 bridge (6 m + 0.3)
@@ -46,11 +47,17 @@ export function createBridges({scene, project}) {
     rail: new THREE.MeshStandardMaterial({color: '#6b5d4f', roughness: 0.8}),
     lamp: new THREE.MeshStandardMaterial({color: '#fff3d0', emissive: '#ffe2a0', emissiveIntensity: 1.0, roughness: 0.5}),
     red: new THREE.MeshStandardMaterial({color: '#c0392f', roughness: 0.7}),
+    railing: new THREE.MeshStandardMaterial({color: '#b9bec2', roughness: 0.45, metalness: 0.5, side: THREE.DoubleSide}),
     cream: new THREE.MeshStandardMaterial({color: '#ece6d4', roughness: 0.55, metalness: 0.3}),
     dark: new THREE.MeshStandardMaterial({color: '#2e3134', roughness: 0.8}),
   };
   const {add, finish} = builder(materials, 'bridge');
   const bridges = {};
+  // The girder bridges' striped kerbs: textured strips (the builder drops
+  // UVs, so these are merged and added separately).
+  const kerbs = [], stripe = new THREE.DataTexture(new Uint8Array([192, 57, 47, 255, 236, 234, 228, 255]), 2, 1, THREE.RGBAFormat);
+  stripe.wrapS = THREE.RepeatWrapping; stripe.magFilter = THREE.NearestFilter; stripe.minFilter = THREE.NearestFilter; stripe.colorSpace = THREE.SRGBColorSpace; stripe.needsUpdate = true;
+  materials.kerb = new THREE.MeshStandardMaterial({map: stripe, roughness: 0.7});
 
   // --- Shared pieces ---------------------------------------------------------
   /** Sweep a cross-section along the centreline from s0 to s1: section(s)
@@ -75,9 +82,9 @@ export function createBridges({scene, project}) {
   }
   const rect = (half, y0, y1) => [[-half, y0], [half, y0], [half, y1], [-half, y1]];
   /** A member from a to b (THREE.Vector3s): a cylinder, or a square frustum. */
-  function strut(key, a, b, r0, r1 = r0, sides = 6) {
+  function strut(key, a, b, r0, r1 = r0, sides = 6, open = r0 < 0.3) {       // thin members, and hidden ends, need no caps
     const len = a.distanceTo(b); if (len < 1e-3) return;
-    const g = new THREE.CylinderGeometry(r1, r0, len, sides, 1, r0 < 0.3);          // thin members need no end caps
+    const g = new THREE.CylinderGeometry(r1, r0, len, sides, 1, open);
     if (sides === 4) g.rotateY(Math.PI / 4);
     g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()));
     g.translate((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
@@ -201,12 +208,14 @@ export function createBridges({scene, project}) {
 
   // --- Bình Lợi railway bridge (2019): 1.3 km of steel spans on piers, with
   // a steel arch 101.5 m long and 16 m high over the channel, 7 m clear.
-  // Railways are not in the generic model, so it stands alone.
+  // Railways are not in the generic model; railway.js draws the line, which
+  // meets it at rail level at both ends.
   {
     const line = path(CENTRELINES.binhLoiRail, project), L = line.length;
     const ARCH = [561, 662], width = 7.7, deck = 9.0;          // rail level: 7 m clear under a 1.8 m deck
-    const top = s => 2.0 + (deck - 2.0) * ease(s, 60, 420) * (1 - ease(s, 820, L - 60));
-    const piers = []; for (let s = 45; s < L - 30; s += 45) if (s < ARCH[0] - 5 || s > ARCH[1] + 5) piers.push(s);
+    // Its ends are at rail level (railway.js's ballast top, 0.45 m), where the track joins it.
+    const top = s => 0.45 + (deck - 0.45) * ease(s, 30, 420) * (1 - ease(s, 820, L - 30));
+    const piers = []; for (let s = 45; s < L - 30; s += 45) if ((s < ARCH[0] - 5 || s > ARCH[1] + 5) && top(s) - 1.8 > 1) piers.push(s);
     piers.push(...ARCH);
     roadDeck(line, {width, depth: 1.8, top, piers, pier: 'wall', key: 'steel'});
     sweep('rail', line, 0, L, 5, s => rect(1.1, top(s) - 0.02, top(s) + 0.12));
@@ -229,7 +238,7 @@ export function createBridges({scene, project}) {
   // ends: the deck's height at its start and end, where the generic ramps
   // are; crest: its height over the middle of the water; water: [s0, s1]
   // stretches over water, where the piers are wall piers.
-  function girderBridge(key, {name, width, depth = 2.0, ends, crest, over, span, riverSpan = span, water, lamps = 32, lampSide = 'both', columns = 2, riverPiers = 'columns', profile = null}) {
+  function girderBridge(key, {name, width, depth = 2.0, ends, crest, over, span, riverSpan = span, water, lamps = 32, lampSide = 'both', columns = 2, riverPiers = 'columns', profile = null, depthAt = null, piersAt = null}) {
     const line = path(CENTRELINES[key], project), L = line.length, [a, b] = over;
     const top = profile ? s => profile(s, L) : s => {
       const rise = ease(s, 0, a) * (1 - ease(s, b, L));                   // 0 at the ends, 1 over [a, b]
@@ -238,40 +247,49 @@ export function createBridges({scene, project}) {
       return base + (crest - Math.max(...ends)) * rise * 0.6 + (crest - Math.max(...ends)) * 0.4 * hump + (Math.max(...ends) - base) * rise;
     };
     const inWater = s => water.some(([w0, w1]) => s > w0 - 2 && s < w1 + 2);
-    const piers = []; let s = span;
-    while (s < L - 8) { piers.push(s); s += inWater(s) ? riverSpan : span; }
+    const piers = piersAt ? [...piersAt] : []; let s = span;
+    if (!piersAt) while (s < L - 8) { piers.push(s); s += inWater(s) ? riverSpan : span; }
+    const D = depthAt ?? (() => depth);                                  // girder depth, deeper over big piers
     const half = width / 2, step = 10;
-    sweep('concrete', line, 0, L, step, q => [[-half + 1.5, top(q) - depth], [half - 1.5, top(q) - depth], [half, top(q) - 0.6], [half, top(q) - 0.2], [-half, top(q) - 0.2], [-half, top(q) - 0.6]]);
+    sweep('concrete', line, 0, L, step, q => [[-half + 1.5, top(q) - D(q)], [half - 1.5, top(q) - D(q)], [half, top(q) - 0.6], [half, top(q) - 0.2], [-half, top(q) - 0.2], [-half, top(q) - 0.6]]);
     sweep('asphalt', line, 0, L, step, q => rect(half - 0.9, top(q) - 0.2, top(q) - 0.02));
     for (const side of [-1, 1]) {
-      sweep('white', line, 0, L, step, q => [[side * (half - 0.9), top(q) - 0.1], [side * (half - 0.5), top(q) - 0.1], [side * (half - 0.5), top(q) + 0.3], [side * (half - 0.9), top(q) + 0.3]]);   // the kerb,
-      const stripes = [];                                                  // striped red: the kerb's top and outer face, 2 m in every 4
-      for (let q = 2; q + 2 <= L; q += 4) {
-        const o0 = side * (half - 0.9), o1 = side * (half - 0.5), y = (t, d) => top(t) + d;
-        const c = (t, o, d) => { const f = line.at(t); return [f.x + f.nx * o, y(t, d), f.z + f.nz * o]; };
-        const [a0, a1, b0, b1] = [c(q, o0, 0.31), c(q, o1, 0.31), c(q + 2, o0, 0.31), c(q + 2, o1, 0.31)];
-        const [d0, d1] = [c(q, o1 + side * 0.01, -0.1), c(q + 2, o1 + side * 0.01, -0.1)];
-        const up = side > 0 ? [a0, b1, a1, a0, b0, b1] : [a0, a1, b1, a0, b1, b0];
-        const face = side > 0 ? [a1, b1, d1, a1, d1, d0] : [a1, d0, d1, a1, d1, b1];
-        for (const v of [...up, ...face]) stripes.push(...v);
+      // Striped red: a strip over the kerb's top and outer face, textured
+      // red and white every 2 m (one quad per 10 m, however many stripes).
+      const pos = [], uv = [], o0 = side * (half - 0.9), o1 = side * (half - 0.5);
+      const c = (t, o, d) => { const f = line.at(t); return [f.x + f.nx * o, top(t) + d, f.z + f.nz * o]; };
+      for (let q = 0; q < L - 1e-6; q += step) {
+        const q1 = Math.min(L, q + step);
+        for (const [[oa, da], [ob, db]] of [[[o0, 0.31], [o1, 0.31]], [[o1 + side * 0.01, 0.31], [o1 + side * 0.01, -0.1]]]) {
+          const [a, b, a2, b2] = [c(q, oa, da), c(q, ob, db), c(q1, oa, da), c(q1, ob, db)];
+          const tri = side > 0 ? [a, a2, b, b, a2, b2] : [a, b, a2, b, b2, a2];
+          const u = [q / 4, q1 / 4], uvs = side > 0 ? [[u[0], 0], [u[1], 0], [u[0], 1], [u[0], 1], [u[1], 0], [u[1], 1]] : [[u[0], 0], [u[0], 1], [u[1], 0], [u[0], 1], [u[1], 1], [u[1], 0]];
+          for (const v of tri) pos.push(...v);
+          for (const v of uvs) uv.push(...v);
+        }
       }
-      const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(stripes, 3)); sg.computeVertexNormals(); add('red', sg);
-      sweep('steel', line, 0, L, step, q => [[side * (half - 0.12), top(q) + 0.9], [side * (half - 0.02), top(q) + 0.9], [side * (half - 0.02), top(q) + 1.05], [side * (half - 0.12), top(q) + 1.05]]);   // and the railing
-      for (let q = 3; q < L; q += 6) strut('steel', P(line, q, side * (half - 0.07), top(q) - 0.2), P(line, q, side * (half - 0.07), top(q) + 0.95), 0.05, 0.05, 3);
+      const kg = new THREE.BufferGeometry();
+      kg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); kg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); kg.computeVertexNormals();
+      kerbs.push(kg);
+      // The railing: its top rail as a thin panel, on posts every 12 m.
+      { const rp = []; const c2 = (t, d) => { const f = line.at(t); return [f.x + f.nx * side * (half - 0.07), top(t) + d, f.z + f.nz * side * (half - 0.07)]; };
+        for (let q = 0; q < L - 1e-6; q += step) { const q1 = Math.min(L, q + step), [a, b, a2, b2] = [c2(q, 0.85), c2(q, 1.05), c2(q1, 0.85), c2(q1, 1.05)]; rp.push(...a, ...a2, ...b, ...b, ...a2, ...b2); }
+        const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3)); rg.computeVertexNormals(); add('railing', rg); }
+      for (let q = 6; q < L; q += 12) strut('steel', P(line, q, side * (half - 0.07), top(q) - 0.2), P(line, q, side * (half - 0.07), top(q) + 0.95), 0.05, 0.05, 3);
     }
     for (const q of piers) {
-      const f = line.at(q), y = top(q) - depth, yaw = Math.atan2(f.tx, f.tz);
+      const f = line.at(q), y = top(q) - D(q), yaw = Math.atan2(f.tx, f.tz);
       if (inWater(q) && riverPiers === 'wall') {
         const g = new THREE.BoxGeometry(width * 0.75, y - WATER_Y + 1.5, 2.6); g.rotateY(yaw); g.translate(f.x, (y + WATER_Y - 1.5) / 2, f.z); add('concrete', g);
       } else {
         if (inWater(q)) { const g = new THREE.BoxGeometry(width * 0.72, 1.2, 3.2); g.rotateY(yaw); g.translate(f.x, WATER_Y + 0.3, f.z); add('concrete', g); }   // the pile cap at the waterline
-        for (let c = 0; c < columns; c++) { const off = columns === 1 ? 0 : (c / (columns - 1) - 0.5) * width * 0.55; strut('concrete', P(line, q, off, -0.5), P(line, q, off, y - 0.8), 0.6, 0.6, 8); }
+        for (let c = 0; c < columns; c++) { const off = columns === 1 ? 0 : (c / (columns - 1) - 0.5) * width * 0.55; strut('concrete', P(line, q, off, -0.5), P(line, q, off, y - 0.8), 0.6, 0.6, 6, true); }
         const cap = new THREE.BoxGeometry(width * 0.8, 0.8, 1.6); cap.rotateY(yaw); cap.translate(f.x, y - 0.4, f.z); add('concrete', cap);
       }
     }
     for (let q = lamps / 2; q < L - 5; q += lamps) for (const side of (lampSide === 'both' ? [-1, 1] : [0])) {
       const o = side * (half - 0.4), base = P(line, q, o, top(q)), head = P(line, q, o, top(q) + 10);
-      strut('steel', base, head, 0.1, 0.08, 6);
+      strut('steel', base, head, 0.1, 0.08, 4);
       for (const arm of (side === 0 ? [-1, 1] : [-side])) {
         const tip = P(line, q, o + arm * 2.2, top(q) + 10.4);
         strut('steel', head, tip, 0.05, 0.05, 4);
@@ -357,7 +375,69 @@ export function createBridges({scene, project}) {
     }
   }
 
-  const triangles = finish(group);
+  // --- Over the Đồng Nai ---------------------------------------------------
+  // Nhơn Trạch (2025, Ring Road 3): two decks 20 m apart, 2.1 km of box
+  // girder rising from the layer-2 ramps (12.3 m) to 30.5 m clear over the
+  // channel, with a 110 m main span built by balanced cantilever: the girder
+  // deepens from 3.5 m to 7 m over the two main piers.
+  {
+    const MAIN = [985, 1095], Y = 12.3, CLEAR = 30.5, deep = 7, shallow = 3.5;
+    const depthAt = q => shallow + (deep - shallow) * Math.max(0, ...MAIN.map(p => 1 - Math.min(1, Math.abs(q - p) / 55)) ) ** 2;
+    const crest = CLEAR + shallow + 0.3;
+    const profile = (q, L) => Y + (crest - Y) * ease(q, 150, 760) * (1 - ease(q, 1330, L - 150));
+    const piersAt = [];
+    for (let q = 40; q < 600; q += 40) piersAt.push(q);
+    for (const q of [685, 760, 835, 910, ...MAIN, 1170, 1245, 1320, 1395, 1470]) piersAt.push(q);
+    for (let q = 1510; q < 2080; q += 40) piersAt.push(q);
+    for (const key of ['nhonTrachA', 'nhonTrachB'])
+      girderBridge(key, {name: `Nhơn Trạch Bridge (${key.endsWith('A') ? 'north-east' : 'south-west'}bound)`, width: 15, depth: shallow, ends: [Y, Y], crest, over: [0, 1], span: 40, water: [[600, 1477], [1703, 1743]], profile, depthAt, piersAt, riverPiers: 'wall', lamps: 40, columns: 1});
+  }
+  // Đồng Nai (QL1): the 1964 bridge and the 2010 one beside it, each about
+  // 455 m in six prestressed-concrete spans, 7 m clear.
+  girderBridge('dongNaiOld', {name: 'Đồng Nai Bridge (1964)', width: 16, ends: [6.3, 6.3], crest: 9.4, over: [60, 385], span: 30, riverSpan: 64, water: [[64, 381]], riverPiers: 'wall'});
+  girderBridge('dongNaiNew', {name: 'Đồng Nai Bridge (2010)', width: 20, ends: [6.3, 6.3], crest: 9.4, over: [60, 385], span: 30, riverSpan: 64, water: [[60, 381]], riverPiers: 'wall'});
+  // Hóa An, Biên Hòa: the 1973 bridge (26 short spans, 10.3 m wide) and the
+  // 2014 bridge beside it (14 m, longer spans).
+  girderBridge('hoaAnOld', {name: 'Hóa An Bridge (1973)', width: 10.3, ends: [6.3, 6.3], crest: 9, over: [110, 740], span: 31, riverSpan: 31, water: [[123, 729]], riverPiers: 'wall', lamps: 40});
+  girderBridge('hoaAnNew', {name: 'Hóa An Bridge (2014)', width: 14, ends: [6.3, 6.3], crest: 11, over: [520, 1220], span: 32, riverSpan: 50, water: [[573, 1166]], riverPiers: 'wall', lamps: 36});
+  // Bửu Hòa, over the Đồng Nai's branch to Biên Hòa.
+  girderBridge('buuHoa', {name: 'Bửu Hòa Bridge', width: 12, ends: [6.3, 6.3], crest: 9.5, over: [170, 575], span: 30, riverSpan: 42, water: [[189, 556]], riverPiers: 'wall'});
+
+  // Ghềnh (railway): Eiffel's bridge of 1904, felled by a barge in 2016 and
+  // rebuilt that year as three 75 m steel bowstring spans, 13 m high, painted
+  // white, on the old stone piers. The railway meets it at rail level.
+  {
+    const line = path(CENTRELINES.ghenh, project), L = line.length, width = 7.5;
+    const top = s => 0.45 + 2.55 * ease(s, 0, 45) * (1 - ease(s, L - 45, L));
+    const s0 = (L - 225) / 2, joints = [s0, s0 + 75, s0 + 150, s0 + 225];
+    roadDeck(line, {width, depth: 1.4, top, piers: [], key: 'steel'});
+    sweep('rail', line, 0, L, 5, s => rect(1.1, top(s) - 0.02, top(s) + 0.12));
+    for (const q of joints.slice(1, 3)) {                                // the old stone piers
+      const f = line.at(q), g = new THREE.CylinderGeometry(3.2, 3.6, top(q) - WATER_Y + 1, 16);
+      g.scale(1, 1, 2.2); g.rotateY(Math.atan2(f.tx, f.tz)); g.translate(f.x, (top(q) + WATER_Y - 1) / 2 - 1.4, f.z); add('rail', g);
+    }
+    for (let k = 0; k < 3; k++) for (const side of [-1, 1]) {
+      const a = joints[k], b = joints[k + 1], o = side * (width / 2 + 0.2), y0 = s => top(s) + 0.2;
+      const rise = s => y0(s) + 1.5 + 11.5 * Math.sin(Math.PI * (s - a) / (b - a));
+      sweep('white', line, a, b, 2.5, s => [[o - 0.4, rise(s) - 0.8], [o + 0.4, rise(s) - 0.8], [o + 0.4, rise(s)], [o - 0.4, rise(s)]]);
+      for (let s = a, n = 0; s <= b + 0.1; s += 5, n++) {
+        strut('white', P(line, s, o, y0(s)), P(line, s, o, rise(s) - 0.8), 0.16, 0.16, 4);
+        if (s + 5 <= b + 0.1) strut('white', P(line, n % 2 ? s : s + 5, o, y0(s)), P(line, n % 2 ? s + 5 : s, o, rise(n % 2 ? s + 5 : s) - 0.8), 0.12, 0.12, 4);
+      }
+      if (side > 0) for (let s = a + 10; s < b - 5; s += 7.5) {
+        const h = 1.5 + 11.5 * Math.sin(Math.PI * (s - a) / (b - a));
+        if (h > 7) strut('white', P(line, s, -width / 2 - 0.2, y0(s) + h - 0.8), P(line, s, width / 2 + 0.2, y0(s) + h - 0.8), 0.12, 0.12, 4);
+      }
+    }
+    bridges.ghenh = {line, width: width + 4, name: 'Ghềnh railway bridge', top: 16};
+  }
+
+  let triangles = finish(group);
+  if (kerbs.length) {
+    const kerb = new THREE.Mesh(mergeGeometries(kerbs, false), materials.kerb); kerb.name = 'bridge-kerb';
+    for (const g of kerbs) g.dispose();
+    kerb.geometry.computeBoundingSphere(); group.add(kerb); triangles += kerb.geometry.attributes.position.count / 3;
+  }
   scene.add(group);
 
   // Replace the generic ribbons: road triangles (bridge, major, street, path)
@@ -415,5 +495,5 @@ export function createBridges({scene, project}) {
     return [k, {target: new THREE.Vector3(f.x, y, f.z), eye: new THREE.Vector3(f.x + f.nx * b.line.length * 0.7, y + b.line.length * 0.15, f.z + f.nz * b.line.length * 0.7)}];
   }));
   const state = {names: Object.values(bridges).map(b => b.name), triangles, drawCalls: group.children.length, schematic: true};
-  return {group, state, bridges, views, replaceGeneric, dispose() { scene.remove(group); for (const m of group.children) m.geometry.dispose(); for (const m of Object.values(materials)) m.dispose(); }};
+  return {group, state, bridges, views, replaceGeneric, dispose() { scene.remove(group); for (const m of group.children) m.geometry.dispose(); for (const m of Object.values(materials)) m.dispose(); stripe.dispose(); }};
 }

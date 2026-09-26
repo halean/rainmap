@@ -141,3 +141,18 @@ For the landmark bridges (`3d/bridges.js`: heights, clearances, decks meeting th
 ```sh
 node --loader ./tests/three-loader.mjs tests/bridges.mjs
 ```
+
+For the North-South railway and its yards (`3d/railway.js`: all the OSM track, rail level, joined to the Bình Lợi bridge):
+```sh
+node --loader ./tests/three-loader.mjs tests/railway.mjs
+```
+
+For the Princess 60 at the Vinhomes Central Park Marina (`3d/yacht.js`):
+```sh
+node --loader ./tests/three-loader.mjs tests/yacht.mjs
+```
+
+For the open-top tour bus (`3d/opentour.js`: route, timetable, smooth motion):
+```sh
+node --loader ./tests/three-loader.mjs tests/opentour.mjs
+```

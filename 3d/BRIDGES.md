@@ -1,6 +1,6 @@
 # Landmark bridges
 
-`bridges.js` models fourteen of the city's bridges, which the generic
+`bridges.js` models twenty-one of the city's bridges, which the generic
 city model drew as flat road ribbons 6 m up per OSM `layer`, with 70 m
 ramps. Each deck follows its OpenStreetMap centreline (`bridge-lines.js`:
 the average of the two carriageways where OSM maps them separately) and
@@ -37,7 +37,8 @@ water surfaces along its centreline; structures are placed from there.
 - **Bình Lợi railway bridge (2019, way 715033337).** Steel spans on wall
   piers every 45 m, and over the channel a steel arch 101.5 m long and 16 m
   high with network hangers and wind bracing; 7 m clear. Railways are not
-  in the generic model, so it has no ribbon to replace and stands alone.
+  in the generic model, so it has no ribbon to replace; `railway.js` draws
+  the line, which meets its ends at rail level (0.45 m).
 
 ### Girder bridges
 
@@ -77,6 +78,33 @@ photograph shows; in the main river they are wall piers.
 
 Both Tân Thuận bridges are on OSM layer 2, so the generic model puts them,
 and their ramps, at 12.3 m; the decks keep that level.
+
+### Over the Đồng Nai
+
+Where the Đồng Nai runs inside the model's extent (east to 106.86° E), its
+big crossings are modelled. Cầu Long Thành, on the Long Thành-Dầu Giây
+expressway, crosses just east of the extent and is left out.
+
+- **Nhơn Trạch (Ring Road 3, opened 19 August 2025; ways 846685273/4).**
+  Two decks 20 m apart, each 15 m wide, 2.1 km of box girder on single
+  wall piers. The deck rises from the layer-2 ramps at 12.3 m to 30.5 m
+  clear over the channel. The 110 m main span is built by balanced
+  cantilever, so its girder deepens from 3.5 m to 7 m over the two main
+  piers; the published clearance holds at mid-span.
+- **Đồng Nai (QL1; ways 53499683 and 32899365).** The 1964 bridge (16 m,
+  four lanes) and the 2010 bridge (20 m, five lanes) side by side, each
+  about 455 m in six prestressed spans, 7 m clear.
+- **Hóa An, Biên Hòa (ways 75650153, and 330237424 and those after it).**
+  The 1973 bridge (26 spans, 10.3 m wide) and the 2014 bridge (14 m wide,
+  1.3 km) beside it.
+- **Bửu Hòa (ways 260604757 and 615064440).** A 12 m girder bridge.
+- **Ghềnh, the railway bridge at Cù lao Phố (way 138540676).** Eiffel's
+  bridge of 1904 was felled by a barge in 2016 and rebuilt that year as
+  three 75 m steel bowstring spans, 13 m high, painted white, on the old
+  stone piers. The railway (`railway.js`, which now leaves this way out)
+  meets it at rail level. Its deck rises only to 3 m, not the published
+  6.5 m clearance, because it has to meet ground-level track within 45 m
+  at each end.
 
 ## References
 
@@ -123,6 +151,23 @@ and their ramps, at 12.3 m; the decks keep that level.
   (Syced, CC0); and
   [Cầu Nguyễn Văn Cừ, Bến Vân Đồn](https://commons.wikimedia.org/wiki/File:C%E1%BA%A7u_Nguy%E1%BB%85n_V%C4%83n_C%E1%BB%AB,B%E1%BA%BFn_v%C4%83n_%C4%91%E1%BB%93n_,_qu%E1%BA%ADn_4,_hcmvn_-_panoramio.jpg)
   (trungydang, CC BY 3.0).
+- [Cầu Nhơn Trạch](https://vi.wikipedia.org/wiki/C%E1%BA%A7u_Nh%C6%A1n_Tr%E1%BA%A1ch):
+  box girder by balanced cantilever, 2,480 m, main span 110 m, 30.5 m clear.
+  [Cầu Đồng Nai](https://vi.wikipedia.org/wiki/C%E1%BA%A7u_%C4%90%E1%BB%93ng_Nai):
+  the old bridge of 1964, 453.9 m by 16 m; the new, 461 m by 20 m, six
+  prestressed spans, 7 m clear.
+  [Cầu Hóa An](https://vi.wikipedia.org/wiki/C%E1%BA%A7u_H%C3%B3a_An): the old,
+  1973, 802 m in 26 spans, 10.26 m wide; the new, 2014, 1,306 m by 14 m.
+  [Cầu Ghềnh](https://vi.wikipedia.org/wiki/C%E1%BA%A7u_Gh%E1%BB%81nh): 1901-1904,
+  four 55.3 m steel spans; rebuilt in 2016 as three 75 m steel arch spans,
+  13 m high, 6.5 m clear.
+- Photographs: [Một nhánh sông Đồng Nai chảy qua cù lao Phố](https://commons.wikimedia.org/wiki/File:M%E1%BB%99t_nh%C3%A1nh_s%C3%B4ng_%C4%90%E1%BB%93ng_Nai_ch%E1%BA%A3y_qua_c%C3%B9_lao_Ph%E1%BB%91.jpg)
+  (Bùi Thụy Đào Nguyên, CC BY-SA 3.0), Ghềnh before 2016;
+  [Cầu Hóa An, Biên Hòa](https://commons.wikimedia.org/wiki/File:C%E1%BA%A7u_H%C3%B3a_An,_Bi%C3%AAn_H%C3%B2a.JPG)
+  (Prenn, CC BY-SA 3.0); and
+  [Đồng Nai Bridge 2022](https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%93ng_Nai_Bridge_2022.jpg)
+  (Unpear, CC BY-SA 4.0). No photograph of the Nhơn Trạch bridge was found
+  on Commons; it is modelled from its published dimensions.
 - [Cầu chữ Y](https://vi.wikipedia.org/wiki/C%E1%BA%A7u_ch%E1%BB%AF_Y): built
   1938-1941, three branches (175, 178.3 and 137 m), 9 m wide, 6.3 m clear,
   rebuilt in part in 2006. [Cầu Tân Thuận](https://vi.wikipedia.org/wiki/C%E1%BA%A7u_T%C3%A2n_Thu%E1%BA%ADn):
@@ -161,11 +206,16 @@ and their ramps, at 12.3 m; the decks keep that level.
   bridge of 1905; steel-tube arches of 2005); the truss and arch geometry
   is fitted by eye. The real Tân Thuận 1 sits lower than the 12.3 m the
   generic model gives both.
+- **Đồng Nai crossings:** pier spacing and hump heights are fitted to the
+  published spans and clearances; the Nhơn Trạch main piers are placed in
+  the middle of the water, not from drawings.
 - **Omitted:** lighting at night, traffic, and the metro viaduct beside
   Ba Son, which `metro.js` draws.
 
 The rest of the city's ~200 bridges remain generic ribbons without piers.
-The fourteen add about 136,000 triangles in a dozen draw calls.
+The twenty-one add about 155,000 triangles in fifteen draw calls. The
+girder bridges' red-and-white kerbs are one textured strip each, and their
+railings a thin panel on posts every 12 m.
 
 ## Verification
 

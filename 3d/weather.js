@@ -20,10 +20,24 @@ export function createWeather({scene, project, manifest}) {
     if (!response.ok) throw new Error(`API HTTP ${response.status}`);
     return response.json();
   }
+  // The rain field and the gauge accumulation are city-wide translucent
+  // sheets a few metres up. Seen from near the ground they tint everything
+  // under them, like a flood; so each fades out as the camera comes down,
+  // fully shown from SHEET_FULL metres up and gone below SHEET_GONE.
+  const SHEET_FULL = 900, SHEET_GONE = 250, sheets = [];
   function plane(texture, y, opacity) {
     const [w,s,e,n] = manifest.boundsXZ;
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(e-w,n-s), new THREE.MeshBasicMaterial({map:texture, transparent:true, opacity, depthWrite:false, side:THREE.DoubleSide}));
-    mesh.rotation.x = -Math.PI/2; mesh.position.set((w+e)/2,y,(s+n)/2); return mesh;
+    mesh.rotation.x = -Math.PI/2; mesh.position.set((w+e)/2,y,(s+n)/2);
+    mesh.userData.fullOpacity = opacity; sheets.push(mesh); return mesh;
+  }
+  function fadeSheets(camera) {
+    const k = Math.max(0, Math.min(1, (camera.position.y - SHEET_GONE) / (SHEET_FULL - SHEET_GONE)));
+    for (let i = sheets.length - 1; i >= 0; i--) {
+      const m = sheets[i];
+      if (!m.parent) { sheets.splice(i, 1); continue; }
+      m.material.opacity = m.userData.fullOpacity * k; m.visible = k > 0.01;
+    }
   }
   function cameras(data) {
     if (!Array.isArray(data)) throw new Error('Invalid camera response');
@@ -134,7 +148,8 @@ export function createWeather({scene, project, manifest}) {
   $('cloud-opacity').oninput=()=>groups.clouds.children.forEach(o=>o.material.opacity=Number($('cloud-opacity').value));
   setInterval(()=>refresh('rain'),60000);
   setInterval(()=>['gauges','clouds'].forEach(refresh),120000);
-  return {state, rainPoints: () => lastRainPoints, update(now) {
+  return {state, rainPoints: () => lastRainPoints, update(now, camera = null) {
+    if (camera) fadeSheets(camera);
     if(now-last<32 || !rain || !groups.rain.visible) return;last=now;
     const pos=rain.geometry.attributes.position;
     for(let i=0;i<rainBase.length;i++) {const y=50+((rainBase[i]-now*.25)%1300+1300)%1300;pos.setY(i*2,y);pos.setY(i*2+1,y+45);}

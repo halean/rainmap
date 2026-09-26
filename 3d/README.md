@@ -115,10 +115,21 @@ approximate, are beside them:
   `city-museum.js`, `tan-dinh.js`, `jade-emperor.js`, `binh-tay.js` and
   `thien-hau.js`, listed in `LANDMARKS` in `viewer.js`.
 
-Fourteen bridges -- Ba Son, Phú Mỹ, Thủ Thiêm, the Mống, the Bình Lợi
+Twenty-one bridges -- Ba Son, Phú Mỹ, Thủ Thiêm, the Mống, the Bình Lợi
 railway bridge, Sài Gòn 1 and 2, Khánh Hội, Ông Lãnh, Calmette, Nguyễn Văn
-Cừ, Chữ Y and Tân Thuận 1 and 2 -- are modelled in `bridges.js` (see `BRIDGES.md`) in
+Cừ, Chữ Y, Tân Thuận 1 and 2, and over the Đồng Nai Nhơn Trạch, Đồng Nai
+(old and new), Hóa An (old and new), Bửu Hòa and the Ghềnh railway bridge
+-- are modelled in `bridges.js` (see `BRIDGES.md`) in
 place of the generic flat ribbons.
+
+The North-South railway and its yards, which the generic model leaves out,
+are drawn by `railway.js` (see `RAILWAY.md`); Metro Line 1 by `metro.js`.
+
+A Princess 60 motor yacht lies at the Vinhomes Central Park Marina below
+Landmark 81, with sunbathers aboard (`yacht.js`, see `YACHT.md`).
+
+The open-top tour bus runs the Red Route on its timetable (`opentour.js`, see
+`OPENTOUR.md`); the **Open tour** button follows one.
 
 Bitexco was missing from the generic model (only its podium was there), and
 Landmark 81 was a slab over its whole site. The flag now stands on Landmark
