@@ -115,6 +115,11 @@ approximate, are beside them:
   `city-museum.js`, `tan-dinh.js`, `jade-emperor.js`, `binh-tay.js` and
   `thien-hau.js`, listed in `LANDMARKS` in `viewer.js`.
 
+Fourteen bridges -- Ba Son, Phú Mỹ, Thủ Thiêm, the Mống, the Bình Lợi
+railway bridge, Sài Gòn 1 and 2, Khánh Hội, Ông Lãnh, Calmette, Nguyễn Văn
+Cừ, Chữ Y and Tân Thuận 1 and 2 -- are modelled in `bridges.js` (see `BRIDGES.md`) in
+place of the generic flat ribbons.
+
 Bitexco was missing from the generic model (only its podium was there), and
 Landmark 81 was a slab over its whole site. The flag now stands on Landmark
 81's modelled spire.

@@ -136,3 +136,8 @@ For the landmarks' flags (`createFlagSet` in `3d/flag.js`: one texture, one wind
 ```sh
 node --loader ./tests/three-loader.mjs tests/flag_set.mjs
 ```
+
+For the landmark bridges (`3d/bridges.js`: heights, clearances, decks meeting the generic ramps, ribbons replaced):
+```sh
+node --loader ./tests/three-loader.mjs tests/bridges.mjs
+```

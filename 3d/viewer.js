@@ -23,9 +23,10 @@ import {createTanDinh} from './tan-dinh.js';
 import {createJadeEmperor} from './jade-emperor.js';
 import {createBinhTay} from './binh-tay.js';
 import {createThienHau} from './thien-hau.js';
+import {createBridges} from './bridges.js';
 // Landmark models built on OSM outlines: each replaces its generic block as
 // tiles stream in, and follows the Buildings checkbox.
-const LANDMARKS=[['opera',createOperaHouse],['stateBank',createStateBank],['postOffice',createPostOffice],['cityHall',createCityHall],['bitexco',createBitexco],['landmark81',createLandmark81],['nhaRong',createNhaRong],['continental',createContinental],['cityMuseum',createCityMuseum],['tanDinh',createTanDinh],['jadeEmperor',createJadeEmperor],['binhTay',createBinhTay],['thienHau',createThienHau]];
+const LANDMARKS=[['opera',createOperaHouse],['stateBank',createStateBank],['postOffice',createPostOffice],['cityHall',createCityHall],['bitexco',createBitexco],['landmark81',createLandmark81],['nhaRong',createNhaRong],['continental',createContinental],['cityMuseum',createCityMuseum],['tanDinh',createTanDinh],['jadeEmperor',createJadeEmperor],['binhTay',createBinhTay],['thienHau',createThienHau],['bridges',createBridges]];
 const landmarks={};
 import {createRex} from './rex.js';
 let weather,flights,lightning,sky,flag,flagSet,metro,cityLighting,cathedral,market,palace,majestic,rex;
