@@ -451,14 +451,17 @@ CAMERA_NOTES = {
     ),
     # Mai Ba Huong - Le Chinh Dang (681883866dfb4b0018f8eef6): a two-lane rural road with a zebra
     # crossing and a roadside stall under a tree. In the rain of 26 Sep (15:30-16:50, gauge Le Minh
-    # Xuan 1, 2.7 km) the frames show drops on the lens and a rider in a raincoat, yet the road was
-    # reported only 'wet', so No; on dry nights and dawns a streetlit glossy road and a shoulder
-    # puddle were reported soaked.
+    # Xuan 1, 2.7 km) a rider in a raincoat and a wet road were reported No; on dry nights and dawns
+    # a streetlit glossy road and a shoulder puddle were reported soaked. A first version told the
+    # model to count spots on the lens as falling rain: on the dry, misty dawn of 27 Sep it called
+    # Light three times running on the faint marks that sit on this lens all the time.
     "681883866dfb4b0018f8eef6": (
         "About this camera (Mai Ba Huong - Le Chinh Dang). It looks along a two-lane rural road with a "
         "zebra crossing, a roadside stall under a tree on the right, and red-earth shoulders.\n"
-        "- The camera sits under the tree, so in rain drops gather on the lens: blurred round spots, "
-        "clearest against the trees and the sky. That is falling water -- answer 'yes'.\n"
+        "- The lens almost always carries faint blurred round spots, clearest over the tree at the "
+        "top right: dew and dried marks from earlier rain. They are there on dry mornings too, so "
+        "they are NOT evidence of rain -- do not answer 'yes' to falling water for them. Only "
+        "streaks of rain in the air, or rings and splashes in the puddles, count as falling water.\n"
         "- Riders in raincoats or ponchos mean rain here; report behaviour 'yes'.\n"
         "- At night the street light makes the road glossy, and puddles lie on the red-earth shoulders "
         "and by the stall long after rain. A glossy road is 'wet', not 'soaked', and the shoulder "
