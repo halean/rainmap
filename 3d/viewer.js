@@ -34,12 +34,14 @@ import {createRiverTour} from './rivertour.js';
 import {createRiverfront} from './riverfront.js';
 import {createCityTowers} from './citytowers.js';
 import {createRiverWater} from './riverwater.js';
+import {createFireworks} from './fireworks.js';
+import {createFireworkSound} from './fireworks-sound.js';
 // Landmark models built on OSM outlines: each replaces its generic block as
 // tiles stream in, and follows the Buildings checkbox.
 const LANDMARKS=[['opera',createOperaHouse],['stateBank',createStateBank],['postOffice',createPostOffice],['cityHall',createCityHall],['bitexco',createBitexco],['landmark81',createLandmark81],['nhaRong',createNhaRong],['hoConRua',createHoConRua],['sevenKho',createSevenKhoCity],['continental',createContinental],['cityMuseum',createCityMuseum],['tanDinh',createTanDinh],['jadeEmperor',createJadeEmperor],['binhTay',createBinhTay],['thienHau',createThienHau],['bridges',createBridges],['yacht',createYacht],['riverfront',createRiverfront],['cityTowers',createCityTowers],['princess60',createMooredPrincess60]];
 const landmarks={};
 import {createRex} from './rex.js';
-let water,weather,flights,lightning,sky,flag,flagSet,railway,openTour,riverTour,metro,cityLighting,cathedral,market,palace,majestic,rex;
+let fireworks,water,weather,flights,lightning,sky,flag,flagSet,railway,openTour,riverTour,metro,cityLighting,cathedral,market,palace,majestic,rex;
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const $=id=>document.getElementById(id),host=$('viewport');
@@ -150,6 +152,10 @@ async function init(){
    {name:'Nha Rong',object:nha.yacht,waterY:-0.12},
   ]});
  }
+ // Fireworks over the river, fired from three barges off Bạch Đằng (fireworks.js): on the Fireworks button.
+ const fireworkSound=createFireworkSound();fireworks=createFireworks({scene,project,sound:fireworkSound});
+ const soundBox=$('fireworks-sound');fireworkSound.setEnabled(soundBox.checked);soundBox.onchange=()=>{fireworkSound.setEnabled(soundBox.checked);if(soundBox.checked)fireworkSound.resume();};
+ fireworks.sound=fireworkSound;
  // The river near the camera: waves, the yachts' wakes, foam, spray and reflections (riverwater.js).
  try{
   water=createRiverWater({scene,renderer,project,glint:sky.glint,night:sky.night,rainAt:(x,z)=>{let best=null,d=2500;for(const p of weather.rainPoints())if(Math.hypot(p.x-x,p.z-z)<d){d=Math.hypot(p.x-x,p.z-z);best=p;}return best?best.classIndex/3:0;}});
@@ -168,7 +174,7 @@ async function init(){
  // Every landmark's flag: the same flag, turned by the same wind, waving when near.
  flagSet=createFlagSet({scene,camera});
  for(const l of [palace,majestic,rex,...Object.values(landmarks)])for(const f of l?.flags??[])flagSet.add({parent:l.group,...f});
- window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get lighting(){return cityLighting?.state;},get flag(){return flag?.state;},get flags(){return flagSet?.state;},get railway(){return railway?.state;},get openTour(){return openTour?.state;},get riverTour(){return riverTour?.state;},get water(){return water?.state??null;},get walkTour(){return walkTour?.state??null;},get metro(){return metro?.state;},get palace(){return palace?.state;},get majestic(){return majestic?.state;},get rex(){return rex?.state;},get landmarks(){return Object.fromEntries(Object.entries(landmarks).map(([key,l])=>[key,l.state]));},get cathedral(){return cathedral?.state;},get market(){return market?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
+ window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get lighting(){return cityLighting?.state;},get flag(){return flag?.state;},get flags(){return flagSet?.state;},get railway(){return railway?.state;},get openTour(){return openTour?.state;},get riverTour(){return riverTour?.state;},get water(){return water?.state??null;},get fireworks(){return fireworks?{...fireworks.state,sound:fireworks.sound?.state}:null;},get walkTour(){return walkTour?.state??null;},get metro(){return metro?.state;},get palace(){return palace?.state;},get majestic(){return majestic?.state;},get rex(){return rex?.state;},get landmarks(){return Object.fromEntries(Object.entries(landmarks).map(([key,l])=>[key,l.state]));},get cathedral(){return cathedral?.state;},get market(){return market?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
 }
 $('overview').onclick=()=>{if(ready)wholeCity();};
 $('downtown').onclick=()=>{if(ready)centralCity();};
@@ -269,11 +275,12 @@ controls.addEventListener('start',()=>{if(!following)setActive('');else followin
 // After a drag the orbit keeps turning a little (damping): hold the chase off until it settles.
 controls.addEventListener('end',()=>{if(following){following.dragging=false;following.settle=performance.now()+600;}});
 function animate(now){requestAnimationFrame(animate);followTrain();controls.update();if(camera.position.y<(following?.button==='walk-tour'?0.9:3))camera.position.y=following?.button==='walk-tour'?0.9:3;   // zooming to the cursor must not take the camera below the ground
- weather?.update(now,camera);flights?.update(now);lightning?.update(now);flag?.update?.(now);riverTour?.update(Date.now());flagSet?.update(now);for(const l of Object.values(landmarks))l.update?.(camera,now);openTour?.update(Date.now());metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}cityLighting?.update(now);if(water){water.update({camera,focus:controls.target,now,boats:riverTour?.hulls()??[]});water.render(scene,camera);}else renderer.render(scene,camera);}
+ weather?.update(now,camera);flights?.update(now);lightning?.update(now);flag?.update?.(now);riverTour?.update(Date.now());flagSet?.update(now);for(const l of Object.values(landmarks))l.update?.(camera,now);openTour?.update(Date.now());metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}cityLighting?.update(now);fireworks?.update(now,camera,renderer);if(water){water.update({camera,focus:controls.target,now,boats:riverTour?.hulls()??[]});water.render(scene,camera);}else renderer.render(scene,camera);}
 requestAnimationFrame(animate);
 init().catch(error=>{console.error(error);$('loading').innerHTML='';const title=document.createElement('strong');title.textContent='Model could not be loaded';const p=document.createElement('p');p.textContent=error.message;$('loading').append(title,p);});
 
 
+$('fireworks').onclick=()=>{fireworks?.sound?.resume();if(!ready||!fireworks)return;stopFollowing();setActive('fireworks');controls.target.copy(fireworks.view.target);camera.position.copy(fireworks.view.eye);controls.update();lastLoad=0;fireworks.start();};   // resume() first, inside the tap: iOS allows sound only there
 $('turtle-lake-view').onclick=()=>{const l=landmarks.hoConRua;if(!l)return;setActive('turtle-lake-view');controls.target.copy(l.view.target);camera.position.copy(l.view.eye);controls.update();lastLoad=0;};
 
 $('seven-kho-view').onclick=()=>{const l=landmarks.sevenKho;if(!l)return;setActive('seven-kho-view');controls.target.copy(l.view.target);camera.position.copy(l.view.eye);controls.update();lastLoad=0;};

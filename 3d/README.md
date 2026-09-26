@@ -143,6 +143,11 @@ The two yachts from the Vinhomes marina circle the Saigon River continuously
 at 35 knots (`rivertour.js`, see `RIVERTOUR.md`); the **River tour** button
 follows one.
 
+The **Fireworks** button puts on a three-minute show over the river from
+three barges off Bạch Đằng, seen from the Thủ Thiêm bank, with its sound
+arriving late by the distance (`fireworks.js`, `fireworks-sound.js`, see
+`FIREWORKS.md`).
+
 Near the river the water moves: wind waves, the yachts' wakes (Kelvin arms,
 propeller wash, foam, bubbles and spray), reflections of the skyline, rain
 rings, and light streaks at night; the yachts ride the waves

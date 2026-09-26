@@ -167,6 +167,11 @@ For the city towers (`3d/citytowers.js`: 50 more towers, detailed near):
 node --loader ./tests/three-loader.mjs tests/citytowers.mjs
 ```
 
+For the fireworks (`3d/fireworks.js`: ballistics, programme, bursts):
+```sh
+node --loader ./tests/three-loader.mjs tests/fireworks.mjs
+```
+
 For the river water (`3d/riverwater.js`: waves, Kelvin wake, wake ribbons
 through turns, the surface grid, yachts riding the surface):
 ```sh
