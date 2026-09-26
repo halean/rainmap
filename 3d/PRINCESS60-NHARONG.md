@@ -1,13 +1,17 @@
 # Princess 60 — Nha Rong (second yacht)
 
-**Moored beside Saigon Star at Vinhomes Central Park Marina**, on its open-water
-side, per the user's updated placement instruction. The yacht retains the name
-*Nha Rong*; Bến Nhà Rồng is no longer its destination.
+**On a continuous river tour** with *Saigon Star*, half a lap apart, round
+the Saigon River from off the Vinhomes Central Park Marina to the Phú Mỹ
+bridge and back, at 35 knots (`rivertour.js`, see `RIVERTOUR.md`). It never
+moors.
 
-`princess60-berth.js` derives the berth from the other yacht's anchor and heading,
-with 5.8 m centreline spacing, approximately 0.73 m minimum clearance including
-fittings, a waterline of -0.12 m, and four inter-boat lines. The existing pontoon
-and original yacht remain unchanged. [Moored pair preview](assets/princess60-moored-pair.png).
+`princess60-berth.js` places the yacht in the city and manages its levels of
+detail; its starting position, alongside *Saigon Star* on the open-water side
+with 5.8 m centreline spacing and a waterline of -0.12 m, is where the model
+is first built before the tour takes it. The four raft lines it defines are
+no longer drawn, since the two yachts are never both at the berth.
+[Moored pair preview](assets/princess60-moored-pair.png) (from when the pair
+lay at the marina).
 
 ## Inspect and download
 
@@ -35,10 +39,11 @@ The preview is a studio inspection, with the boat above a neutral floor, separat
 side effects. The caller may attach `group` to an inspection scene. `dispose()`
 removes it and releases its geometry and materials; repeated calls are safe.
 
-Metres, Y up, +X toward the bow, +Z to port, design waterline Y = 0. Metadata stores
-`destination: 'Vinhomes Central Park Marina'` and
-`status: 'moored-alongside-saigon-star'`. The standalone asset stays in local
-coordinates; the berth wrapper supplies the city transform.
+Metres, Y up, +X toward the bow, +Z to port, design waterline Y = 0. The model's
+metadata still carries `destination: 'Vinhomes Central Park Marina'` and
+`status: 'moored-alongside-saigon-star'` from when it was moored; in the city the
+tour overrides its position. The standalone asset stays in local coordinates;
+`princess60-berth.js` supplies the city transform and `rivertour.js` moves it.
 
 **1,723,097 triangles, 108 material-batched meshes, 12 named assemblies:**
 
@@ -114,15 +119,17 @@ node --loader ./tests/three-loader.mjs tests/princess60_berth.mjs
 node --loader ./tests/three-loader.mjs tests/yacht.mjs
 ```
 
-Checks cover relative placement, parallel headings, clearance, waterline, four
-lines, independent disposal and preservation of the other yacht. The actual city
-viewer was loaded in Chromium and its Yachts camera action verified.
+Checks cover the starting placement beside *Saigon Star*, parallel headings,
+clearance, waterline, the four raft lines, the levels of detail (built on demand,
+released on leaving), independent disposal and preservation of the other yacht.
+The tour itself is covered by `tests/rivertour.mjs`; the viewer's **River tour**
+button follows the yachts (the former Yachts button is gone).
 
 ## In the city: levels of detail
 
-In the city the yacht lies alongside *Saigon Star* at the Vinhomes Central
-Park Marina (`princess60-berth.js`). The full model is never built at page
-load. Which level is drawn depends on the camera's distance to the yacht:
+In the city the yacht runs the river tour. The full model is never built at
+page load. Which level is drawn depends on the camera's distance to the yacht,
+wherever it is on the river:
 
 | Distance | Drawn | Triangles |
 |---|---|---|
@@ -140,9 +147,9 @@ load. Which level is drawn depends on the camera's distance to the yacht:
   `node --loader ./tests/three-loader.mjs 3d/tools/build-princess60-lod.mjs 0.14 1`
   (and `0.35 2`), written to `assets/princess60-nharong-lod1.glb` (2.9 MB)
   and `-lod2.glb` (0.65 MB). Rerun both after changing the model.
-- **Ropes:** the raft lines are drawn within 700 m.
 - **Ensign:** in the city the ensign is the shared, waving flag (`flag.js`
-  createFlagSet), hung at the top of the raked staff. The model's own static
+  createFlagSet), hung at the top of the raked staff. It sails with the yacht
+  and streams aft in the apparent wind. The model's own static
   flag is left out of the worker build and the proxies; the standalone
   inspection page still shows it.
 
