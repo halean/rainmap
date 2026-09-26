@@ -39,6 +39,13 @@ try{renderer=new THREE.WebGLRenderer({antialias:true,logarithmicDepthBuffer:true
 catch(error){$('loading').textContent='This 3D model needs a WebGL-capable browser.';throw error;}
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);
 const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.1;controls.maxPolarAngle=Math.PI/2-.08;controls.minDistance=25;controls.maxDistance=220000;
+// Map-style navigation: pan across the ground plane, not the screen plane (on
+// a tilted view, screen-space panning sank the orbit pivot underground and
+// the camera with it), and zoom towards the point under the cursor, which
+// also brings the pivot -- and with it the pan speed -- to what is being
+// looked at. maxDistance and the pivot's reach are set from the city's
+// bounds once the manifest is loaded.
+controls.screenSpacePanning=false;controls.zoomToCursor=true;
 const hemiLight=new THREE.HemisphereLight('#e7f1ee','#769080',2.6);scene.add(hemiLight);const sunLight=new THREE.DirectionalLight('#fff3da',2.7);sunLight.position.set(-10000,20000,5000);scene.add(sunLight);
 const loader=new GLTFLoader(),tiles=new Map(),pending=new Set(),failed=new Set();let manifest,overview,skyline,cameraMarkers,ready=false,lastLoad=0,desired=new Set(),focusTile=null,highrises=[];
 // tallBuildings() clusters skyline vertices into approximate individual
@@ -51,13 +58,17 @@ const loader=new GLTFLoader(),tiles=new Map(),pending=new Set(),failed=new Set()
 // tall building's facade would miss that geometry entirely and hit nothing.
 const HIGHRISE_SNAP_PIXELS=45;
 function project(lon,lat){return [(lon-manifest.originLonLat[0])*111320*Math.cos(manifest.originLonLat[1]*Math.PI/180),-(lat-manifest.originLonLat[1])*111320];}
-function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(ready&&$('overview').classList.contains('active'))wholeCity();}
+function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(manifest)limitNavigation();if(ready&&$('overview').classList.contains('active'))wholeCity();}
 new ResizeObserver(resize).observe(host);resize();
 function setActive(id){if(id!=='metro-view')stopFollowing();document.querySelectorAll('.views button').forEach(b=>b.classList.toggle('active',b.id===id));}
 function goTo(x,z,distance=1600,top=false){controls.target.set(x,0,z);camera.position.copy(controls.target).add(top?new THREE.Vector3(0,distance,1):new THREE.Vector3(.6,.85,.7).normalize().multiplyScalar(distance));controls.update();lastLoad=0;}
 // Look through the rain volume from below the schematic cloud deck.
 function centralCity(){const [x,z]=project(106.699,10.774);controls.target.set(x,120,z);camera.position.copy(controls.target).add(new THREE.Vector3(-.6,.36,.7).normalize().multiplyScalar(2600));controls.update();lastLoad=0;setActive('downtown');}
-function wholeCity(){const b=manifest.boundsXZ,span=Math.hypot(b[2]-b[0],b[3]-b[1]);const fov=Math.min(camera.fov*Math.PI/360,Math.atan(Math.tan(camera.fov*Math.PI/360)*camera.aspect));goTo((b[0]+b[2])/2,(b[1]+b[3])/2,Math.min(200000,span*.52/Math.sin(fov)));setActive('overview');}
+function wholeCityDistance(){const b=manifest.boundsXZ,span=Math.hypot(b[2]-b[0],b[3]-b[1]);const fov=Math.min(camera.fov*Math.PI/360,Math.atan(Math.tan(camera.fov*Math.PI/360)*camera.aspect));return Math.min(200000,span*.52/Math.sin(fov));}
+function wholeCity(){const b=manifest.boundsXZ;goTo((b[0]+b[2])/2,(b[1]+b[3])/2,wholeCityDistance());setActive('overview');}
+// Keep navigation over the city: zoom out no further than half again the
+// whole-city view, and keep the pivot within the model's bounds.
+function limitNavigation(){const b=manifest.boundsXZ;controls.maxDistance=wholeCityDistance()*1.5;controls.cursor.set((b[0]+b[2])/2,0,(b[1]+b[3])/2);controls.maxTargetRadius=Math.hypot(b[2]-b[0],b[3]-b[1])/2;}
 function updateLayer(group){group.traverse(o=>{if(!o.isMesh&&!o.isLineSegments)return;const name=o.name;o.visible= name.startsWith('building')?$('buildings').checked : ['street','path'].includes(name)?$('minor').checked : true;});}
 function dispose(group){cityLighting?.unregister(group);group.traverse(o=>{o.geometry?.dispose();if(o.material){for(const m of Array.isArray(o.material)?o.material:[o.material])m.dispose();}});}
 function tileDistance(tile){const b=tile.bounds,t=controls.target;const dx=Math.max(b[0]-t.x,0,t.x-b[2]),dz=Math.max(b[1]-t.z,0,t.z-b[3]);return Math.hypot(dx,dz);}
@@ -84,7 +95,7 @@ function updateTiles(){
  $('download').href=nearest?nearest.url:manifest.overview.url;$('download').textContent=nearest?'↓ Download local tile GLB':'↓ Download overview GLB';
 }
 async function init(){
- const response=await fetch('assets/manifest.json');if(!response.ok)throw new Error('The model manifest is not available yet');manifest=await response.json();
+ const response=await fetch('assets/manifest.json');if(!response.ok)throw new Error('The model manifest is not available yet');manifest=await response.json();limitNavigation();
  const cameraData=await fetch('assets/cameras.json').then(r=>r.json());
  $('road-km').textContent=Math.round(manifest.statistics.roadLengthMetres/1000).toLocaleString();$('building-count').textContent=manifest.statistics.buildingFeatures.toLocaleString();
  const b=manifest.boundsXZ;$('extent').textContent=`${((b[2]-b[0])/1000).toFixed(0)} × ${((b[3]-b[1])/1000).toFixed(0)} km · ${manifest.cameraCount} camera locations · static 3D model`;
@@ -131,7 +142,7 @@ $('airport').onclick=()=>{if(!ready)return;const [x,z]=project(106.6525,10.8185)
 const CHASE_PITCH=0.38;          // radians above the horizontal, ~22°
 const CHASE_TURN=2.5;            // how quickly the view swings round, per second
 let following=null;
-function stopFollowing(){if(!following)return;following=null;metro?.setFollowing?.(false);}
+function stopFollowing(){if(!following)return;following=null;controls.enableZoom=true;metro?.setFollowing?.(false);}
 const behindYaw=v=>Math.atan2(-v.forward.x,-v.forward.z);        // direction from train to camera
 function placeChase(v){const {yaw,distance}=following,flat=distance*Math.cos(CHASE_PITCH);
  controls.target.copy(v.pos);
@@ -140,6 +151,9 @@ function placeChase(v){const {yaw,distance}=following,flat=distance*Math.cos(CHA
 $('metro-view').onclick=()=>{if(!ready)return;metro?.setFollowing?.(false);const v=metro?.trainView(controls.target.clone());
  if(!v){const [x,z]=project(106.744,10.803);controls.target.set(x,12,z);camera.position.copy(controls.target).add(new THREE.Vector3(-.35,.45,.82).normalize().multiplyScalar(1400));controls.update();lastLoad=0;setActive('metro-view');return;}
  following={yaw:behindYaw(v),distance:140,last:v.pos.clone(),at:performance.now()};
+ // The wheel sets the chase distance (below); the controls' own zoom, which
+ // moves the pivot to the cursor, would end the chase.
+ controls.enableZoom=false;
  placeChase(v);controls.update();metro.setFollowing?.(true);lastLoad=0;setActive('metro-view');};
 function followTrain(){
  if(!following)return;const v=metro?.trainView();if(!v)return;
@@ -177,6 +191,7 @@ renderer.domElement.addEventListener('dblclick',e=>{
 });
 $('about').onclick=()=>$('info').showModal();$('close').onclick=()=>$('info').close();
 controls.addEventListener('start',()=>{if(!following)setActive('');});
-function animate(now){requestAnimationFrame(animate);followTrain();controls.update();weather?.update(now);flights?.update(now);lightning?.update(now);flag?.update?.(now);metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}cityLighting?.update(now);renderer.render(scene,camera);}
+function animate(now){requestAnimationFrame(animate);followTrain();controls.update();if(camera.position.y<3)camera.position.y=3;   // zooming to the cursor must not take the camera below the ground
+ weather?.update(now);flights?.update(now);lightning?.update(now);flag?.update?.(now);metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}cityLighting?.update(now);renderer.render(scene,camera);}
 requestAnimationFrame(animate);
 init().catch(error=>{console.error(error);$('loading').innerHTML='';const title=document.createElement('strong');title.textContent='Model could not be loaded';const p=document.createElement('p');p.textContent=error.message;$('loading').append(title,p);});
