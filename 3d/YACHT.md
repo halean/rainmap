@@ -43,7 +43,9 @@ photographs of the 2011-2017 model.
   teak table, a wet bar with sink and grill, and a cool box. The radar arch
   carries the radome, masthead light, antennas, searchlight and horns, and
   there are rails aft.
-- **Ensign:** the national flag, with its star, on a staff at the transom.
+- **Ensign:** the shared flag (`flag.js`), on a staff at the transom. It
+  turns with the wind like every other flag and waves when the camera is
+  near, at its own rate, not in step with the *Nha Rong*'s beside it.
 - **Sunbathers:** two on the foredeck sunpad (one in a bikini and straw hat,
   hands behind her head; one with a knee up) and one on the flybridge sunpad
   reading. They lie on striped towels in sunglasses, and there is a drink on

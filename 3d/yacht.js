@@ -85,7 +85,6 @@ export function createYacht({scene, project}) {
     suitA: M('#1f5fa8'), suitB: M('#c0392b'), suitC: M('#23303a'),
     towel1: M('#f2c14e', {roughness: 1}), towel2: M('#2a9d8f', {roughness: 1}), towel3: M('#e76f51', {roughness: 1}), stripe: M('#fbf7ee', {roughness: 1}),
     book: M('#3c6e91'), drink: M('#f39c12', {transparent: true, opacity: 0.85}), straw: M('#dcb86a', {roughness: 0.9}),
-    flag: M('#da251d', {side: THREE.DoubleSide}), star: M('#ffd400', {side: THREE.DoubleSide}),
   };
   const {add, box, finish} = builder(materials, 'yacht');
   const raw = (key, positions) => { if (!positions.length) return; const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); g.computeVertexNormals(); add(key, g); };
@@ -338,9 +337,8 @@ export function createYacht({scene, project}) {
   for (const side of [-1, 1]) for (const px of [FB0 + 0.1, FB0 + 0.6, FB0 + 1.1]) add('steel', new THREE.CylinderGeometry(0.015, 0.015, 0.95, 8), px, FY + 0.47, side * (FW - 0.05));
   // The ensign on its staff at the transom: the national flag.
   add('steel', new THREE.CylinderGeometry(0.018, 0.022, 1.3, 8), AFT + 0.2, 1.45 + 0.65, -1.95);
-  { const f = new THREE.PlaneGeometry(0.75, 0.5); f.translate(-0.375, 0, 0); add('flag', f, AFT + 0.2, 2.35, -1.95);
-    const s5 = new THREE.Shape(); for (let k = 0; k < 10; k++) { const a = Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 0.038 : 0.1; (k ? s5.lineTo : s5.moveTo).call(s5, -0.375 + r * Math.cos(a), r * Math.sin(a)); }
-    for (const dz of [0.003, -0.003]) add('star', new THREE.ShapeGeometry(s5), AFT + 0.2, 2.35, -1.95 + dz); }
+  // The flag itself is the shared one (flag.js createFlagSet), hung from
+  // the staff's top via `flags` below.
 
   // ================= People sunbathing ==========================================
   // Two on the foredeck sunpad, head to the backrest; one on the flybridge
@@ -406,6 +404,8 @@ export function createYacht({scene, project}) {
   line(V(AFT + 0.5, gunY(0) + 0.1, -2.2), V(AFT - 3.5, 0.45, -3.05));
 
   const triangles = finish(group);
+  group.updateMatrixWorld(true);
+  const flags = [{top: group.localToWorld(V(AFT + 0.2, 2.72, -1.95)), length: 0.75, parent: group}];   // on the yacht: it sails (rivertour.js)
 
   // ================= The pontoons ==============================================
   // A floating deck 0.47 m over the water with dark floats, as OSM maps
@@ -429,5 +429,8 @@ export function createYacht({scene, project}) {
   const view = {target: group.localToWorld(V(0, 2, 0)), eye: group.localToWorld(V(-22, 14, 26))};
   const state = {name: 'Princess 60 at the Vinhomes Central Park Marina', lon: YACHT.lon, lat: YACHT.lat, length: YACHT.length, beam: YACHT.beam, sunbathers: 3, triangles, pontoonTriangles, drawCalls: group.children.length + marina.children.length, schematic: false};
   const all = {...materials, ...pm};
-  return {group: outer, yacht: group, state, view, replaceGeneric: () => 0, dispose() { scene.remove(outer); for (const g of [group, marina]) for (const m of g.children) m.geometry.dispose(); for (const m of Object.values(all)) m.dispose(); }};
+  // Moored: lines ashore and fenders out; underway (rivertour.js) both are in.
+  const setMoored = on => { for (const n of ['yacht-rope', 'yacht-fender']) { const m = group.getObjectByName(n); if (m) m.visible = on; } state.moored = on; };
+  state.moored = true;
+  return {group: outer, yacht: group, state, view, flags, setMoored, replaceGeneric: () => 0, dispose() { scene.remove(outer); for (const g of [group, marina]) for (const m of g.children) m.geometry.dispose(); for (const m of Object.values(all)) m.dispose(); }};
 }

@@ -131,6 +131,10 @@ Landmark 81, with sunbathers aboard (`yacht.js`, see `YACHT.md`).
 The open-top tour bus runs the Red Route on its timetable (`opentour.js`, see
 `OPENTOUR.md`); the **Open tour** button follows one.
 
+The two yachts from the Vinhomes marina circle the Saigon River continuously
+at 35 knots (`rivertour.js`, see `RIVERTOUR.md`); the **River tour** button
+follows one.
+
 Bitexco was missing from the generic model (only its podium was there), and
 Landmark 81 was a slab over its whole site. The flag now stands on Landmark
 81's modelled spire.

@@ -12,8 +12,10 @@ assert(Math.abs(hull.max.x - hull.min.x - YACHT.hull) < 0.05, `hull length ${hul
 const below = y.yacht.getObjectByName('yacht-antifoul').geometry; below.computeBoundingBox();
 assert(Math.abs(-0.12 - below.boundingBox.min.y - YACHT.draft) < 0.02, 'draft');
 assert(Math.abs(Math.max(hull.max.z, -hull.min.z) - YACHT.beam / 2) < 0.12, `beam ${2 * Math.max(hull.max.z, -hull.min.z)}`);
-// Three sunbathers' towels, and the ensign with its star.
-for (const k of ['towel1', 'towel2', 'towel3', 'flag', 'star']) assert(y.yacht.getObjectByName(`yacht-${k}`), k);
+// Three sunbathers' towels.
+for (const k of ['towel1', 'towel2', 'towel3']) assert(y.yacht.getObjectByName(`yacht-${k}`), k);
+// The ensign is the shared flag (flag.js), hung at the staff's top.
+assert.equal(y.flags.length, 1); assert(y.flags[0].top.y > 2.5 && y.flags[0].length > 0.5);
 // Moored alongside the pontoon: its edge 3 m off the centreline, clear of the hull, which floats in the water.
 const w = new THREE.Box3().setFromObject(y.yacht);
 assert(w.min.y < -1 && w.max.y > 7, 'afloat, arch above');

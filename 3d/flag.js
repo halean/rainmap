@@ -259,8 +259,11 @@ export function createFlagSet({scene, camera = null}) {
   let windFrom = null, surfaceKt = 0;
 
   /** A flag whose hoist's top corner is at `top` (world), `length` long, 2:3,
-   *  hung under `parent` (a landmark's group, turned only about y) so that
-   *  it shows and hides with it. */
+   *  hung under `parent` (a landmark's group, or a yacht's) so that it shows,
+   *  hides and moves with it. A parent that moves sets
+   *  parent.userData.velocity ({x, z}, m/s); its flag then flies in the
+   *  apparent wind, the true wind less the parent's own motion -- streaming
+   *  aft at speed. */
   function add({top, length, parent = scene}) {
     const height = length * 2 / 3, columns = 14, rows = 9;
     const geometry = new THREE.PlaneGeometry(length, height, columns - 1, rows - 1);
@@ -273,7 +276,11 @@ export function createFlagSet({scene, camera = null}) {
     const yawOffset = -parent.rotation.y;
     mesh.rotation.y = (windFrom === null ? 0 : flagYaw(windFrom)) + yawOffset;
     parent.add(mesh);
-    flags.push({mesh, rest, length, yawOffset, world: top.clone(), phase: flags.length * 1.7, still: true});
+    // Each flag its own rhythm: a phase and a rate of its own, so flags side
+    // by side (the two yachts' ensigns) never wave in step.
+    const seed = Math.sin((top.x * 12.9898 + top.z * 78.233) * 0.01) * 43758.5453, r = seed - Math.floor(seed);
+    const flag = {mesh, rest, length, yawOffset, world: top.clone(), phase: r * Math.PI * 2, rate: 0.82 + 0.36 * ((r * 7.31) % 1), still: true};
+    flags.push(flag); orient(flag);
     state.count = flags.length;
     return mesh;
   }
@@ -283,11 +290,25 @@ export function createFlagSet({scene, camera = null}) {
     if (Number.isFinite(w.speed_kt)) surfaceKt = Math.max(0, w.speed_kt);
     if (Number.isFinite(w.dir)) {
       windFrom = w.dir;
-      for (const f of flags) f.mesh.rotation.y = flagYaw(windFrom) + f.yawOffset;
+      for (const f of flags) orient(f);
     }
     Object.assign(state, {windFrom, windKt: surfaceKt});
   });
 
+  // Where a flag is and which way it flies: the parent may have moved.
+  const q = new THREE.Quaternion(), ax = new THREE.Vector3();
+  function orient(f) {
+    const {mesh} = f, parent = mesh.parent;
+    if (!parent) return;
+    mesh.getWorldPosition(f.world);
+    parent.getWorldQuaternion(q); ax.set(1, 0, 0).applyQuaternion(q);
+    const parentYaw = Math.atan2(-ax.z, ax.x), v = parent.userData.velocity;
+    const trueWind = windAloft(surfaceKt, f.world.y) * 0.514444, d = windFrom === null ? {x: 0, z: 0} : downwind(windFrom);
+    let wx = d.x * trueWind, wz = d.z * trueWind;
+    if (v) { wx -= v.x; wz -= v.z; }
+    f.apparent = Math.hypot(wx, wz);
+    if (f.apparent > 0.05) mesh.rotation.y = Math.atan2(-wz, wx) - parentYaw;
+  }
   const eye = new THREE.Vector3();
   function update(nowMs) {
     if (!camera || !Number.isFinite(nowMs)) return;
@@ -296,6 +317,7 @@ export function createFlagSet({scene, camera = null}) {
     let waving = 0;
     for (const f of flags) {
       const {mesh, rest, length} = f;
+      orient(f);
       let visible = true;
       for (let o = mesh; o; o = o.parent) visible = visible && o.visible;
       const d = eye.distanceTo(f.world);
@@ -308,8 +330,8 @@ export function createFlagSet({scene, camera = null}) {
       f.still = false;
       // Wind at the flag's height; a small flag flutters a few times a second
       // in a moderate breeze, faster as the wind rises.
-      const u = windAloft(surfaceKt, f.world.y) * 0.514444;
-      const frequency = Math.min(4, Math.max(0.6, 0.8 * u / length)), k = 2 * Math.PI / (0.9 * length);
+      const u = f.apparent ?? windAloft(surfaceKt, f.world.y) * 0.514444;
+      const frequency = f.rate * Math.min(4, Math.max(0.6, 0.8 * u / length)), k = 2 * Math.PI / (0.9 * length);
       const amplitude = strength * length * (0.05 + 0.07 * Math.min(1, u / 8));
       const p = mesh.geometry.attributes.position.array, w = 2 * Math.PI * frequency;
       for (let i = 0; i < p.length; i += 3) {

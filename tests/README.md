@@ -156,3 +156,8 @@ For the open-top tour bus (`3d/opentour.js`: route, timetable, smooth motion):
 ```sh
 node --loader ./tests/three-loader.mjs tests/opentour.mjs
 ```
+
+For the river tours (`3d/rivertour.js`: continuous loop, 35 knots, on the water):
+```sh
+node --loader ./tests/three-loader.mjs tests/rivertour.mjs
+```

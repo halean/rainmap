@@ -56,4 +56,12 @@ const hoist = (p, i) => p[i * 3 + 2];
 assert(Math.abs(hoist(a, 0)) < 1e-6, 'the hoist stays on the pole');
 camera.position.copy(flag.world).add(new THREE.Vector3(3000, 0, 0)); camera.updateMatrixWorld();
 set.update(3000); assert.deepEqual(positions(), rest, 'settles again when far');
+// Two flags a few metres apart (the two yachts' ensigns) keep their own rhythm.
+const pair = createFlagSet({scene, camera});
+const [f1, f2] = [pair.add({top: new THREE.Vector3(8000, 3, 1700), length: 0.8}), pair.add({top: new THREE.Vector3(8003, 3, 1705), length: 0.8})].map((_, i) => pair.flags[i]);
+assert(Math.abs(f1.rate - f2.rate) > 0.01 || Math.abs(f1.phase - f2.phase) > 0.3, 'not in step');
+camera.position.set(8010, 10, 1710); camera.updateMatrixWorld();
+const tip = f => f.mesh.geometry.attributes.position.array.at(-1);
+let diverge = 0; for (let t = 0; t < 4000; t += 250) { pair.update(t); if (Math.abs(tip(f1) - tip(f2)) > 0.01) diverge++; }
+assert(diverge > 8, `ensigns wave independently (${diverge}/16 samples differ)`);
 console.log(`ok - ${set.flags.length} landmark flags: one texture with the star, all downwind with the tower's flag, hung at their poles, waving only near`);

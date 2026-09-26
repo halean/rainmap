@@ -5,6 +5,7 @@ const THREE_URL = new URL('../3d/vendor/three.module.js', import.meta.url).href;
 
 export function resolve(specifier, context, nextResolve) {
   if (specifier === 'three') return {url: THREE_URL, shortCircuit: true};
+  if (specifier.startsWith('three/addons/')) return {url: new URL(`../3d/vendor/${specifier.slice('three/addons/'.length)}`, import.meta.url).href, shortCircuit: true};
   return nextResolve(specifier, context);
 }
 
