@@ -103,6 +103,10 @@ is shown at a schematic 2.5 km height, not a measured cloud altitude.
 
 ## Landmark models
 
+7 Khô on Lý Thái Tổ has a narrow photo-based shopfront and pavement dining
+(`seven-kho-city.js`; [notes and footprint limits](SEVEN-KHO.md)). The **7 Khô**
+button opens its city view.
+
 Some landmarks are modelled rather than extruded, each from its OSM outline
 and photographs, and each replaces its generic block when that block's tile
 streams in (and in the skyline layer). Their notes, with sources and what is

@@ -1,0 +1,217 @@
+{
+  "name": "7 Khô",
+  "address": "94–96–98 Lý Thái Tổ",
+  "lon": 106.67978880686381,
+  "lat": 10.766184867002776,
+  "yaw": -0.30055790360122264,
+  "outline": [
+    [
+      -2.1,
+      -10.3
+    ],
+    [
+      2.1,
+      -10.3
+    ],
+    [
+      2.1,
+      3.7
+    ],
+    [
+      -2.1,
+      3.7
+    ]
+  ],
+  "outlineLonLat": [
+    [
+      106.679798349974,
+      10.766278830151668
+    ],
+    [
+      106.67983503876435,
+      10.76626766034198
+    ],
+    [
+      106.67979713341725,
+      10.766147534573372
+    ],
+    [
+      106.67976044462691,
+      10.76615870438306
+    ]
+  ],
+  "frontLocalZ": 3.7,
+  "depth": 14,
+  "width": 4.2,
+  "footprintStatus": "photo-constrained-estimate-not-surveyed",
+  "osmBuildingId": null,
+  "listingPin": [
+    106.67981719970703,
+    10.76621150970459
+  ],
+  "sourceUrls": [
+    "https://www.momo.vn/page/10046672",
+    "https://www.openstreetmap.org/way/39513492",
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
+  ],
+  "notes": "User frontage photo shows a single narrow shop, turquoise shutters and thatched awnings beside the passage at no.98. Width revised to estimated 4.2 m. Depth14 m remains aerial interpretation; no OSM building polygon exists.",
+  "roadContext": [
+    {
+      "id": 35114554,
+      "tags": {
+        "highway": "service",
+        "motorcar": "destination",
+        "service": "alley",
+        "surface": "concrete"
+      },
+      "coords": [
+        [
+          106.6799457,
+          10.7665138
+        ],
+        [
+          106.6798916,
+          10.7663473
+        ],
+        [
+          106.6798128,
+          10.7660599
+        ]
+      ]
+    },
+    {
+      "id": 39513492,
+      "tags": {
+        "alt_name:vi": "Đại lộ Lý Thái Tổ",
+        "highway": "primary",
+        "lanes": "2",
+        "maxspeed": "60",
+        "name": "Lý Thái Tổ",
+        "name:en": "Ly Thai To Boulevard",
+        "name:vi": "Đường Lý Thái Tổ",
+        "old_name": "Boulevard Hui Bon Hoa",
+        "oneway": "yes",
+        "surface": "asphalt"
+      },
+      "coords": [
+        [
+          106.6814466,
+          10.7655602
+        ],
+        [
+          106.6812154,
+          10.7656315
+        ],
+        [
+          106.6810042,
+          10.7656968
+        ],
+        [
+          106.6809162,
+          10.765724
+        ],
+        [
+          106.680423,
+          10.7658742
+        ],
+        [
+          106.6802281,
+          10.7659335
+        ],
+        [
+          106.6800784,
+          10.7659791
+        ],
+        [
+          106.6798128,
+          10.7660599
+        ],
+        [
+          106.6796128,
+          10.7661208
+        ],
+        [
+          106.6794474,
+          10.7661712
+        ],
+        [
+          106.679338,
+          10.7662045
+        ],
+        [
+          106.6793043,
+          10.7662146
+        ],
+        [
+          106.6788202,
+          10.7663709
+        ],
+        [
+          106.6787847,
+          10.7663838
+        ]
+      ]
+    },
+    {
+      "id": 242309084,
+      "tags": {
+        "alt_name:vi": "Đại lộ Lý Thái Tổ",
+        "highway": "primary",
+        "lanes": "2",
+        "maxspeed": "60",
+        "name": "Lý Thái Tổ",
+        "name:en": "Ly Thai To Boulevard",
+        "name:vi": "Đường Lý Thái Tổ",
+        "old_name": "Boulevard Hui Bon Hoa",
+        "oneway": "yes",
+        "surface": "asphalt"
+      },
+      "coords": [
+        [
+          106.6787522,
+          10.7663034
+        ],
+        [
+          106.6787865,
+          10.7662933
+        ],
+        [
+          106.6792783,
+          10.7661429
+        ],
+        [
+          106.6794244,
+          10.7660983
+        ],
+        [
+          106.679587,
+          10.7660486
+        ],
+        [
+          106.6803293,
+          10.7658216
+        ],
+        [
+          106.6808922,
+          10.7656495
+        ],
+        [
+          106.6809838,
+          10.7656241
+        ],
+        [
+          106.6811505,
+          10.765571
+        ],
+        [
+          106.6811875,
+          10.7655592
+        ],
+        [
+          106.6814143,
+          10.7654867
+        ]
+      ]
+    }
+  ]
+}

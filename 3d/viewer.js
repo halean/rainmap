@@ -1,3 +1,4 @@
+import {createSevenKhoCity} from './seven-kho-city.js';
 import * as THREE from 'three';
 import {createWeather} from './weather.js';
 import {createFlights} from './flights.js';
@@ -35,7 +36,7 @@ import {createCityTowers} from './citytowers.js';
 import {createRiverWater} from './riverwater.js';
 // Landmark models built on OSM outlines: each replaces its generic block as
 // tiles stream in, and follows the Buildings checkbox.
-const LANDMARKS=[['opera',createOperaHouse],['stateBank',createStateBank],['postOffice',createPostOffice],['cityHall',createCityHall],['bitexco',createBitexco],['landmark81',createLandmark81],['nhaRong',createNhaRong],['hoConRua',createHoConRua],['continental',createContinental],['cityMuseum',createCityMuseum],['tanDinh',createTanDinh],['jadeEmperor',createJadeEmperor],['binhTay',createBinhTay],['thienHau',createThienHau],['bridges',createBridges],['yacht',createYacht],['riverfront',createRiverfront],['cityTowers',createCityTowers],['princess60',createMooredPrincess60]];
+const LANDMARKS=[['opera',createOperaHouse],['stateBank',createStateBank],['postOffice',createPostOffice],['cityHall',createCityHall],['bitexco',createBitexco],['landmark81',createLandmark81],['nhaRong',createNhaRong],['hoConRua',createHoConRua],['sevenKho',createSevenKhoCity],['continental',createContinental],['cityMuseum',createCityMuseum],['tanDinh',createTanDinh],['jadeEmperor',createJadeEmperor],['binhTay',createBinhTay],['thienHau',createThienHau],['bridges',createBridges],['yacht',createYacht],['riverfront',createRiverfront],['cityTowers',createCityTowers],['princess60',createMooredPrincess60]];
 const landmarks={};
 import {createRex} from './rex.js';
 let water,weather,flights,lightning,sky,flag,flagSet,railway,openTour,riverTour,metro,cityLighting,cathedral,market,palace,majestic,rex;
@@ -79,7 +80,8 @@ function wholeCity(){const b=manifest.boundsXZ;goTo((b[0]+b[2])/2,(b[1]+b[3])/2,
 // Keep navigation over the city: zoom out no further than half again the
 // whole-city view, and keep the pivot within the model's bounds.
 function limitNavigation(){const b=manifest.boundsXZ;controls.maxDistance=wholeCityDistance()*1.5;controls.cursor.set((b[0]+b[2])/2,0,(b[1]+b[3])/2);controls.maxTargetRadius=Math.hypot(b[2]-b[0],b[3]-b[1])/2;}
-function updateLayer(group){group.traverse(o=>{if(!o.isMesh&&!o.isLineSegments)return;const name=o.name;o.visible= name.startsWith('building')?$('buildings').checked : ['street','path'].includes(name)?$('minor').checked : true;});}
+// The overview's road lines (major, street, path) are hidden everywhere: drawn 3 m up, they floated like wires.
+function updateLayer(group){group.traverse(o=>{if(!o.isMesh&&!o.isLineSegments)return;if(o.isLineSegments){o.visible=false;return;}const name=o.name;o.visible= name.startsWith('building')?$('buildings').checked : ['street','path'].includes(name)?$('minor').checked : true;});}
 function dispose(group){cityLighting?.unregister(group);group.traverse(o=>{o.geometry?.dispose();if(o.material){for(const m of Array.isArray(o.material)?o.material:[o.material])m.dispose();}});}
 function tileDistance(tile){const b=tile.bounds,t=controls.target;const dx=Math.max(b[0]-t.x,0,t.x-b[2]),dz=Math.max(b[1]-t.z,0,t.z-b[3]);return Math.hypot(dx,dz);}
 function updateSkyline(){if(!skyline)return;skyline.traverse(o=>{if(!o.isMesh)return;const id=o.name.split('__')[1];const visible=$('buildings').checked&&!tiles.get(id)?.group.visible;o.visible=visible;});}
@@ -274,3 +276,4 @@ init().catch(error=>{console.error(error);$('loading').innerHTML='';const title=
 
 $('turtle-lake-view').onclick=()=>{const l=landmarks.hoConRua;if(!l)return;setActive('turtle-lake-view');controls.target.copy(l.view.target);camera.position.copy(l.view.eye);controls.update();lastLoad=0;};
 
+$('seven-kho-view').onclick=()=>{const l=landmarks.sevenKho;if(!l)return;setActive('seven-kho-view');controls.target.copy(l.view.target);camera.position.copy(l.view.eye);controls.update();lastLoad=0;};
