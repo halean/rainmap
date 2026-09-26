@@ -68,9 +68,9 @@ assert(wh.delay > 650 / soundSpeed(28) && wh.L.length > 4 * 48000 && peakAt(wh.L
 // Without Web Audio the sound stays silent, and does not fail.
 const quiet = createFireworkSound(); quiet.resume(); quiet.launch([0, 0, 0], 0, 3, true, [0, 60, 0]); quiet.burst([0, 200, 0], 0, 'peony', 80);
 assert.equal(quiet.state.available, false); assert.equal(quiet.state.played, 0);
-const heard = {launch: 0, burst: 0, lags: [], listener: 0};
-const sound = {setListener: () => heard.listener++, launch: (p, lag, rise, whistle, v) => { heard.launch++; assert(v && v[1] > 30, 'launch velocity for the whistle'); assert(rise > 1 && rise < 12, `rise ${rise}`); heard.lags.push(lag); },
-  burst: (p, lag, type) => { heard.burst++; heard.lags.push(lag); assert(p[1] > 80, 'burst up high'); }};
+const heard = {launch: 0, burst: 0, lags: [], listener: 0, fans: 0, later: 0};
+const sound = {setListener: () => heard.listener++, launch: (p, lag, rise, whistle, v) => { heard.launch++; if (rise > 0.1) { assert(v && v[1] > 30, 'launch velocity for the whistle'); assert(rise > 1 && rise < 12, `rise ${rise}`); } else heard.fans++; heard.lags.push(lag); },
+  burst: (p, lag, type) => { heard.burst++; if (lag > 0.01) heard.later++; else heard.lags.push(lag); assert(p[1] > 60, 'burst up high'); }};
 let ms = 0;
 const camera = new THREE.PerspectiveCamera();
 const scene = new THREE.Scene(), fw = createFireworks({scene, project, now: () => ms, sound});
@@ -81,6 +81,9 @@ for (const s of fw.sites) { const d = Math.min(...centre.slice(1).map((p, i) => 
 assert.equal(fw.state.running, false);
 fw.start();
 assert(fw.state.running && fw.state.shells > 80, `shells ${fw.state.shells}`);
+// The arsenal rotates: over three minutes every effect is fired, the classics dealt from a
+// shuffled deck, so none comes round much more often than another.
+assert(fw.state.types.length >= 22, `types: ${fw.state.types.join(', ')}`);
 // Run the show at 20 frames a second.
 let flashes = 0, maxHead = 0;
 for (ms = 0; ms <= (FIREWORKS.showSeconds + 15) * 1000; ms += 50) {
@@ -91,16 +94,20 @@ for (ms = 0; ms <= (FIREWORKS.showSeconds + 15) * 1000; ms += 50) {
 assert.equal(fw.state.running, false, 'the show ends');
 assert(fw.state.shellsFired === fw.state.shells, `fired ${fw.state.shellsFired}/${fw.state.shells}`);
 assert(flashes > 100, `flashes ${flashes}`);
-assert(heard.launch === fw.state.shells && heard.burst === fw.state.shells, `sounds ${heard.launch}/${heard.burst}`);
+// Every launch is heard; every shell's burst too (fans have none), and each cluster's five little bursts, later.
+assert(heard.launch === fw.state.shells && heard.burst - heard.later === fw.state.shells - heard.fans, `sounds ${heard.launch}/${heard.burst}`);
+assert(heard.fans >= 12 && heard.later >= 5, `fans ${heard.fans}, cluster breaks ${heard.later}`);
 assert(heard.lags.every(l => l <= 0 && l > -0.06), 'each sound starts from when it happened (within a frame)');
 assert(heard.listener > 1000, 'the listener follows the camera');
-// Every star is finite; bursts are 90-270 m up.
+// Every star is finite; bursts are high up (a crossette's splits and a cluster's breaks a little
+// below their shells), fans start at the barges.
 const st = fw.attributes.start.array, used = [];
 for (let i = 0; i < st.length; i += 4) if (st[i + 3] > -1e8) used.push(st[i + 1]);
 assert(used.length > 20000 && used.every(Number.isFinite), `stars ${used.length}`);
-const bursts = used.filter(y => y > 1);
-assert(Math.min(...bursts) > 80 && Math.max(...bursts) < 280, `burst heights ${Math.min(...bursts)}-${Math.max(...bursts)}`);
+const bursts = used.filter(y => y > 5), lowest = bursts.reduce((a, b) => Math.min(a, b), Infinity), highest = bursts.reduce((a, b) => Math.max(a, b), 0);
+assert(lowest > 50 && highest < 340, `burst heights ${lowest}-${highest}`);
+assert(used.some(y => y < 2), 'fans fire from the barges');
 // The view looks from the Thủ Thiêm bank across the barges.
 assert(fw.view.eye.distanceTo(fw.view.target) > 400 && fw.view.eye.y > 20);
 fw.dispose();
-console.log(`ok - fireworks: ${fw.state.shells} shells over ${FIREWORKS.showSeconds} s from ${fw.sites.length} barges, ${used.length} stars written, bursts ${Math.round(Math.min(...bursts))}-${Math.round(Math.max(...bursts))} m up`);
+console.log(`ok - fireworks: ${fw.state.shells} shells over ${FIREWORKS.showSeconds} s from ${fw.sites.length} barges, ${used.length} stars written, bursts ${Math.round(lowest)}-${Math.round(highest)} m up; ${fw.state.types.length} effects`);

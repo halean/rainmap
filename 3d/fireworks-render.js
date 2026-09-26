@@ -101,16 +101,19 @@ export function renderWhistle(scene, from, v, rise) {
  *  or burning stars hissing. */
 export function renderBurst(scene, p, type, size, random = Math.random) {
   const {sr, atm, ear} = scene, S = type === 'salute' ? SOURCES.salute : SOURCES.burst(size);
-  const crackles = type === 'crackle' || type === 'salute', hiss = type === 'willow' || type === 'palm';
+  // Pops after the blast: crackling stars, a salute's crackle, a crossette's splits (all at
+  // once, 0.8 s out), glitter's soft twinkle. Hiss: stars that burn long on the way down.
+  const POPS = {crackle: [70, 1.2, 1.6, 1], salute: [25, 0.3, 1.6, 1], crossette: [36, 0.78, 0.12, 1.2], glitter: [60, 0.3, 2.6, 0.35]};
+  const crackles = type in POPS, hiss = ['willow', 'palm', 'kamuro', 'horsetail'].includes(type);
   const {L, R, first} = impulsive(scene, p, blastShape(sr, S.W, S.td0), crackles ? 3 : hiss ? 4.5 : 0);
   const c = soundSpeed(atm.T), dist = q => Math.hypot(q[0] - ear[0], q[1] - ear[1], q[2] - ear[2]);
   if (crackles) {
     const C = SOURCES.crackle, Rm = dist(p), micro = throughAir(blastShape(sr, C.W, C.td0)(Rm), Rm, sr, atm);
-    const count = type === 'crackle' ? C.count : 25, t0 = type === 'crackle' ? 1.2 : 0.3;
+    const [count, t0, spread, loud] = POPS[type];
     for (let i = 0; i < count; i++) {
       const z = random() * 2 - 1, a = random() * 2 * Math.PI, rr = Math.sqrt(1 - z * z), reach = size * (0.6 + 0.5 * random());
       const q = [p[0] + rr * Math.cos(a) * reach, p[1] + z * reach - 4, p[2] + rr * Math.sin(a) * reach];
-      const when = t0 + random() * 1.6, d = dist(q), k = (0.5 + random()) / d / FULL_SCALE_PA;
+      const when = t0 + random() * spread, d = dist(q), k = loud * (0.5 + random()) / d / FULL_SCALE_PA;
       place(scene, L, R, Float32Array.from(micro, x => x * k), Math.round((when + d / c - first) * sr), [(q[0] - ear[0]) / d, 0, (q[2] - ear[2]) / d]);
     }
   }

@@ -10,27 +10,58 @@ It looks best at night; the sky follows the clock as usual.
 
 ## The show
 
-- **Opening:** single shells every 2-3 s from one barge or another.
-- **Middle:** pairs and threes, mixed effects, and bursts of salutes.
-- **Finale:** a shell every 0.18 s from all three barges, then a wall of
-  willows and a last volley of salutes.
+Effects are dealt from a shuffled deck: every effect is fired before any
+repeats, and the deck is reshuffled, never opening with the last one fired.
+Each show rotates through the whole arsenal in its three minutes.
 
-About 280-330 shells in all.
+- **Opening:** single shells every 2-3 s from one barge or another.
+- **Middle:** pairs and threes, and bursts of salutes.
+- **Throughout:**
+  - fan cakes from the barges every 12-20 s;
+  - a volley of pattern shells, one per barge, every 20-40 s.
+- **Finale:** a shell every 0.18 s from all three barges, still rotating,
+  with fans beneath; then a wall of kamuro and willows, and a last volley of
+  salutes.
+
+About 300-350 shells in all. `state.types` and `state.counts` list what a
+show holds, and `fire(type)` fires a single shell of any effect.
 
 ## Shells
 
 Each shell rises as a flickering gold comet with a trail. It bursts at its
-apex, 90-260 m up, into:
+apex, 90-260 m up, into one of 23 effects:
 
 | Effect | Stars |
 |---|---|
 | peony | a sphere of stars in one or two colours |
 | chrysanthemum | the same, with trails |
-| crackle | stars that strobe as they fade |
+| dahlia | fewer, bigger stars with long trails |
+| pistil | a peony with a smaller core of another colour |
+| transform | stars that change colour mid-flight |
+| crackle | stars that crackle as they fade |
+| glitter | twinkling gold |
+| strobe | slow silver stars that pulse on and off |
 | willow | long gold trails that drift down and dim to embers |
-| ring | a tilted ring of stars, with a pistil |
+| kamuro | a dense gold and silver crown that hangs |
+| horsetail | a golden waterfall pouring from the top |
 | palm | 9-12 thick gold arms |
+| spider | fast, straight gold and silver streaks |
+| crossette | stars that each split into four, 0.8 s out |
+| fish | stars that wriggle as they swim out |
+| cluster | a small break, then five little bursts round it |
+| ring, double-ring, saturn | tilted rings; two nested; a ring round a sphere |
+| heart, smiley | pattern shells (Japanese *katamono*) |
+| fan | a cake on a barge: nine comets fanned out low over the water |
 | salute | a white flash and crackle |
+
+- **Pattern shells** tumble as they fly, so the shape breaks at a random
+  angle: sometimes square to the audience, often side-on, a line or a
+  squashed oval, as at a real display. They go up three at a time, one
+  per barge, so one is likely to read.
+- **Fans** are aimed, and face the Thủ Thiêm bank.
+- **Sound:** crossettes pop as they split, glitter crackles softly, and
+  kamuro and horsetails hiss as they fall. A cluster's little bursts are
+  each heard where they break.
 
 Every burst starts with a white flash. The stars are white-hot, then their
 colour, then fade.
