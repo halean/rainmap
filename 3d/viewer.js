@@ -4,7 +4,7 @@ import {createFlights} from './flights.js';
 import {createLightning,tallBuildings,nearestHighrise} from './lightning.js';
 import {createSky} from './sky-render.js';
 import {createCityLighting} from './city-lighting.js';
-import {createFlag} from './flag.js';
+import {createFlag,createFlagSet} from './flag.js';
 import {createMetro} from './metro.js';
 import {createNotreDame} from './notre-dame.js';
 import {createBenThanh} from './ben-thanh.js';
@@ -28,7 +28,7 @@ import {createThienHau} from './thien-hau.js';
 const LANDMARKS=[['opera',createOperaHouse],['stateBank',createStateBank],['postOffice',createPostOffice],['cityHall',createCityHall],['bitexco',createBitexco],['landmark81',createLandmark81],['nhaRong',createNhaRong],['continental',createContinental],['cityMuseum',createCityMuseum],['tanDinh',createTanDinh],['jadeEmperor',createJadeEmperor],['binhTay',createBinhTay],['thienHau',createThienHau]];
 const landmarks={};
 import {createRex} from './rex.js';
-let weather,flights,lightning,sky,flag,metro,cityLighting,cathedral,market,palace,majestic,rex;
+let weather,flights,lightning,sky,flag,flagSet,metro,cityLighting,cathedral,market,palace,majestic,rex;
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const $=id=>document.getElementById(id),host=$('viewport');
@@ -127,7 +127,10 @@ async function init(){
  metro=createMetro({scene,project});
  lightning=createLightning({scene,weather,skyline,camera});
  flag=createFlag({scene,skyline,camera,roof:landmarks.landmark81?.roof});
- window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get lighting(){return cityLighting?.state;},get flag(){return flag?.state;},get metro(){return metro?.state;},get palace(){return palace?.state;},get majestic(){return majestic?.state;},get rex(){return rex?.state;},get landmarks(){return Object.fromEntries(Object.entries(landmarks).map(([key,l])=>[key,l.state]));},get cathedral(){return cathedral?.state;},get market(){return market?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
+ // Every landmark's flag: the same flag, turned by the same wind, waving when near.
+ flagSet=createFlagSet({scene,camera});
+ for(const l of [palace,majestic,rex,...Object.values(landmarks)])for(const f of l?.flags??[])flagSet.add({...f,parent:l.group});
+ window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get lighting(){return cityLighting?.state;},get flag(){return flag?.state;},get flags(){return flagSet?.state;},get metro(){return metro?.state;},get palace(){return palace?.state;},get majestic(){return majestic?.state;},get rex(){return rex?.state;},get landmarks(){return Object.fromEntries(Object.entries(landmarks).map(([key,l])=>[key,l.state]));},get cathedral(){return cathedral?.state;},get market(){return market?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
 }
 $('overview').onclick=()=>{if(ready)wholeCity();};
 $('downtown').onclick=()=>{if(ready)centralCity();};
@@ -192,6 +195,6 @@ renderer.domElement.addEventListener('dblclick',e=>{
 $('about').onclick=()=>$('info').showModal();$('close').onclick=()=>$('info').close();
 controls.addEventListener('start',()=>{if(!following)setActive('');});
 function animate(now){requestAnimationFrame(animate);followTrain();controls.update();if(camera.position.y<3)camera.position.y=3;   // zooming to the cursor must not take the camera below the ground
- weather?.update(now);flights?.update(now);lightning?.update(now);flag?.update?.(now);metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}cityLighting?.update(now);renderer.render(scene,camera);}
+ weather?.update(now);flights?.update(now);lightning?.update(now);flag?.update?.(now);flagSet?.update(now);metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}cityLighting?.update(now);renderer.render(scene,camera);}
 requestAnimationFrame(animate);
 init().catch(error=>{console.error(error);$('loading').innerHTML='';const title=document.createElement('strong');title.textContent='Model could not be loaded';const p=document.createElement('p');p.textContent=error.message;$('loading').append(title,p);});

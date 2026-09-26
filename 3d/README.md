@@ -119,6 +119,14 @@ Bitexco was missing from the generic model (only its podium was there), and
 Landmark 81 was a slab over its whole site. The flag now stands on Landmark
 81's modelled spire.
 
+Landmarks with a flagpole (the palace, the Rex, the Post Office, City Hall,
+Bitexco, the City Museum and Bình Tây) return its top in `flags`; the viewer
+hangs one flag on each with `createFlagSet` in `flag.js`. They share the
+tower flag's texture (the yellow star on red), turn downwind by the same
+METAR poll, and wave -- a travelling wave growing towards the fly end, at a
+rate set by the wind at their height -- only when the camera is within about
+250-450 m, staying flat and costing nothing further away.
+
 ## Persistent skyline
 
 `assets/skyline.glb` keeps building roofs and walls reaching at least 40 m

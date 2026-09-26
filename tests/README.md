@@ -131,3 +131,8 @@ For the landmarks built on OSM outlines with `3d/landmark-kit.js` (the Majestic,
 ```sh
 node --loader ./tests/three-loader.mjs tests/outline_landmarks.mjs
 ```
+
+For the landmarks' flags (`createFlagSet` in `3d/flag.js`: one texture, one wind, waving when near):
+```sh
+node --loader ./tests/three-loader.mjs tests/flag_set.mjs
+```

@@ -74,7 +74,10 @@ export function tallestRoof(skyline) {
 
 // Red field with a centred yellow five-pointed star; the star's outer radius
 // is 1/5 of the flag's length. Row 0 is the bottom (DataTexture order).
-function flagTexture(width = 480) {
+let sharedTexture = null;
+/** The one flag texture every flag on the map uses. */
+export function flagTexture() { return sharedTexture ??= drawFlag(); }
+function drawFlag(width = 480) {
   const height = Math.round(width * 2 / 3), data = new Uint8Array(width * height * 4);
   const cx = width / 2, cy = height / 2, outer = width / 5, inner = outer * 0.382;
   const corners = [];
@@ -99,6 +102,29 @@ function flagTexture(width = 480) {
   texture.magFilter = THREE.LinearFilter;
   texture.needsUpdate = true;
   return texture;
+}
+
+// One poll of the METAR wind for every flag on the map, so they all turn to
+// the same report. Subscribers get {wind} or {error}, now if a report is in.
+let feed = null;
+export function windFeed() {
+  if (feed) return feed;
+  const listeners = new Set();
+  let last = null;
+  async function poll() {
+    try {
+      const r = await fetch('/api/rain-map/flights', {cache: 'no-store'});
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      last = {wind: (await r.json()).wind};
+    } catch (error) {
+      last = {error};
+    }
+    for (const listener of listeners) listener(last);
+  }
+  poll();
+  setInterval(poll, WIND_REFRESH_MS);
+  feed = {subscribe(listener) { listeners.add(listener); if (last) listener(last); return () => listeners.delete(listener); }};
+  return feed;
 }
 
 /** `roof` ({x, y, z, side}) places the flag on a modelled tower's top;
@@ -146,35 +172,28 @@ export function createFlag({scene, skyline, camera = null, roof: given = null}) 
   group.add(pole, turn);
   scene.add(group);
 
-  async function refreshWind() {
-    try {
-      const r = await fetch('/api/rain-map/flights', {cache: 'no-store'});
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const w = (await r.json()).wind;
-      state.windObserved = w?.observed ?? null;
-      // Older responses expose the raw METAR but omit its parsed gust.
-      const rawGust = /\b(?:\d{3}|VRB)\d{2,3}G(\d{2,3})KT\b/.exec(w?.raw ?? '');
-      const surfaceGust = Number.isFinite(w?.gust_kt) ? w.gust_kt : rawGust ? +rawGust[1] : null;
-      const surfaceSpeed = Number.isFinite(w?.speed_kt) ? Math.max(0, w.speed_kt) : 0;
-      gustKt = surfaceGust === null ? 0 : windAloft(Math.max(0, surfaceGust), flagAltitude);
-      state.gustKt = surfaceGust;
-      if (w && Number.isFinite(w.dir)) {
-        turn.rotation.y = flagYaw(w.dir);
-        windKt = windAloft(surfaceSpeed, flagAltitude);
-        Object.assign(state, {windFrom: w.dir, windKt: w.speed_kt, flagKt: +windKt.toFixed(1), yawDeg: Math.round(turn.rotation.y * 180 / Math.PI)});
-        status(`Wind from ${w.dir}° at ${w.speed_kt} kt at ground level (Tân Sơn Nhất METAR${w.observed ? ', ' + w.observed.slice(11, 16) + ' UTC' : ''}); about ${Math.round(windKt)} kt estimated at the flag, ${Math.round(flagAltitude)} m up.`);
-      } else {
-        Object.assign(state, {windFrom: null, windKt: w?.speed_kt ?? null});
-        windKt = windAloft(surfaceSpeed, flagAltitude);
-        status(w ? `Wind variable or calm (${w.speed_kt ?? '?'} kt); flag left as it was.` : 'Wind unavailable; flag left as it was.');
-      }
-    } catch (e) {
-      status(`Wind unavailable (${e.message}); flag left as it was.`);
+  function onWind({wind: w, error}) {
+    if (error) { status(`Wind unavailable (${error.message}); flag left as it was.`); return; }
+    state.windObserved = w?.observed ?? null;
+    // Older responses expose the raw METAR but omit its parsed gust.
+    const rawGust = /\b(?:\d{3}|VRB)\d{2,3}G(\d{2,3})KT\b/.exec(w?.raw ?? '');
+    const surfaceGust = Number.isFinite(w?.gust_kt) ? w.gust_kt : rawGust ? +rawGust[1] : null;
+    const surfaceSpeed = Number.isFinite(w?.speed_kt) ? Math.max(0, w.speed_kt) : 0;
+    gustKt = surfaceGust === null ? 0 : windAloft(Math.max(0, surfaceGust), flagAltitude);
+    state.gustKt = surfaceGust;
+    if (w && Number.isFinite(w.dir)) {
+      turn.rotation.y = flagYaw(w.dir);
+      windKt = windAloft(surfaceSpeed, flagAltitude);
+      Object.assign(state, {windFrom: w.dir, windKt: w.speed_kt, flagKt: +windKt.toFixed(1), yawDeg: Math.round(turn.rotation.y * 180 / Math.PI)});
+      status(`Wind from ${w.dir}° at ${w.speed_kt} kt at ground level (Tân Sơn Nhất METAR${w.observed ? ', ' + w.observed.slice(11, 16) + ' UTC' : ''}); about ${Math.round(windKt)} kt estimated at the flag, ${Math.round(flagAltitude)} m up.`);
+    } else {
+      Object.assign(state, {windFrom: null, windKt: w?.speed_kt ?? null});
+      windKt = windAloft(surfaceSpeed, flagAltitude);
+      status(w ? `Wind variable or calm (${w.speed_kt ?? '?'} kt); flag left as it was.` : 'Wind unavailable; flag left as it was.');
     }
   }
   let windKt = 0, gustKt = 0, shownKt = 0, shownGustKt = 0;
-  refreshWind();
-  setInterval(refreshWind, WIND_REFRESH_MS);
+  windFeed().subscribe(onWind);
 
   const STEP = solver.dt, MAX_STEPS = 6, KNOTS_TO_MPS = 0.514444;
   let lastMs = null, accumulator = 0;
@@ -225,4 +244,85 @@ export function createFlag({scene, skyline, camera = null, roof: given = null}) 
     }
   }
   return {state, group, update};
+}
+
+// Flags on the landmarks' poles: the same flag as the tower's, turned
+// downwind by the same METAR, and waving once the camera is near. They are
+// a few metres long, so instead of a cloth solver each runs a travelling wave
+// down its length, growing towards the fly end -- the way a small flag
+// flutters -- at a rate set by the wind at its height.
+const WAVE_NEAR = 250, WAVE_FAR = 450;          // waving fades in between these camera distances (m)
+
+export function createFlagSet({scene, camera = null}) {
+  const material = new THREE.MeshStandardMaterial({map: flagTexture(), side: THREE.DoubleSide, roughness: 0.85});
+  const flags = [], state = {count: 0, windFrom: null, waving: 0};
+  let windFrom = null, surfaceKt = 0;
+
+  /** A flag whose hoist's top corner is at `top` (world), `length` long, 2:3,
+   *  hung under `parent` (a landmark's group, turned only about y) so that
+   *  it shows and hides with it. */
+  function add({top, length, parent = scene}) {
+    const height = length * 2 / 3, columns = 14, rows = 9;
+    const geometry = new THREE.PlaneGeometry(length, height, columns - 1, rows - 1);
+    geometry.translate(length / 2 + 0.08, -height / 2, 0);             // hoist at the pole, top at its top
+    const rest = Float32Array.from(geometry.attributes.position.array);
+    geometry.attributes.position.setUsage(THREE.DynamicDrawUsage);
+    const mesh = new THREE.Mesh(geometry, material);
+    parent.updateWorldMatrix(true, false);
+    mesh.position.copy(parent.worldToLocal(top.clone()));
+    const yawOffset = -parent.rotation.y;
+    mesh.rotation.y = (windFrom === null ? 0 : flagYaw(windFrom)) + yawOffset;
+    parent.add(mesh);
+    flags.push({mesh, rest, length, yawOffset, world: top.clone(), phase: flags.length * 1.7, still: true});
+    state.count = flags.length;
+    return mesh;
+  }
+
+  windFeed().subscribe(({wind: w}) => {
+    if (!w) return;
+    if (Number.isFinite(w.speed_kt)) surfaceKt = Math.max(0, w.speed_kt);
+    if (Number.isFinite(w.dir)) {
+      windFrom = w.dir;
+      for (const f of flags) f.mesh.rotation.y = flagYaw(windFrom) + f.yawOffset;
+    }
+    Object.assign(state, {windFrom, windKt: surfaceKt});
+  });
+
+  const eye = new THREE.Vector3();
+  function update(nowMs) {
+    if (!camera || !Number.isFinite(nowMs)) return;
+    camera.getWorldPosition(eye);
+    const t = nowMs / 1000;
+    let waving = 0;
+    for (const f of flags) {
+      const {mesh, rest, length} = f;
+      let visible = true;
+      for (let o = mesh; o; o = o.parent) visible = visible && o.visible;
+      const d = eye.distanceTo(f.world);
+      const strength = visible ? Math.min(1, Math.max(0, (WAVE_FAR - d) / (WAVE_FAR - WAVE_NEAR))) : 0;
+      if (strength === 0) {
+        if (!f.still) { mesh.geometry.attributes.position.array.set(rest); mesh.geometry.attributes.position.needsUpdate = true; mesh.geometry.computeVertexNormals(); f.still = true; }
+        continue;
+      }
+      waving++;
+      f.still = false;
+      // Wind at the flag's height; a small flag flutters a few times a second
+      // in a moderate breeze, faster as the wind rises.
+      const u = windAloft(surfaceKt, f.world.y) * 0.514444;
+      const frequency = Math.min(4, Math.max(0.6, 0.8 * u / length)), k = 2 * Math.PI / (0.9 * length);
+      const amplitude = strength * length * (0.05 + 0.07 * Math.min(1, u / 8));
+      const p = mesh.geometry.attributes.position.array, w = 2 * Math.PI * frequency;
+      for (let i = 0; i < p.length; i += 3) {
+        const x = rest[i], along = Math.max(0, (x - 0.08) / length), y = rest[i + 1];
+        const swing = amplitude * along ** 1.4;
+        p[i + 2] = swing * Math.sin(k * x - w * t + f.phase) + 0.3 * swing * Math.sin(1.7 * k * x - 1.3 * w * t + y);
+        p[i] = x - 0.08 * swing * along;                                  // the fly end draws in a little as it swings
+        p[i + 1] = y - 0.04 * length * along * (1 - Math.min(1, u / 6)); // and sags in light air
+      }
+      mesh.geometry.attributes.position.needsUpdate = true;
+      mesh.geometry.computeVertexNormals();
+    }
+    state.waving = waving;
+  }
+  return {state, add, update, flags};
 }
