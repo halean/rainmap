@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {freshCamera, rainClasses, rainColors, mercator, gaugeValue, cameraDensitySampler, cameraRainRGB} from './weather-data.js';
+import {freshCamera, rainClasses, mercator, gaugeValue, cameraDensitySampler, cameraRainRGB} from './weather-data.js';
 const $ = id => document.getElementById(id);
 const time = iso => Number.isFinite(Date.parse(iso)) ? new Date(iso).toLocaleString('en-GB', {timeZone:'Asia/Ho_Chi_Minh'}) + ' ICT' : 'unknown time';
 export function createWeather({scene, project, manifest}) {
@@ -46,11 +46,9 @@ export function createWeather({scene, project, manifest}) {
     // Kept for 3d/lightning.js: which currently-reporting cameras are wet
     // enough to plausibly be under a thunderstorm, and where.
     lastRainPoints = points.map(p => {const [x,z] = project(p.lon,p.lat); return {x, z, classIndex: rainClasses[p.rain]};});
-    const positions = [], colors = [], drops = [], dropColors = [];
-    for (const p of points) {
-      const [x,z] = project(p.lon,p.lat), level = rainClasses[p.rain], c = new THREE.Color(rainColors[level]);
-      positions.push(x,35,z); colors.push(c.r,c.g,c.b);
-    }
+    // No marker at each camera: the squares showed through every building. The cameras
+    // drive the density field and the falling rain below, and the readings list.
+    const drops = [], dropColors = [];
     const sample=cameraDensitySampler(points), [west,north,east,south]=manifest.boundsXZ;
     const lonScale=111320*Math.cos(manifest.originLonLat[1]*Math.PI/180);
     const at=(x,z)=>sample(manifest.originLonLat[0]+x/lonScale,manifest.originLonLat[1]-z/111320);
@@ -78,8 +76,6 @@ export function createWeather({scene, project, manifest}) {
       drops.push(x,y,z,x,y+45,z);dropColors.push(c.r,c.g,c.b,c.r,c.g,c.b);rainBase.push(y);
     }
     state.rainParticleCount=rainBase.length;
-    const geo = new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3)); geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
-    groups.rain.add(new THREE.Points(geo,new THREE.PointsMaterial({vertexColors:true,size:7,sizeAttenuation:false,depthTest:false})));
     const dg = new THREE.BufferGeometry(); dg.setAttribute('position',new THREE.Float32BufferAttribute(drops,3)); dg.setAttribute('color',new THREE.Float32BufferAttribute(dropColors,3));
     rain = new THREE.LineSegments(dg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.5,depthWrite:false})); groups.rain.add(rain);
     state.cameraCount = points.length;
