@@ -20,6 +20,7 @@ NOTES.md
 /3d/assets/*
 !/3d/assets/*.glb
 !/3d/assets/*.json
+!/3d/assets/LICENSE.md
 !/3d/assets/tiles/
 /3d/assets/tiles/*
 !/3d/assets/tiles/*.glb

@@ -349,3 +349,31 @@ same weather APIs as the main map. Generated model assets are excluded from
 Git and must be rebuilt after a fresh checkout. See [3D asset rebuild instructions](3d/README.md)
 for the isolated Python environment, source OSM/camera data, staged build,
 validation and publishing commands.
+
+## License
+
+The project's original source code, documentation, and original procedural
+model/artwork contributions are licensed under the [MIT License](LICENSE).
+Copyright (c) 2026 Le An Ha. MIT permits reuse, modification, redistribution,
+and commercial use, provided the copyright and permission notices are retained.
+The software is provided without warranty.
+
+Third-party material retains its own licenses and terms; the MIT grant covers
+only this project's original contributions:
+
+- **OpenStreetMap:** © OpenStreetMap contributors. The source map database is
+  licensed under [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/).
+  OSM-derived data and generated map/model assets remain subject to applicable
+  ODbL obligations and [OSM attribution requirements](https://www.openstreetmap.org/copyright).
+  Generating a GLB or other asset does not remove those obligations.
+  [3d/assets/LICENSE.md](3d/assets/LICENSE.md) lists which asset files are ODbL and
+  which are MIT.
+- **Libraries:** dependencies retain their upstream licenses, including the
+  bundled [Three.js license](3d/vendor/THREE-LICENSE.txt).
+- **External data and imagery:** camera frames, weather feeds, satellite imagery,
+  reference photographs, and other externally sourced material remain subject
+  to their respective providers' terms. Their availability through this app
+  does not place them under MIT or grant additional redistribution rights.
+
+Source references and asset provenance are documented in [3d/README.md](3d/README.md)
+and the individual model notes in `3d/`.
