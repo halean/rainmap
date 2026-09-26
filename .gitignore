@@ -14,8 +14,15 @@ data/test_sets/
 logs/
 NOTES.md
 
-# Generated 3D map models and build inputs; rebuild with 3d/tools/build.py.
-/3d/assets/
+# 3D build inputs and caches. In 3d/assets/ the generated models (.glb) and data
+# (.json: the manifest, cameras, streets) are versioned; the preview images are
+# not. Rebuild them with 3d/tools/build.py and the tools beside it.
+/3d/assets/*
+!/3d/assets/*.glb
+!/3d/assets/*.json
+!/3d/assets/tiles/
+/3d/assets/tiles/*
+!/3d/assets/tiles/*.glb
 /3d/build-cache/
 /3d/.venv-build/
 /3d/**/*.osm.pbf

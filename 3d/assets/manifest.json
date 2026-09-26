@@ -1,0 +1,8671 @@
+{
+  "title": "HCMC · city streets",
+  "extentDescription": "Bounding rectangle of the supplied HCMC camera locations, plus 0.01 degrees (~1.1 km) on each side; not the municipal administrative boundary.",
+  "boundsLonLat": [
+    106.442713012695,
+    10.6324723207925,
+    106.860624084473,
+    10.9982952554727
+  ],
+  "boundsXZ": [
+    -22665.70741653692,
+    -20961.027839220864,
+    23030.60088627906,
+    19762.381249378952
+  ],
+  "originLonLat": [
+    106.65,
+    10.81
+  ],
+  "coordinates": "Local metres: X east, Y up, Z south; equirectangular projection at origin latitude.",
+  "tileSizeMetres": 2000,
+  "source": {
+    "url": "https://download.geofabrik.de/asia/vietnam-260918.osm.pbf",
+    "sha256": "c9809abbc9ea4c9be0be9823f09a1b1268abb86249040245a8ba193a8057231b",
+    "bytes": 328969116,
+    "attribution": "© OpenStreetMap contributors",
+    "license": "ODbL 1.0",
+    "licenseUrl": "https://www.openstreetmap.org/copyright"
+  },
+  "builtAt": "2026-09-19T14:28:16.674568+00:00",
+  "cameraCount": 753,
+  "statistics": {
+    "widthAssumed": 176008,
+    "roadWays": 176134,
+    "roadLengthMetres": 23687555.196919747,
+    "bridgeWays": 4044,
+    "widthTagged": 126,
+    "tunnelWays": 206,
+    "buildingFeatures": 95491,
+    "buildingHeightAssumed": 91675,
+    "greenFeatures": 1316,
+    "waterFeatures": 1973,
+    "buildingHeightTagged": 3816
+  },
+  "excludedHighways": {
+    "construction": 738,
+    "proposed": 115
+  },
+  "geometryErrors": {},
+  "assumptions": [
+    "Road alignments and building footprints are OSM-derived, not surveyed here.",
+    "Road widths use OSM width where present, otherwise lanes × 3.2 m or class defaults.",
+    "Building heights use height, levels × 3.2 m, or a 10.5 m default.",
+    "Bridge decks use 6 m per OSM layer with schematic 70 m approach ramps; not measured elevation.",
+    "Tunnels are modelled below the ground plane and are normally hidden.",
+    "Terrain is flat; no junction turning simulation, traffic or CCTV capture is running.",
+    "Coverage reflects OSM completeness. Missing buildings are not proof of empty land.",
+    "Overview road lines are simplified by up to 2 m for display; detailed road tiles use original centreline vertices."
+  ],
+  "overview": {
+    "url": "assets/overview.glb",
+    "bytes": 14422700,
+    "vertices": 984455
+  },
+  "tiles": [
+    {
+      "id": "-10_-1",
+      "url": "assets/tiles/-10_-1.glb",
+      "bounds": [
+        -20000,
+        -2000,
+        -18000,
+        0
+      ],
+      "counts": {
+        "roads": 272
+      },
+      "bytes": 631996,
+      "vertices": 26226
+    },
+    {
+      "id": "-10_-10",
+      "url": "assets/tiles/-10_-10.glb",
+      "bounds": [
+        -20000,
+        -20000,
+        -18000,
+        -18000
+      ],
+      "counts": {
+        "roads": 320,
+        "building": 11,
+        "green": 4
+      },
+      "bytes": 780584,
+      "vertices": 32301
+    },
+    {
+      "id": "-10_-11",
+      "url": "assets/tiles/-10_-11.glb",
+      "bounds": [
+        -20000,
+        -22000,
+        -18000,
+        -20000
+      ],
+      "counts": {
+        "roads": 83
+      },
+      "bytes": 259684,
+      "vertices": 10656
+    },
+    {
+      "id": "-10_-2",
+      "url": "assets/tiles/-10_-2.glb",
+      "bounds": [
+        -20000,
+        -4000,
+        -18000,
+        -2000
+      ],
+      "counts": {
+        "roads": 207,
+        "water": 1
+      },
+      "bytes": 541732,
+      "vertices": 22437
+    },
+    {
+      "id": "-10_-3",
+      "url": "assets/tiles/-10_-3.glb",
+      "bounds": [
+        -20000,
+        -6000,
+        -18000,
+        -4000
+      ],
+      "counts": {
+        "roads": 134,
+        "water": 2
+      },
+      "bytes": 294428,
+      "vertices": 12075
+    },
+    {
+      "id": "-10_-4",
+      "url": "assets/tiles/-10_-4.glb",
+      "bounds": [
+        -20000,
+        -8000,
+        -18000,
+        -6000
+      ],
+      "counts": {
+        "roads": 203
+      },
+      "bytes": 522688,
+      "vertices": 21672
+    },
+    {
+      "id": "-10_-5",
+      "url": "assets/tiles/-10_-5.glb",
+      "bounds": [
+        -20000,
+        -10000,
+        -18000,
+        -8000
+      ],
+      "counts": {
+        "roads": 114,
+        "water": 1
+      },
+      "bytes": 253144,
+      "vertices": 10413
+    },
+    {
+      "id": "-10_-6",
+      "url": "assets/tiles/-10_-6.glb",
+      "bounds": [
+        -20000,
+        -12000,
+        -18000,
+        -10000
+      ],
+      "counts": {
+        "roads": 64,
+        "water": 1
+      },
+      "bytes": 141424,
+      "vertices": 5700
+    },
+    {
+      "id": "-10_-7",
+      "url": "assets/tiles/-10_-7.glb",
+      "bounds": [
+        -20000,
+        -14000,
+        -18000,
+        -12000
+      ],
+      "counts": {
+        "roads": 95,
+        "water": 1
+      },
+      "bytes": 157028,
+      "vertices": 6351
+    },
+    {
+      "id": "-10_-8",
+      "url": "assets/tiles/-10_-8.glb",
+      "bounds": [
+        -20000,
+        -16000,
+        -18000,
+        -14000
+      ],
+      "counts": {
+        "roads": 54,
+        "water": 2
+      },
+      "bytes": 251640,
+      "vertices": 10350
+    },
+    {
+      "id": "-10_-9",
+      "url": "assets/tiles/-10_-9.glb",
+      "bounds": [
+        -20000,
+        -18000,
+        -18000,
+        -16000
+      ],
+      "counts": {
+        "roads": 211,
+        "building": 7
+      },
+      "bytes": 553104,
+      "vertices": 22881
+    },
+    {
+      "id": "-10_0",
+      "url": "assets/tiles/-10_0.glb",
+      "bounds": [
+        -20000,
+        0,
+        -18000,
+        2000
+      ],
+      "counts": {
+        "roads": 194
+      },
+      "bytes": 380996,
+      "vertices": 15768
+    },
+    {
+      "id": "-10_1",
+      "url": "assets/tiles/-10_1.glb",
+      "bounds": [
+        -20000,
+        2000,
+        -18000,
+        4000
+      ],
+      "counts": {
+        "roads": 83,
+        "water": 3
+      },
+      "bytes": 172424,
+      "vertices": 7050
+    },
+    {
+      "id": "-10_2",
+      "url": "assets/tiles/-10_2.glb",
+      "bounds": [
+        -20000,
+        4000,
+        -18000,
+        6000
+      ],
+      "counts": {
+        "roads": 85,
+        "water": 1
+      },
+      "bytes": 150188,
+      "vertices": 6123
+    },
+    {
+      "id": "-10_3",
+      "url": "assets/tiles/-10_3.glb",
+      "bounds": [
+        -20000,
+        6000,
+        -18000,
+        8000
+      ],
+      "counts": {
+        "roads": 114,
+        "water": 6,
+        "building": 1
+      },
+      "bytes": 241628,
+      "vertices": 9876
+    },
+    {
+      "id": "-10_4",
+      "url": "assets/tiles/-10_4.glb",
+      "bounds": [
+        -20000,
+        8000,
+        -18000,
+        10000
+      ],
+      "counts": {
+        "roads": 39,
+        "water": 1
+      },
+      "bytes": 114432,
+      "vertices": 4605
+    },
+    {
+      "id": "-10_5",
+      "url": "assets/tiles/-10_5.glb",
+      "bounds": [
+        -20000,
+        10000,
+        -18000,
+        12000
+      ],
+      "counts": {
+        "roads": 29
+      },
+      "bytes": 45752,
+      "vertices": 1800
+    },
+    {
+      "id": "-10_6",
+      "url": "assets/tiles/-10_6.glb",
+      "bounds": [
+        -20000,
+        12000,
+        -18000,
+        14000
+      ],
+      "counts": {
+        "roads": 49
+      },
+      "bytes": 81604,
+      "vertices": 3294
+    },
+    {
+      "id": "-10_7",
+      "url": "assets/tiles/-10_7.glb",
+      "bounds": [
+        -20000,
+        14000,
+        -18000,
+        16000
+      ],
+      "counts": {
+        "roads": 78
+      },
+      "bytes": 155484,
+      "vertices": 6372
+    },
+    {
+      "id": "-10_8",
+      "url": "assets/tiles/-10_8.glb",
+      "bounds": [
+        -20000,
+        16000,
+        -18000,
+        18000
+      ],
+      "counts": {
+        "roads": 205,
+        "green": 3,
+        "building": 7,
+        "water": 2
+      },
+      "bytes": 466892,
+      "vertices": 19203
+    },
+    {
+      "id": "-10_9",
+      "url": "assets/tiles/-10_9.glb",
+      "bounds": [
+        -20000,
+        18000,
+        -18000,
+        20000
+      ],
+      "counts": {
+        "roads": 197,
+        "building": 9,
+        "water": 3,
+        "green": 1
+      },
+      "bytes": 467576,
+      "vertices": 19230
+    },
+    {
+      "id": "-11_-1",
+      "url": "assets/tiles/-11_-1.glb",
+      "bounds": [
+        -22000,
+        -2000,
+        -20000,
+        0
+      ],
+      "counts": {
+        "roads": 327,
+        "building": 4,
+        "green": 2
+      },
+      "bytes": 738172,
+      "vertices": 30534
+    },
+    {
+      "id": "-11_-10",
+      "url": "assets/tiles/-11_-10.glb",
+      "bounds": [
+        -22000,
+        -20000,
+        -20000,
+        -18000
+      ],
+      "counts": {
+        "roads": 165,
+        "building": 2
+      },
+      "bytes": 435504,
+      "vertices": 17952
+    },
+    {
+      "id": "-11_-11",
+      "url": "assets/tiles/-11_-11.glb",
+      "bounds": [
+        -22000,
+        -22000,
+        -20000,
+        -20000
+      ],
+      "counts": {
+        "roads": 94
+      },
+      "bytes": 228160,
+      "vertices": 9342
+    },
+    {
+      "id": "-11_-2",
+      "url": "assets/tiles/-11_-2.glb",
+      "bounds": [
+        -22000,
+        -4000,
+        -20000,
+        -2000
+      ],
+      "counts": {
+        "roads": 211
+      },
+      "bytes": 610044,
+      "vertices": 25254
+    },
+    {
+      "id": "-11_-3",
+      "url": "assets/tiles/-11_-3.glb",
+      "bounds": [
+        -22000,
+        -6000,
+        -20000,
+        -4000
+      ],
+      "counts": {
+        "roads": 142,
+        "water": 2
+      },
+      "bytes": 348948,
+      "vertices": 14376
+    },
+    {
+      "id": "-11_-4",
+      "url": "assets/tiles/-11_-4.glb",
+      "bounds": [
+        -22000,
+        -8000,
+        -20000,
+        -6000
+      ],
+      "counts": {
+        "roads": 113,
+        "water": 1
+      },
+      "bytes": 307948,
+      "vertices": 12696
+    },
+    {
+      "id": "-11_-5",
+      "url": "assets/tiles/-11_-5.glb",
+      "bounds": [
+        -22000,
+        -10000,
+        -20000,
+        -8000
+      ],
+      "counts": {
+        "roads": 160,
+        "water": 4
+      },
+      "bytes": 363896,
+      "vertices": 15027
+    },
+    {
+      "id": "-11_-6",
+      "url": "assets/tiles/-11_-6.glb",
+      "bounds": [
+        -22000,
+        -12000,
+        -20000,
+        -10000
+      ],
+      "counts": {
+        "roads": 119,
+        "water": 4
+      },
+      "bytes": 298896,
+      "vertices": 12348
+    },
+    {
+      "id": "-11_-7",
+      "url": "assets/tiles/-11_-7.glb",
+      "bounds": [
+        -22000,
+        -14000,
+        -20000,
+        -12000
+      ],
+      "counts": {
+        "roads": 78,
+        "water": 4,
+        "building": 2
+      },
+      "bytes": 146164,
+      "vertices": 5871
+    },
+    {
+      "id": "-11_-8",
+      "url": "assets/tiles/-11_-8.glb",
+      "bounds": [
+        -22000,
+        -16000,
+        -20000,
+        -14000
+      ],
+      "counts": {
+        "roads": 64,
+        "water": 2,
+        "building": 5
+      },
+      "bytes": 172660,
+      "vertices": 7002
+    },
+    {
+      "id": "-11_-9",
+      "url": "assets/tiles/-11_-9.glb",
+      "bounds": [
+        -22000,
+        -18000,
+        -20000,
+        -16000
+      ],
+      "counts": {
+        "roads": 60
+      },
+      "bytes": 204308,
+      "vertices": 8406
+    },
+    {
+      "id": "-11_0",
+      "url": "assets/tiles/-11_0.glb",
+      "bounds": [
+        -22000,
+        0,
+        -20000,
+        2000
+      ],
+      "counts": {
+        "roads": 165
+      },
+      "bytes": 360684,
+      "vertices": 14922
+    },
+    {
+      "id": "-11_1",
+      "url": "assets/tiles/-11_1.glb",
+      "bounds": [
+        -22000,
+        2000,
+        -20000,
+        4000
+      ],
+      "counts": {
+        "roads": 37,
+        "water": 2
+      },
+      "bytes": 81592,
+      "vertices": 3237
+    },
+    {
+      "id": "-11_2",
+      "url": "assets/tiles/-11_2.glb",
+      "bounds": [
+        -22000,
+        4000,
+        -20000,
+        6000
+      ],
+      "counts": {
+        "roads": 44,
+        "water": 1
+      },
+      "bytes": 71856,
+      "vertices": 2832
+    },
+    {
+      "id": "-11_3",
+      "url": "assets/tiles/-11_3.glb",
+      "bounds": [
+        -22000,
+        6000,
+        -20000,
+        8000
+      ],
+      "counts": {
+        "roads": 37,
+        "water": 3
+      },
+      "bytes": 73524,
+      "vertices": 2901
+    },
+    {
+      "id": "-11_4",
+      "url": "assets/tiles/-11_4.glb",
+      "bounds": [
+        -22000,
+        8000,
+        -20000,
+        10000
+      ],
+      "counts": {
+        "roads": 56,
+        "water": 1
+      },
+      "bytes": 128716,
+      "vertices": 5229
+    },
+    {
+      "id": "-11_5",
+      "url": "assets/tiles/-11_5.glb",
+      "bounds": [
+        -22000,
+        10000,
+        -20000,
+        12000
+      ],
+      "counts": {
+        "roads": 28
+      },
+      "bytes": 27608,
+      "vertices": 1044
+    },
+    {
+      "id": "-11_6",
+      "url": "assets/tiles/-11_6.glb",
+      "bounds": [
+        -22000,
+        12000,
+        -20000,
+        14000
+      ],
+      "counts": {
+        "roads": 63,
+        "building": 1
+      },
+      "bytes": 99660,
+      "vertices": 4017
+    },
+    {
+      "id": "-11_7",
+      "url": "assets/tiles/-11_7.glb",
+      "bounds": [
+        -22000,
+        14000,
+        -20000,
+        16000
+      ],
+      "counts": {
+        "roads": 134,
+        "water": 1
+      },
+      "bytes": 304240,
+      "vertices": 12513
+    },
+    {
+      "id": "-11_8",
+      "url": "assets/tiles/-11_8.glb",
+      "bounds": [
+        -22000,
+        16000,
+        -20000,
+        18000
+      ],
+      "counts": {
+        "roads": 211,
+        "building": 1,
+        "water": 3
+      },
+      "bytes": 686560,
+      "vertices": 28386
+    },
+    {
+      "id": "-11_9",
+      "url": "assets/tiles/-11_9.glb",
+      "bounds": [
+        -22000,
+        18000,
+        -20000,
+        20000
+      ],
+      "counts": {
+        "roads": 107,
+        "building": 3,
+        "water": 1
+      },
+      "bytes": 332588,
+      "vertices": 13665
+    },
+    {
+      "id": "-12_-1",
+      "url": "assets/tiles/-12_-1.glb",
+      "bounds": [
+        -24000,
+        -2000,
+        -22000,
+        0
+      ],
+      "counts": {
+        "roads": 51
+      },
+      "bytes": 105368,
+      "vertices": 4284
+    },
+    {
+      "id": "-12_-10",
+      "url": "assets/tiles/-12_-10.glb",
+      "bounds": [
+        -24000,
+        -20000,
+        -22000,
+        -18000
+      ],
+      "counts": {
+        "roads": 31
+      },
+      "bytes": 111160,
+      "vertices": 4554
+    },
+    {
+      "id": "-12_-11",
+      "url": "assets/tiles/-12_-11.glb",
+      "bounds": [
+        -24000,
+        -22000,
+        -22000,
+        -20000
+      ],
+      "counts": {
+        "roads": 51
+      },
+      "bytes": 125244,
+      "vertices": 5112
+    },
+    {
+      "id": "-12_-2",
+      "url": "assets/tiles/-12_-2.glb",
+      "bounds": [
+        -24000,
+        -4000,
+        -22000,
+        -2000
+      ],
+      "counts": {
+        "roads": 58
+      },
+      "bytes": 129816,
+      "vertices": 5274
+    },
+    {
+      "id": "-12_-3",
+      "url": "assets/tiles/-12_-3.glb",
+      "bounds": [
+        -24000,
+        -6000,
+        -22000,
+        -4000
+      ],
+      "counts": {
+        "roads": 31
+      },
+      "bytes": 109524,
+      "vertices": 4428
+    },
+    {
+      "id": "-12_-4",
+      "url": "assets/tiles/-12_-4.glb",
+      "bounds": [
+        -24000,
+        -8000,
+        -22000,
+        -6000
+      ],
+      "counts": {
+        "roads": 36
+      },
+      "bytes": 148748,
+      "vertices": 6120
+    },
+    {
+      "id": "-12_-5",
+      "url": "assets/tiles/-12_-5.glb",
+      "bounds": [
+        -24000,
+        -10000,
+        -22000,
+        -8000
+      ],
+      "counts": {
+        "roads": 19
+      },
+      "bytes": 71228,
+      "vertices": 2862
+    },
+    {
+      "id": "-12_-6",
+      "url": "assets/tiles/-12_-6.glb",
+      "bounds": [
+        -24000,
+        -12000,
+        -22000,
+        -10000
+      ],
+      "counts": {
+        "roads": 31,
+        "water": 1
+      },
+      "bytes": 107300,
+      "vertices": 4365
+    },
+    {
+      "id": "-12_-7",
+      "url": "assets/tiles/-12_-7.glb",
+      "bounds": [
+        -24000,
+        -14000,
+        -22000,
+        -12000
+      ],
+      "counts": {
+        "roads": 26,
+        "water": 4
+      },
+      "bytes": 66080,
+      "vertices": 2619
+    },
+    {
+      "id": "-12_-8",
+      "url": "assets/tiles/-12_-8.glb",
+      "bounds": [
+        -24000,
+        -16000,
+        -22000,
+        -14000
+      ],
+      "counts": {
+        "roads": 41,
+        "water": 2
+      },
+      "bytes": 78988,
+      "vertices": 3156
+    },
+    {
+      "id": "-12_-9",
+      "url": "assets/tiles/-12_-9.glb",
+      "bounds": [
+        -24000,
+        -18000,
+        -22000,
+        -16000
+      ],
+      "counts": {
+        "roads": 8
+      },
+      "bytes": 14388,
+      "vertices": 522
+    },
+    {
+      "id": "-12_0",
+      "url": "assets/tiles/-12_0.glb",
+      "bounds": [
+        -24000,
+        0,
+        -22000,
+        2000
+      ],
+      "counts": {
+        "roads": 54
+      },
+      "bytes": 66488,
+      "vertices": 2664
+    },
+    {
+      "id": "-12_1",
+      "url": "assets/tiles/-12_1.glb",
+      "bounds": [
+        -24000,
+        2000,
+        -22000,
+        4000
+      ],
+      "counts": {
+        "roads": 9,
+        "building": 1,
+        "water": 3
+      },
+      "bytes": 22816,
+      "vertices": 816
+    },
+    {
+      "id": "-12_2",
+      "url": "assets/tiles/-12_2.glb",
+      "bounds": [
+        -24000,
+        4000,
+        -22000,
+        6000
+      ],
+      "counts": {
+        "roads": 29
+      },
+      "bytes": 44628,
+      "vertices": 1782
+    },
+    {
+      "id": "-12_3",
+      "url": "assets/tiles/-12_3.glb",
+      "bounds": [
+        -24000,
+        6000,
+        -22000,
+        8000
+      ],
+      "counts": {
+        "roads": 30
+      },
+      "bytes": 36248,
+      "vertices": 1404
+    },
+    {
+      "id": "-12_4",
+      "url": "assets/tiles/-12_4.glb",
+      "bounds": [
+        -24000,
+        8000,
+        -22000,
+        10000
+      ],
+      "counts": {
+        "roads": 25,
+        "water": 1
+      },
+      "bytes": 36892,
+      "vertices": 1374
+    },
+    {
+      "id": "-12_5",
+      "url": "assets/tiles/-12_5.glb",
+      "bounds": [
+        -24000,
+        10000,
+        -22000,
+        12000
+      ],
+      "counts": {
+        "roads": 34
+      },
+      "bytes": 66744,
+      "vertices": 2646
+    },
+    {
+      "id": "-12_6",
+      "url": "assets/tiles/-12_6.glb",
+      "bounds": [
+        -24000,
+        12000,
+        -22000,
+        14000
+      ],
+      "counts": {
+        "roads": 53,
+        "building": 2
+      },
+      "bytes": 89188,
+      "vertices": 3552
+    },
+    {
+      "id": "-12_7",
+      "url": "assets/tiles/-12_7.glb",
+      "bounds": [
+        -24000,
+        14000,
+        -22000,
+        16000
+      ],
+      "counts": {
+        "roads": 25,
+        "water": 1
+      },
+      "bytes": 59580,
+      "vertices": 2319
+    },
+    {
+      "id": "-12_8",
+      "url": "assets/tiles/-12_8.glb",
+      "bounds": [
+        -24000,
+        16000,
+        -22000,
+        18000
+      ],
+      "counts": {
+        "roads": 83,
+        "water": 3
+      },
+      "bytes": 223016,
+      "vertices": 9129
+    },
+    {
+      "id": "-12_9",
+      "url": "assets/tiles/-12_9.glb",
+      "bounds": [
+        -24000,
+        18000,
+        -22000,
+        20000
+      ],
+      "counts": {
+        "roads": 39,
+        "water": 1
+      },
+      "bytes": 91392,
+      "vertices": 3645
+    },
+    {
+      "id": "-1_-1",
+      "url": "assets/tiles/-1_-1.glb",
+      "bounds": [
+        -2000,
+        -2000,
+        0,
+        0
+      ],
+      "counts": {
+        "roads": 596,
+        "green": 3,
+        "building": 273,
+        "water": 6
+      },
+      "bytes": 1169604,
+      "vertices": 48453
+    },
+    {
+      "id": "-1_-10",
+      "url": "assets/tiles/-1_-10.glb",
+      "bounds": [
+        -2000,
+        -20000,
+        0,
+        -18000
+      ],
+      "counts": {
+        "roads": 296,
+        "water": 5,
+        "green": 2,
+        "building": 15
+      },
+      "bytes": 923352,
+      "vertices": 38223
+    },
+    {
+      "id": "-1_-11",
+      "url": "assets/tiles/-1_-11.glb",
+      "bounds": [
+        -2000,
+        -22000,
+        0,
+        -20000
+      ],
+      "counts": {
+        "roads": 159,
+        "water": 1,
+        "building": 1
+      },
+      "bytes": 465444,
+      "vertices": 19200
+    },
+    {
+      "id": "-1_-2",
+      "url": "assets/tiles/-1_-2.glb",
+      "bounds": [
+        -2000,
+        -4000,
+        0,
+        -2000
+      ],
+      "counts": {
+        "roads": 1310,
+        "water": 3,
+        "green": 6,
+        "building": 45
+      },
+      "bytes": 1815796,
+      "vertices": 75378
+    },
+    {
+      "id": "-1_-3",
+      "url": "assets/tiles/-1_-3.glb",
+      "bounds": [
+        -2000,
+        -6000,
+        0,
+        -4000
+      ],
+      "counts": {
+        "roads": 1001,
+        "water": 1,
+        "green": 1,
+        "building": 175
+      },
+      "bytes": 1879380,
+      "vertices": 78027
+    },
+    {
+      "id": "-1_-4",
+      "url": "assets/tiles/-1_-4.glb",
+      "bounds": [
+        -2000,
+        -8000,
+        0,
+        -6000
+      ],
+      "counts": {
+        "roads": 769,
+        "water": 5,
+        "building": 182,
+        "green": 4
+      },
+      "bytes": 1419656,
+      "vertices": 58869
+    },
+    {
+      "id": "-1_-5",
+      "url": "assets/tiles/-1_-5.glb",
+      "bounds": [
+        -2000,
+        -10000,
+        0,
+        -8000
+      ],
+      "counts": {
+        "roads": 646,
+        "water": 1,
+        "building": 2
+      },
+      "bytes": 1141304,
+      "vertices": 47331
+    },
+    {
+      "id": "-1_-6",
+      "url": "assets/tiles/-1_-6.glb",
+      "bounds": [
+        -2000,
+        -12000,
+        0,
+        -10000
+      ],
+      "counts": {
+        "roads": 470,
+        "water": 5,
+        "building": 52,
+        "green": 3
+      },
+      "bytes": 1036132,
+      "vertices": 42921
+    },
+    {
+      "id": "-1_-7",
+      "url": "assets/tiles/-1_-7.glb",
+      "bounds": [
+        -2000,
+        -14000,
+        0,
+        -12000
+      ],
+      "counts": {
+        "roads": 376,
+        "water": 6,
+        "building": 1,
+        "green": 3
+      },
+      "bytes": 930412,
+      "vertices": 38517
+    },
+    {
+      "id": "-1_-8",
+      "url": "assets/tiles/-1_-8.glb",
+      "bounds": [
+        -2000,
+        -16000,
+        0,
+        -14000
+      ],
+      "counts": {
+        "roads": 309,
+        "water": 2,
+        "building": 4
+      },
+      "bytes": 607156,
+      "vertices": 25077
+    },
+    {
+      "id": "-1_-9",
+      "url": "assets/tiles/-1_-9.glb",
+      "bounds": [
+        -2000,
+        -18000,
+        0,
+        -16000
+      ],
+      "counts": {
+        "roads": 258,
+        "water": 4,
+        "building": 1
+      },
+      "bytes": 665632,
+      "vertices": 27513
+    },
+    {
+      "id": "-1_0",
+      "url": "assets/tiles/-1_0.glb",
+      "bounds": [
+        -2000,
+        0,
+        0,
+        2000
+      ],
+      "counts": {
+        "roads": 1129,
+        "green": 17,
+        "building": 542
+      },
+      "bytes": 2321148,
+      "vertices": 96462
+    },
+    {
+      "id": "-1_1",
+      "url": "assets/tiles/-1_1.glb",
+      "bounds": [
+        -2000,
+        2000,
+        0,
+        4000
+      ],
+      "counts": {
+        "roads": 1493,
+        "building": 418,
+        "green": 13,
+        "water": 3
+      },
+      "bytes": 2953420,
+      "vertices": 122778
+    },
+    {
+      "id": "-1_2",
+      "url": "assets/tiles/-1_2.glb",
+      "bounds": [
+        -2000,
+        4000,
+        0,
+        6000
+      ],
+      "counts": {
+        "roads": 1767,
+        "water": 5,
+        "building": 802,
+        "green": 12
+      },
+      "bytes": 3582064,
+      "vertices": 148971
+    },
+    {
+      "id": "-1_3",
+      "url": "assets/tiles/-1_3.glb",
+      "bounds": [
+        -2000,
+        6000,
+        0,
+        8000
+      ],
+      "counts": {
+        "roads": 1911,
+        "water": 5,
+        "building": 339,
+        "green": 10
+      },
+      "bytes": 3497432,
+      "vertices": 145446
+    },
+    {
+      "id": "-1_4",
+      "url": "assets/tiles/-1_4.glb",
+      "bounds": [
+        -2000,
+        8000,
+        0,
+        10000
+      ],
+      "counts": {
+        "roads": 882,
+        "water": 13,
+        "building": 198,
+        "green": 4
+      },
+      "bytes": 1564348,
+      "vertices": 64902
+    },
+    {
+      "id": "-1_5",
+      "url": "assets/tiles/-1_5.glb",
+      "bounds": [
+        -2000,
+        10000,
+        0,
+        12000
+      ],
+      "counts": {
+        "roads": 341,
+        "water": 50,
+        "building": 615,
+        "green": 5
+      },
+      "bytes": 1253328,
+      "vertices": 51912
+    },
+    {
+      "id": "-1_6",
+      "url": "assets/tiles/-1_6.glb",
+      "bounds": [
+        -2000,
+        12000,
+        0,
+        14000
+      ],
+      "counts": {
+        "roads": 255,
+        "water": 5,
+        "building": 29,
+        "green": 2
+      },
+      "bytes": 544356,
+      "vertices": 22401
+    },
+    {
+      "id": "-1_7",
+      "url": "assets/tiles/-1_7.glb",
+      "bounds": [
+        -2000,
+        14000,
+        0,
+        16000
+      ],
+      "counts": {
+        "roads": 210,
+        "water": 3,
+        "building": 6
+      },
+      "bytes": 534872,
+      "vertices": 22035
+    },
+    {
+      "id": "-1_8",
+      "url": "assets/tiles/-1_8.glb",
+      "bounds": [
+        -2000,
+        16000,
+        0,
+        18000
+      ],
+      "counts": {
+        "roads": 204,
+        "water": 12,
+        "building": 16
+      },
+      "bytes": 633416,
+      "vertices": 26172
+    },
+    {
+      "id": "-1_9",
+      "url": "assets/tiles/-1_9.glb",
+      "bounds": [
+        -2000,
+        18000,
+        0,
+        20000
+      ],
+      "counts": {
+        "roads": 195,
+        "water": 25,
+        "building": 111
+      },
+      "bytes": 693372,
+      "vertices": 28638
+    },
+    {
+      "id": "-2_-1",
+      "url": "assets/tiles/-2_-1.glb",
+      "bounds": [
+        -4000,
+        -2000,
+        -2000,
+        0
+      ],
+      "counts": {
+        "roads": 784,
+        "water": 6,
+        "building": 914,
+        "green": 12
+      },
+      "bytes": 2083476,
+      "vertices": 86502
+    },
+    {
+      "id": "-2_-10",
+      "url": "assets/tiles/-2_-10.glb",
+      "bounds": [
+        -4000,
+        -20000,
+        -2000,
+        -18000
+      ],
+      "counts": {
+        "roads": 282,
+        "water": 4,
+        "building": 2
+      },
+      "bytes": 955572,
+      "vertices": 39594
+    },
+    {
+      "id": "-2_-11",
+      "url": "assets/tiles/-2_-11.glb",
+      "bounds": [
+        -4000,
+        -22000,
+        -2000,
+        -20000
+      ],
+      "counts": {
+        "roads": 74,
+        "water": 3,
+        "building": 1
+      },
+      "bytes": 221804,
+      "vertices": 9078
+    },
+    {
+      "id": "-2_-2",
+      "url": "assets/tiles/-2_-2.glb",
+      "bounds": [
+        -4000,
+        -4000,
+        -2000,
+        -2000
+      ],
+      "counts": {
+        "roads": 1015,
+        "water": 2,
+        "building": 566,
+        "green": 2
+      },
+      "bytes": 2002556,
+      "vertices": 83130
+    },
+    {
+      "id": "-2_-3",
+      "url": "assets/tiles/-2_-3.glb",
+      "bounds": [
+        -4000,
+        -6000,
+        -2000,
+        -4000
+      ],
+      "counts": {
+        "roads": 820,
+        "building": 545,
+        "green": 14,
+        "water": 2
+      },
+      "bytes": 2337860,
+      "vertices": 97101
+    },
+    {
+      "id": "-2_-4",
+      "url": "assets/tiles/-2_-4.glb",
+      "bounds": [
+        -4000,
+        -8000,
+        -2000,
+        -6000
+      ],
+      "counts": {
+        "roads": 802,
+        "building": 144,
+        "green": 3
+      },
+      "bytes": 1480644,
+      "vertices": 61440
+    },
+    {
+      "id": "-2_-5",
+      "url": "assets/tiles/-2_-5.glb",
+      "bounds": [
+        -4000,
+        -10000,
+        -2000,
+        -8000
+      ],
+      "counts": {
+        "roads": 637,
+        "building": 1,
+        "water": 1
+      },
+      "bytes": 1262912,
+      "vertices": 52398
+    },
+    {
+      "id": "-2_-6",
+      "url": "assets/tiles/-2_-6.glb",
+      "bounds": [
+        -4000,
+        -12000,
+        -2000,
+        -10000
+      ],
+      "counts": {
+        "roads": 287,
+        "water": 10,
+        "building": 4
+      },
+      "bytes": 889536,
+      "vertices": 36843
+    },
+    {
+      "id": "-2_-7",
+      "url": "assets/tiles/-2_-7.glb",
+      "bounds": [
+        -4000,
+        -14000,
+        -2000,
+        -12000
+      ],
+      "counts": {
+        "roads": 275,
+        "water": 8,
+        "building": 1
+      },
+      "bytes": 832892,
+      "vertices": 34512
+    },
+    {
+      "id": "-2_-8",
+      "url": "assets/tiles/-2_-8.glb",
+      "bounds": [
+        -4000,
+        -16000,
+        -2000,
+        -14000
+      ],
+      "counts": {
+        "roads": 149,
+        "water": 8
+      },
+      "bytes": 614820,
+      "vertices": 25455
+    },
+    {
+      "id": "-2_-9",
+      "url": "assets/tiles/-2_-9.glb",
+      "bounds": [
+        -4000,
+        -18000,
+        -2000,
+        -16000
+      ],
+      "counts": {
+        "roads": 160,
+        "water": 1,
+        "building": 1
+      },
+      "bytes": 416824,
+      "vertices": 17175
+    },
+    {
+      "id": "-2_0",
+      "url": "assets/tiles/-2_0.glb",
+      "bounds": [
+        -4000,
+        0,
+        -2000,
+        2000
+      ],
+      "counts": {
+        "roads": 1266,
+        "building": 487,
+        "water": 5,
+        "green": 20
+      },
+      "bytes": 2379220,
+      "vertices": 98826
+    },
+    {
+      "id": "-2_1",
+      "url": "assets/tiles/-2_1.glb",
+      "bounds": [
+        -4000,
+        2000,
+        -2000,
+        4000
+      ],
+      "counts": {
+        "roads": 998,
+        "building": 150,
+        "green": 18
+      },
+      "bytes": 1669244,
+      "vertices": 69330
+    },
+    {
+      "id": "-2_2",
+      "url": "assets/tiles/-2_2.glb",
+      "bounds": [
+        -4000,
+        4000,
+        -2000,
+        6000
+      ],
+      "counts": {
+        "roads": 1319,
+        "building": 421,
+        "green": 8,
+        "water": 1
+      },
+      "bytes": 2339200,
+      "vertices": 97185
+    },
+    {
+      "id": "-2_3",
+      "url": "assets/tiles/-2_3.glb",
+      "bounds": [
+        -4000,
+        6000,
+        -2000,
+        8000
+      ],
+      "counts": {
+        "roads": 1150,
+        "green": 22,
+        "building": 1086,
+        "water": 3
+      },
+      "bytes": 2952056,
+      "vertices": 122721
+    },
+    {
+      "id": "-2_4",
+      "url": "assets/tiles/-2_4.glb",
+      "bounds": [
+        -4000,
+        8000,
+        -2000,
+        10000
+      ],
+      "counts": {
+        "roads": 1011,
+        "water": 7,
+        "building": 153,
+        "green": 20
+      },
+      "bytes": 1747620,
+      "vertices": 72537
+    },
+    {
+      "id": "-2_5",
+      "url": "assets/tiles/-2_5.glb",
+      "bounds": [
+        -4000,
+        10000,
+        -2000,
+        12000
+      ],
+      "counts": {
+        "roads": 638,
+        "building": 90,
+        "water": 8,
+        "green": 9
+      },
+      "bytes": 1163740,
+      "vertices": 48210
+    },
+    {
+      "id": "-2_6",
+      "url": "assets/tiles/-2_6.glb",
+      "bounds": [
+        -4000,
+        12000,
+        -2000,
+        14000
+      ],
+      "counts": {
+        "roads": 180,
+        "water": 7,
+        "building": 16,
+        "green": 2
+      },
+      "bytes": 420320,
+      "vertices": 17235
+    },
+    {
+      "id": "-2_7",
+      "url": "assets/tiles/-2_7.glb",
+      "bounds": [
+        -4000,
+        14000,
+        -2000,
+        16000
+      ],
+      "counts": {
+        "roads": 220,
+        "water": 3,
+        "green": 2,
+        "building": 5
+      },
+      "bytes": 605124,
+      "vertices": 24993
+    },
+    {
+      "id": "-2_8",
+      "url": "assets/tiles/-2_8.glb",
+      "bounds": [
+        -4000,
+        16000,
+        -2000,
+        18000
+      ],
+      "counts": {
+        "roads": 271,
+        "water": 2,
+        "building": 3
+      },
+      "bytes": 927200,
+      "vertices": 38382
+    },
+    {
+      "id": "-2_9",
+      "url": "assets/tiles/-2_9.glb",
+      "bounds": [
+        -4000,
+        18000,
+        -2000,
+        20000
+      ],
+      "counts": {
+        "roads": 247,
+        "water": 1
+      },
+      "bytes": 812420,
+      "vertices": 33687
+    },
+    {
+      "id": "-3_-1",
+      "url": "assets/tiles/-3_-1.glb",
+      "bounds": [
+        -6000,
+        -2000,
+        -4000,
+        0
+      ],
+      "counts": {
+        "roads": 836,
+        "building": 357,
+        "water": 5,
+        "green": 9
+      },
+      "bytes": 1543988,
+      "vertices": 64023
+    },
+    {
+      "id": "-3_-10",
+      "url": "assets/tiles/-3_-10.glb",
+      "bounds": [
+        -6000,
+        -20000,
+        -4000,
+        -18000
+      ],
+      "counts": {
+        "roads": 187,
+        "building": 3
+      },
+      "bytes": 495412,
+      "vertices": 20448
+    },
+    {
+      "id": "-3_-11",
+      "url": "assets/tiles/-3_-11.glb",
+      "bounds": [
+        -6000,
+        -22000,
+        -4000,
+        -20000
+      ],
+      "counts": {
+        "roads": 67,
+        "water": 1
+      },
+      "bytes": 285912,
+      "vertices": 11778
+    },
+    {
+      "id": "-3_-2",
+      "url": "assets/tiles/-3_-2.glb",
+      "bounds": [
+        -6000,
+        -4000,
+        -4000,
+        -2000
+      ],
+      "counts": {
+        "roads": 729,
+        "building": 248
+      },
+      "bytes": 1425612,
+      "vertices": 59178
+    },
+    {
+      "id": "-3_-3",
+      "url": "assets/tiles/-3_-3.glb",
+      "bounds": [
+        -6000,
+        -6000,
+        -4000,
+        -4000
+      ],
+      "counts": {
+        "roads": 930,
+        "building": 588,
+        "green": 2
+      },
+      "bytes": 2060380,
+      "vertices": 85626
+    },
+    {
+      "id": "-3_-4",
+      "url": "assets/tiles/-3_-4.glb",
+      "bounds": [
+        -6000,
+        -8000,
+        -4000,
+        -6000
+      ],
+      "counts": {
+        "roads": 775,
+        "building": 198
+      },
+      "bytes": 1504964,
+      "vertices": 62514
+    },
+    {
+      "id": "-3_-5",
+      "url": "assets/tiles/-3_-5.glb",
+      "bounds": [
+        -6000,
+        -10000,
+        -4000,
+        -8000
+      ],
+      "counts": {
+        "roads": 680,
+        "building": 39,
+        "green": 1
+      },
+      "bytes": 1503952,
+      "vertices": 62442
+    },
+    {
+      "id": "-3_-6",
+      "url": "assets/tiles/-3_-6.glb",
+      "bounds": [
+        -6000,
+        -12000,
+        -4000,
+        -10000
+      ],
+      "counts": {
+        "roads": 324,
+        "water": 7,
+        "building": 2
+      },
+      "bytes": 867676,
+      "vertices": 35931
+    },
+    {
+      "id": "-3_-7",
+      "url": "assets/tiles/-3_-7.glb",
+      "bounds": [
+        -6000,
+        -14000,
+        -4000,
+        -12000
+      ],
+      "counts": {
+        "roads": 177,
+        "water": 5
+      },
+      "bytes": 425492,
+      "vertices": 17508
+    },
+    {
+      "id": "-3_-8",
+      "url": "assets/tiles/-3_-8.glb",
+      "bounds": [
+        -6000,
+        -16000,
+        -4000,
+        -14000
+      ],
+      "counts": {
+        "roads": 252,
+        "water": 5,
+        "building": 1
+      },
+      "bytes": 723700,
+      "vertices": 29904
+    },
+    {
+      "id": "-3_-9",
+      "url": "assets/tiles/-3_-9.glb",
+      "bounds": [
+        -6000,
+        -18000,
+        -4000,
+        -16000
+      ],
+      "counts": {
+        "roads": 286
+      },
+      "bytes": 692900,
+      "vertices": 28764
+    },
+    {
+      "id": "-3_0",
+      "url": "assets/tiles/-3_0.glb",
+      "bounds": [
+        -6000,
+        0,
+        -4000,
+        2000
+      ],
+      "counts": {
+        "roads": 985,
+        "water": 6,
+        "building": 104,
+        "green": 8
+      },
+      "bytes": 1834408,
+      "vertices": 76125
+    },
+    {
+      "id": "-3_1",
+      "url": "assets/tiles/-3_1.glb",
+      "bounds": [
+        -6000,
+        2000,
+        -4000,
+        4000
+      ],
+      "counts": {
+        "roads": 1093,
+        "water": 15,
+        "green": 3,
+        "building": 37
+      },
+      "bytes": 1673404,
+      "vertices": 69444
+    },
+    {
+      "id": "-3_2",
+      "url": "assets/tiles/-3_2.glb",
+      "bounds": [
+        -6000,
+        4000,
+        -4000,
+        6000
+      ],
+      "counts": {
+        "roads": 1203,
+        "building": 60,
+        "water": 1,
+        "green": 2
+      },
+      "bytes": 1682748,
+      "vertices": 69804
+    },
+    {
+      "id": "-3_3",
+      "url": "assets/tiles/-3_3.glb",
+      "bounds": [
+        -6000,
+        6000,
+        -4000,
+        8000
+      ],
+      "counts": {
+        "roads": 639,
+        "water": 2,
+        "building": 146,
+        "green": 14
+      },
+      "bytes": 1367292,
+      "vertices": 56691
+    },
+    {
+      "id": "-3_4",
+      "url": "assets/tiles/-3_4.glb",
+      "bounds": [
+        -6000,
+        8000,
+        -4000,
+        10000
+      ],
+      "counts": {
+        "roads": 804,
+        "water": 3,
+        "building": 92,
+        "green": 12
+      },
+      "bytes": 1401780,
+      "vertices": 58158
+    },
+    {
+      "id": "-3_5",
+      "url": "assets/tiles/-3_5.glb",
+      "bounds": [
+        -6000,
+        10000,
+        -4000,
+        12000
+      ],
+      "counts": {
+        "roads": 503,
+        "water": 3,
+        "building": 73,
+        "green": 1
+      },
+      "bytes": 1007068,
+      "vertices": 41712
+    },
+    {
+      "id": "-3_6",
+      "url": "assets/tiles/-3_6.glb",
+      "bounds": [
+        -6000,
+        12000,
+        -4000,
+        14000
+      ],
+      "counts": {
+        "roads": 299,
+        "water": 5,
+        "green": 3,
+        "building": 84
+      },
+      "bytes": 614524,
+      "vertices": 25356
+    },
+    {
+      "id": "-3_7",
+      "url": "assets/tiles/-3_7.glb",
+      "bounds": [
+        -6000,
+        14000,
+        -4000,
+        16000
+      ],
+      "counts": {
+        "roads": 294,
+        "water": 3,
+        "building": 7,
+        "green": 1
+      },
+      "bytes": 732716,
+      "vertices": 30309
+    },
+    {
+      "id": "-3_8",
+      "url": "assets/tiles/-3_8.glb",
+      "bounds": [
+        -6000,
+        16000,
+        -4000,
+        18000
+      ],
+      "counts": {
+        "roads": 377,
+        "water": 2,
+        "building": 6,
+        "green": 2
+      },
+      "bytes": 964188,
+      "vertices": 39924
+    },
+    {
+      "id": "-3_9",
+      "url": "assets/tiles/-3_9.glb",
+      "bounds": [
+        -6000,
+        18000,
+        -4000,
+        20000
+      ],
+      "counts": {
+        "roads": 184,
+        "water": 3,
+        "building": 6
+      },
+      "bytes": 499612,
+      "vertices": 20595
+    },
+    {
+      "id": "-4_-1",
+      "url": "assets/tiles/-4_-1.glb",
+      "bounds": [
+        -8000,
+        -2000,
+        -6000,
+        0
+      ],
+      "counts": {
+        "roads": 599,
+        "building": 394
+      },
+      "bytes": 1280148,
+      "vertices": 53175
+    },
+    {
+      "id": "-4_-10",
+      "url": "assets/tiles/-4_-10.glb",
+      "bounds": [
+        -8000,
+        -20000,
+        -6000,
+        -18000
+      ],
+      "counts": {
+        "roads": 180,
+        "green": 1,
+        "building": 11
+      },
+      "bytes": 352284,
+      "vertices": 14514
+    },
+    {
+      "id": "-4_-11",
+      "url": "assets/tiles/-4_-11.glb",
+      "bounds": [
+        -8000,
+        -22000,
+        -6000,
+        -20000
+      ],
+      "counts": {
+        "roads": 93
+      },
+      "bytes": 234716,
+      "vertices": 9702
+    },
+    {
+      "id": "-4_-2",
+      "url": "assets/tiles/-4_-2.glb",
+      "bounds": [
+        -8000,
+        -4000,
+        -6000,
+        -2000
+      ],
+      "counts": {
+        "roads": 402,
+        "green": 1,
+        "building": 64
+      },
+      "bytes": 781572,
+      "vertices": 32313
+    },
+    {
+      "id": "-4_-3",
+      "url": "assets/tiles/-4_-3.glb",
+      "bounds": [
+        -8000,
+        -6000,
+        -6000,
+        -4000
+      ],
+      "counts": {
+        "roads": 596,
+        "building": 5,
+        "green": 2,
+        "water": 1
+      },
+      "bytes": 1128180,
+      "vertices": 46755
+    },
+    {
+      "id": "-4_-4",
+      "url": "assets/tiles/-4_-4.glb",
+      "bounds": [
+        -8000,
+        -8000,
+        -6000,
+        -6000
+      ],
+      "counts": {
+        "roads": 598,
+        "building": 10
+      },
+      "bytes": 1157724,
+      "vertices": 48045
+    },
+    {
+      "id": "-4_-5",
+      "url": "assets/tiles/-4_-5.glb",
+      "bounds": [
+        -8000,
+        -10000,
+        -6000,
+        -8000
+      ],
+      "counts": {
+        "roads": 610,
+        "building": 45,
+        "green": 1
+      },
+      "bytes": 1409920,
+      "vertices": 58554
+    },
+    {
+      "id": "-4_-6",
+      "url": "assets/tiles/-4_-6.glb",
+      "bounds": [
+        -8000,
+        -12000,
+        -6000,
+        -10000
+      ],
+      "counts": {
+        "roads": 373,
+        "building": 20
+      },
+      "bytes": 678920,
+      "vertices": 28095
+    },
+    {
+      "id": "-4_-7",
+      "url": "assets/tiles/-4_-7.glb",
+      "bounds": [
+        -8000,
+        -14000,
+        -6000,
+        -12000
+      ],
+      "counts": {
+        "roads": 33,
+        "water": 2
+      },
+      "bytes": 186740,
+      "vertices": 7647
+    },
+    {
+      "id": "-4_-8",
+      "url": "assets/tiles/-4_-8.glb",
+      "bounds": [
+        -8000,
+        -16000,
+        -6000,
+        -14000
+      ],
+      "counts": {
+        "roads": 47,
+        "water": 5
+      },
+      "bytes": 341320,
+      "vertices": 14088
+    },
+    {
+      "id": "-4_-9",
+      "url": "assets/tiles/-4_-9.glb",
+      "bounds": [
+        -8000,
+        -18000,
+        -6000,
+        -16000
+      ],
+      "counts": {
+        "roads": 193,
+        "water": 2,
+        "green": 1
+      },
+      "bytes": 535248,
+      "vertices": 22110
+    },
+    {
+      "id": "-4_0",
+      "url": "assets/tiles/-4_0.glb",
+      "bounds": [
+        -8000,
+        0,
+        -6000,
+        2000
+      ],
+      "counts": {
+        "roads": 1096,
+        "building": 1207,
+        "water": 1,
+        "green": 6
+      },
+      "bytes": 2493668,
+      "vertices": 103650
+    },
+    {
+      "id": "-4_1",
+      "url": "assets/tiles/-4_1.glb",
+      "bounds": [
+        -8000,
+        2000,
+        -6000,
+        4000
+      ],
+      "counts": {
+        "roads": 1155,
+        "water": 2,
+        "building": 28
+      },
+      "bytes": 1787272,
+      "vertices": 74217
+    },
+    {
+      "id": "-4_2",
+      "url": "assets/tiles/-4_2.glb",
+      "bounds": [
+        -8000,
+        4000,
+        -6000,
+        6000
+      ],
+      "counts": {
+        "roads": 888,
+        "building": 33,
+        "water": 2,
+        "green": 1
+      },
+      "bytes": 1607308,
+      "vertices": 66690
+    },
+    {
+      "id": "-4_3",
+      "url": "assets/tiles/-4_3.glb",
+      "bounds": [
+        -8000,
+        6000,
+        -6000,
+        8000
+      ],
+      "counts": {
+        "roads": 619,
+        "water": 4,
+        "green": 9,
+        "building": 28
+      },
+      "bytes": 1422480,
+      "vertices": 58989
+    },
+    {
+      "id": "-4_4",
+      "url": "assets/tiles/-4_4.glb",
+      "bounds": [
+        -8000,
+        8000,
+        -6000,
+        10000
+      ],
+      "counts": {
+        "roads": 371,
+        "water": 2
+      },
+      "bytes": 648992,
+      "vertices": 26850
+    },
+    {
+      "id": "-4_5",
+      "url": "assets/tiles/-4_5.glb",
+      "bounds": [
+        -8000,
+        10000,
+        -6000,
+        12000
+      ],
+      "counts": {
+        "roads": 278,
+        "water": 3,
+        "green": 1,
+        "building": 4
+      },
+      "bytes": 633416,
+      "vertices": 26142
+    },
+    {
+      "id": "-4_6",
+      "url": "assets/tiles/-4_6.glb",
+      "bounds": [
+        -8000,
+        12000,
+        -6000,
+        14000
+      ],
+      "counts": {
+        "roads": 484,
+        "water": 7,
+        "green": 6,
+        "building": 41
+      },
+      "bytes": 1069140,
+      "vertices": 44268
+    },
+    {
+      "id": "-4_7",
+      "url": "assets/tiles/-4_7.glb",
+      "bounds": [
+        -8000,
+        14000,
+        -6000,
+        16000
+      ],
+      "counts": {
+        "roads": 312,
+        "building": 20,
+        "green": 9
+      },
+      "bytes": 675888,
+      "vertices": 27939
+    },
+    {
+      "id": "-4_8",
+      "url": "assets/tiles/-4_8.glb",
+      "bounds": [
+        -8000,
+        16000,
+        -6000,
+        18000
+      ],
+      "counts": {
+        "roads": 290,
+        "building": 2
+      },
+      "bytes": 711904,
+      "vertices": 29439
+    },
+    {
+      "id": "-4_9",
+      "url": "assets/tiles/-4_9.glb",
+      "bounds": [
+        -8000,
+        18000,
+        -6000,
+        20000
+      ],
+      "counts": {
+        "roads": 206,
+        "water": 2
+      },
+      "bytes": 545196,
+      "vertices": 22524
+    },
+    {
+      "id": "-5_-1",
+      "url": "assets/tiles/-5_-1.glb",
+      "bounds": [
+        -10000,
+        -2000,
+        -8000,
+        0
+      ],
+      "counts": {
+        "roads": 752,
+        "water": 1
+      },
+      "bytes": 1401880,
+      "vertices": 58218
+    },
+    {
+      "id": "-5_-10",
+      "url": "assets/tiles/-5_-10.glb",
+      "bounds": [
+        -10000,
+        -20000,
+        -8000,
+        -18000
+      ],
+      "counts": {
+        "roads": 161,
+        "water": 2,
+        "green": 2,
+        "building": 2
+      },
+      "bytes": 379480,
+      "vertices": 15591
+    },
+    {
+      "id": "-5_-11",
+      "url": "assets/tiles/-5_-11.glb",
+      "bounds": [
+        -10000,
+        -22000,
+        -8000,
+        -20000
+      ],
+      "counts": {
+        "roads": 88,
+        "water": 2,
+        "green": 1
+      },
+      "bytes": 259008,
+      "vertices": 10599
+    },
+    {
+      "id": "-5_-2",
+      "url": "assets/tiles/-5_-2.glb",
+      "bounds": [
+        -10000,
+        -4000,
+        -8000,
+        -2000
+      ],
+      "counts": {
+        "roads": 592,
+        "building": 6
+      },
+      "bytes": 1134080,
+      "vertices": 47088
+    },
+    {
+      "id": "-5_-3",
+      "url": "assets/tiles/-5_-3.glb",
+      "bounds": [
+        -10000,
+        -6000,
+        -8000,
+        -4000
+      ],
+      "counts": {
+        "roads": 340,
+        "building": 33
+      },
+      "bytes": 826904,
+      "vertices": 34290
+    },
+    {
+      "id": "-5_-4",
+      "url": "assets/tiles/-5_-4.glb",
+      "bounds": [
+        -10000,
+        -8000,
+        -8000,
+        -6000
+      ],
+      "counts": {
+        "roads": 357,
+        "building": 31,
+        "water": 1
+      },
+      "bytes": 892464,
+      "vertices": 36963
+    },
+    {
+      "id": "-5_-5",
+      "url": "assets/tiles/-5_-5.glb",
+      "bounds": [
+        -10000,
+        -10000,
+        -8000,
+        -8000
+      ],
+      "counts": {
+        "roads": 279,
+        "water": 1,
+        "building": 7
+      },
+      "bytes": 585868,
+      "vertices": 24189
+    },
+    {
+      "id": "-5_-6",
+      "url": "assets/tiles/-5_-6.glb",
+      "bounds": [
+        -10000,
+        -12000,
+        -8000,
+        -10000
+      ],
+      "counts": {
+        "roads": 140,
+        "water": 4
+      },
+      "bytes": 235652,
+      "vertices": 9627
+    },
+    {
+      "id": "-5_-7",
+      "url": "assets/tiles/-5_-7.glb",
+      "bounds": [
+        -10000,
+        -14000,
+        -8000,
+        -12000
+      ],
+      "counts": {
+        "roads": 99,
+        "water": 2,
+        "building": 8
+      },
+      "bytes": 234276,
+      "vertices": 9540
+    },
+    {
+      "id": "-5_-8",
+      "url": "assets/tiles/-5_-8.glb",
+      "bounds": [
+        -10000,
+        -16000,
+        -8000,
+        -14000
+      ],
+      "counts": {
+        "roads": 95,
+        "water": 1,
+        "building": 1
+      },
+      "bytes": 395760,
+      "vertices": 16326
+    },
+    {
+      "id": "-5_-9",
+      "url": "assets/tiles/-5_-9.glb",
+      "bounds": [
+        -10000,
+        -18000,
+        -8000,
+        -16000
+      ],
+      "counts": {
+        "roads": 85,
+        "water": 2,
+        "green": 1
+      },
+      "bytes": 312968,
+      "vertices": 12849
+    },
+    {
+      "id": "-5_0",
+      "url": "assets/tiles/-5_0.glb",
+      "bounds": [
+        -10000,
+        0,
+        -8000,
+        2000
+      ],
+      "counts": {
+        "roads": 844,
+        "water": 1,
+        "building": 2
+      },
+      "bytes": 1451636,
+      "vertices": 60261
+    },
+    {
+      "id": "-5_1",
+      "url": "assets/tiles/-5_1.glb",
+      "bounds": [
+        -10000,
+        2000,
+        -8000,
+        4000
+      ],
+      "counts": {
+        "roads": 733,
+        "water": 1,
+        "building": 1
+      },
+      "bytes": 1446876,
+      "vertices": 60093
+    },
+    {
+      "id": "-5_2",
+      "url": "assets/tiles/-5_2.glb",
+      "bounds": [
+        -10000,
+        4000,
+        -8000,
+        6000
+      ],
+      "counts": {
+        "roads": 588,
+        "water": 4,
+        "building": 40,
+        "green": 13
+      },
+      "bytes": 1157448,
+      "vertices": 47946
+    },
+    {
+      "id": "-5_3",
+      "url": "assets/tiles/-5_3.glb",
+      "bounds": [
+        -10000,
+        6000,
+        -8000,
+        8000
+      ],
+      "counts": {
+        "roads": 152,
+        "water": 1
+      },
+      "bytes": 352440,
+      "vertices": 14493
+    },
+    {
+      "id": "-5_4",
+      "url": "assets/tiles/-5_4.glb",
+      "bounds": [
+        -10000,
+        8000,
+        -8000,
+        10000
+      ],
+      "counts": {
+        "roads": 269,
+        "water": 2
+      },
+      "bytes": 530428,
+      "vertices": 21909
+    },
+    {
+      "id": "-5_5",
+      "url": "assets/tiles/-5_5.glb",
+      "bounds": [
+        -10000,
+        10000,
+        -8000,
+        12000
+      ],
+      "counts": {
+        "roads": 349,
+        "water": 6,
+        "building": 13
+      },
+      "bytes": 674840,
+      "vertices": 27837
+    },
+    {
+      "id": "-5_6",
+      "url": "assets/tiles/-5_6.glb",
+      "bounds": [
+        -10000,
+        12000,
+        -8000,
+        14000
+      ],
+      "counts": {
+        "roads": 228,
+        "water": 3,
+        "building": 9
+      },
+      "bytes": 506712,
+      "vertices": 20892
+    },
+    {
+      "id": "-5_7",
+      "url": "assets/tiles/-5_7.glb",
+      "bounds": [
+        -10000,
+        14000,
+        -8000,
+        16000
+      ],
+      "counts": {
+        "roads": 236,
+        "water": 3,
+        "building": 3
+      },
+      "bytes": 598472,
+      "vertices": 24714
+    },
+    {
+      "id": "-5_8",
+      "url": "assets/tiles/-5_8.glb",
+      "bounds": [
+        -10000,
+        16000,
+        -8000,
+        18000
+      ],
+      "counts": {
+        "roads": 334,
+        "building": 12
+      },
+      "bytes": 803396,
+      "vertices": 33222
+    },
+    {
+      "id": "-5_9",
+      "url": "assets/tiles/-5_9.glb",
+      "bounds": [
+        -10000,
+        18000,
+        -8000,
+        20000
+      ],
+      "counts": {
+        "roads": 177,
+        "building": 2,
+        "water": 3
+      },
+      "bytes": 532380,
+      "vertices": 21960
+    },
+    {
+      "id": "-6_-1",
+      "url": "assets/tiles/-6_-1.glb",
+      "bounds": [
+        -12000,
+        -2000,
+        -10000,
+        0
+      ],
+      "counts": {
+        "roads": 421,
+        "water": 1
+      },
+      "bytes": 851284,
+      "vertices": 35307
+    },
+    {
+      "id": "-6_-10",
+      "url": "assets/tiles/-6_-10.glb",
+      "bounds": [
+        -12000,
+        -20000,
+        -10000,
+        -18000
+      ],
+      "counts": {
+        "roads": 120,
+        "water": 1
+      },
+      "bytes": 369840,
+      "vertices": 15246
+    },
+    {
+      "id": "-6_-11",
+      "url": "assets/tiles/-6_-11.glb",
+      "bounds": [
+        -12000,
+        -22000,
+        -10000,
+        -20000
+      ],
+      "counts": {
+        "roads": 27,
+        "water": 2
+      },
+      "bytes": 121464,
+      "vertices": 4926
+    },
+    {
+      "id": "-6_-2",
+      "url": "assets/tiles/-6_-2.glb",
+      "bounds": [
+        -12000,
+        -4000,
+        -10000,
+        -2000
+      ],
+      "counts": {
+        "roads": 259,
+        "water": 2
+      },
+      "bytes": 627228,
+      "vertices": 25971
+    },
+    {
+      "id": "-6_-3",
+      "url": "assets/tiles/-6_-3.glb",
+      "bounds": [
+        -12000,
+        -6000,
+        -10000,
+        -4000
+      ],
+      "counts": {
+        "roads": 107,
+        "water": 1
+      },
+      "bytes": 238644,
+      "vertices": 9780
+    },
+    {
+      "id": "-6_-4",
+      "url": "assets/tiles/-6_-4.glb",
+      "bounds": [
+        -12000,
+        -8000,
+        -10000,
+        -6000
+      ],
+      "counts": {
+        "roads": 95,
+        "water": 2,
+        "building": 1
+      },
+      "bytes": 194252,
+      "vertices": 7902
+    },
+    {
+      "id": "-6_-5",
+      "url": "assets/tiles/-6_-5.glb",
+      "bounds": [
+        -12000,
+        -10000,
+        -10000,
+        -8000
+      ],
+      "counts": {
+        "roads": 87,
+        "water": 2
+      },
+      "bytes": 133524,
+      "vertices": 5400
+    },
+    {
+      "id": "-6_-6",
+      "url": "assets/tiles/-6_-6.glb",
+      "bounds": [
+        -12000,
+        -12000,
+        -10000,
+        -10000
+      ],
+      "counts": {
+        "roads": 57,
+        "water": 2
+      },
+      "bytes": 114212,
+      "vertices": 4596
+    },
+    {
+      "id": "-6_-7",
+      "url": "assets/tiles/-6_-7.glb",
+      "bounds": [
+        -12000,
+        -14000,
+        -10000,
+        -12000
+      ],
+      "counts": {
+        "roads": 278,
+        "building": 20
+      },
+      "bytes": 587776,
+      "vertices": 24297
+    },
+    {
+      "id": "-6_-8",
+      "url": "assets/tiles/-6_-8.glb",
+      "bounds": [
+        -12000,
+        -16000,
+        -10000,
+        -14000
+      ],
+      "counts": {
+        "roads": 317,
+        "building": 6
+      },
+      "bytes": 760196,
+      "vertices": 31482
+    },
+    {
+      "id": "-6_-9",
+      "url": "assets/tiles/-6_-9.glb",
+      "bounds": [
+        -12000,
+        -18000,
+        -10000,
+        -16000
+      ],
+      "counts": {
+        "roads": 178
+      },
+      "bytes": 424616,
+      "vertices": 17586
+    },
+    {
+      "id": "-6_0",
+      "url": "assets/tiles/-6_0.glb",
+      "bounds": [
+        -12000,
+        0,
+        -10000,
+        2000
+      ],
+      "counts": {
+        "roads": 333
+      },
+      "bytes": 765560,
+      "vertices": 31734
+    },
+    {
+      "id": "-6_1",
+      "url": "assets/tiles/-6_1.glb",
+      "bounds": [
+        -12000,
+        2000,
+        -10000,
+        4000
+      ],
+      "counts": {
+        "roads": 218,
+        "water": 2,
+        "building": 1
+      },
+      "bytes": 489236,
+      "vertices": 20163
+    },
+    {
+      "id": "-6_2",
+      "url": "assets/tiles/-6_2.glb",
+      "bounds": [
+        -12000,
+        4000,
+        -10000,
+        6000
+      ],
+      "counts": {
+        "roads": 238,
+        "water": 4,
+        "building": 16,
+        "green": 1
+      },
+      "bytes": 402532,
+      "vertices": 16491
+    },
+    {
+      "id": "-6_3",
+      "url": "assets/tiles/-6_3.glb",
+      "bounds": [
+        -12000,
+        6000,
+        -10000,
+        8000
+      ],
+      "counts": {
+        "roads": 148,
+        "water": 3,
+        "building": 3
+      },
+      "bytes": 248736,
+      "vertices": 10143
+    },
+    {
+      "id": "-6_4",
+      "url": "assets/tiles/-6_4.glb",
+      "bounds": [
+        -12000,
+        8000,
+        -10000,
+        10000
+      ],
+      "counts": {
+        "roads": 228,
+        "water": 6,
+        "building": 13
+      },
+      "bytes": 607792,
+      "vertices": 25104
+    },
+    {
+      "id": "-6_5",
+      "url": "assets/tiles/-6_5.glb",
+      "bounds": [
+        -12000,
+        10000,
+        -10000,
+        12000
+      ],
+      "counts": {
+        "roads": 124,
+        "water": 5,
+        "building": 4
+      },
+      "bytes": 361008,
+      "vertices": 14850
+    },
+    {
+      "id": "-6_6",
+      "url": "assets/tiles/-6_6.glb",
+      "bounds": [
+        -12000,
+        12000,
+        -10000,
+        14000
+      ],
+      "counts": {
+        "roads": 137,
+        "water": 2,
+        "building": 5
+      },
+      "bytes": 331668,
+      "vertices": 13599
+    },
+    {
+      "id": "-6_7",
+      "url": "assets/tiles/-6_7.glb",
+      "bounds": [
+        -12000,
+        14000,
+        -10000,
+        16000
+      ],
+      "counts": {
+        "roads": 185,
+        "water": 2,
+        "building": 4
+      },
+      "bytes": 461856,
+      "vertices": 18993
+    },
+    {
+      "id": "-6_8",
+      "url": "assets/tiles/-6_8.glb",
+      "bounds": [
+        -12000,
+        16000,
+        -10000,
+        18000
+      ],
+      "counts": {
+        "roads": 224,
+        "water": 1
+      },
+      "bytes": 525124,
+      "vertices": 21687
+    },
+    {
+      "id": "-6_9",
+      "url": "assets/tiles/-6_9.glb",
+      "bounds": [
+        -12000,
+        18000,
+        -10000,
+        20000
+      ],
+      "counts": {
+        "roads": 236,
+        "building": 2
+      },
+      "bytes": 674828,
+      "vertices": 27924
+    },
+    {
+      "id": "-7_-1",
+      "url": "assets/tiles/-7_-1.glb",
+      "bounds": [
+        -14000,
+        -2000,
+        -12000,
+        0
+      ],
+      "counts": {
+        "roads": 42,
+        "water": 2
+      },
+      "bytes": 62776,
+      "vertices": 2454
+    },
+    {
+      "id": "-7_-10",
+      "url": "assets/tiles/-7_-10.glb",
+      "bounds": [
+        -14000,
+        -20000,
+        -12000,
+        -18000
+      ],
+      "counts": {
+        "roads": 169,
+        "water": 4,
+        "building": 3
+      },
+      "bytes": 431352,
+      "vertices": 17751
+    },
+    {
+      "id": "-7_-11",
+      "url": "assets/tiles/-7_-11.glb",
+      "bounds": [
+        -14000,
+        -22000,
+        -12000,
+        -20000
+      ],
+      "counts": {
+        "roads": 42,
+        "water": 1
+      },
+      "bytes": 151732,
+      "vertices": 6159
+    },
+    {
+      "id": "-7_-2",
+      "url": "assets/tiles/-7_-2.glb",
+      "bounds": [
+        -14000,
+        -4000,
+        -12000,
+        -2000
+      ],
+      "counts": {
+        "roads": 53,
+        "water": 1
+      },
+      "bytes": 101240,
+      "vertices": 4056
+    },
+    {
+      "id": "-7_-3",
+      "url": "assets/tiles/-7_-3.glb",
+      "bounds": [
+        -14000,
+        -6000,
+        -12000,
+        -4000
+      ],
+      "counts": {
+        "roads": 48,
+        "water": 1
+      },
+      "bytes": 88392,
+      "vertices": 3549
+    },
+    {
+      "id": "-7_-4",
+      "url": "assets/tiles/-7_-4.glb",
+      "bounds": [
+        -14000,
+        -8000,
+        -12000,
+        -6000
+      ],
+      "counts": {
+        "roads": 214,
+        "water": 3,
+        "building": 4
+      },
+      "bytes": 371732,
+      "vertices": 15267
+    },
+    {
+      "id": "-7_-5",
+      "url": "assets/tiles/-7_-5.glb",
+      "bounds": [
+        -14000,
+        -10000,
+        -12000,
+        -8000
+      ],
+      "counts": {
+        "roads": 33,
+        "building": 2
+      },
+      "bytes": 62824,
+      "vertices": 2454
+    },
+    {
+      "id": "-7_-6",
+      "url": "assets/tiles/-7_-6.glb",
+      "bounds": [
+        -14000,
+        -12000,
+        -12000,
+        -10000
+      ],
+      "counts": {
+        "roads": 26,
+        "water": 1
+      },
+      "bytes": 73808,
+      "vertices": 2913
+    },
+    {
+      "id": "-7_-7",
+      "url": "assets/tiles/-7_-7.glb",
+      "bounds": [
+        -14000,
+        -14000,
+        -12000,
+        -12000
+      ],
+      "counts": {
+        "roads": 244,
+        "water": 1,
+        "building": 1
+      },
+      "bytes": 550236,
+      "vertices": 22734
+    },
+    {
+      "id": "-7_-8",
+      "url": "assets/tiles/-7_-8.glb",
+      "bounds": [
+        -14000,
+        -16000,
+        -12000,
+        -14000
+      ],
+      "counts": {
+        "roads": 275,
+        "building": 10
+      },
+      "bytes": 687052,
+      "vertices": 28434
+    },
+    {
+      "id": "-7_-9",
+      "url": "assets/tiles/-7_-9.glb",
+      "bounds": [
+        -14000,
+        -18000,
+        -12000,
+        -16000
+      ],
+      "counts": {
+        "roads": 216,
+        "building": 7
+      },
+      "bytes": 519236,
+      "vertices": 21441
+    },
+    {
+      "id": "-7_0",
+      "url": "assets/tiles/-7_0.glb",
+      "bounds": [
+        -14000,
+        0,
+        -12000,
+        2000
+      ],
+      "counts": {
+        "roads": 49,
+        "water": 2
+      },
+      "bytes": 112984,
+      "vertices": 4545
+    },
+    {
+      "id": "-7_1",
+      "url": "assets/tiles/-7_1.glb",
+      "bounds": [
+        -14000,
+        2000,
+        -12000,
+        4000
+      ],
+      "counts": {
+        "roads": 175,
+        "water": 3,
+        "building": 3,
+        "green": 2
+      },
+      "bytes": 296228,
+      "vertices": 12093
+    },
+    {
+      "id": "-7_2",
+      "url": "assets/tiles/-7_2.glb",
+      "bounds": [
+        -14000,
+        4000,
+        -12000,
+        6000
+      ],
+      "counts": {
+        "roads": 80,
+        "water": 1,
+        "green": 3
+      },
+      "bytes": 100668,
+      "vertices": 3975
+    },
+    {
+      "id": "-7_3",
+      "url": "assets/tiles/-7_3.glb",
+      "bounds": [
+        -14000,
+        6000,
+        -12000,
+        8000
+      ],
+      "counts": {
+        "roads": 101,
+        "water": 3
+      },
+      "bytes": 182332,
+      "vertices": 7434
+    },
+    {
+      "id": "-7_4",
+      "url": "assets/tiles/-7_4.glb",
+      "bounds": [
+        -14000,
+        8000,
+        -12000,
+        10000
+      ],
+      "counts": {
+        "roads": 319,
+        "water": 14,
+        "building": 29,
+        "green": 52
+      },
+      "bytes": 1558588,
+      "vertices": 64719
+    },
+    {
+      "id": "-7_5",
+      "url": "assets/tiles/-7_5.glb",
+      "bounds": [
+        -14000,
+        10000,
+        -12000,
+        12000
+      ],
+      "counts": {
+        "roads": 92,
+        "water": 3,
+        "building": 1
+      },
+      "bytes": 276712,
+      "vertices": 11337
+    },
+    {
+      "id": "-7_6",
+      "url": "assets/tiles/-7_6.glb",
+      "bounds": [
+        -14000,
+        12000,
+        -12000,
+        14000
+      ],
+      "counts": {
+        "roads": 117,
+        "water": 3,
+        "building": 1
+      },
+      "bytes": 280800,
+      "vertices": 11508
+    },
+    {
+      "id": "-7_7",
+      "url": "assets/tiles/-7_7.glb",
+      "bounds": [
+        -14000,
+        14000,
+        -12000,
+        16000
+      ],
+      "counts": {
+        "roads": 113,
+        "water": 1
+      },
+      "bytes": 289280,
+      "vertices": 11889
+    },
+    {
+      "id": "-7_8",
+      "url": "assets/tiles/-7_8.glb",
+      "bounds": [
+        -14000,
+        16000,
+        -12000,
+        18000
+      ],
+      "counts": {
+        "roads": 167
+      },
+      "bytes": 390324,
+      "vertices": 16128
+    },
+    {
+      "id": "-7_9",
+      "url": "assets/tiles/-7_9.glb",
+      "bounds": [
+        -14000,
+        18000,
+        -12000,
+        20000
+      ],
+      "counts": {
+        "roads": 261,
+        "building": 7,
+        "water": 1,
+        "green": 1
+      },
+      "bytes": 580456,
+      "vertices": 23934
+    },
+    {
+      "id": "-8_-1",
+      "url": "assets/tiles/-8_-1.glb",
+      "bounds": [
+        -16000,
+        -2000,
+        -14000,
+        0
+      ],
+      "counts": {
+        "roads": 136,
+        "water": 1
+      },
+      "bytes": 258944,
+      "vertices": 10626
+    },
+    {
+      "id": "-8_-10",
+      "url": "assets/tiles/-8_-10.glb",
+      "bounds": [
+        -16000,
+        -20000,
+        -14000,
+        -18000
+      ],
+      "counts": {
+        "roads": 203,
+        "building": 18
+      },
+      "bytes": 406412,
+      "vertices": 16740
+    },
+    {
+      "id": "-8_-11",
+      "url": "assets/tiles/-8_-11.glb",
+      "bounds": [
+        -16000,
+        -22000,
+        -14000,
+        -20000
+      ],
+      "counts": {
+        "roads": 76
+      },
+      "bytes": 131036,
+      "vertices": 5382
+    },
+    {
+      "id": "-8_-2",
+      "url": "assets/tiles/-8_-2.glb",
+      "bounds": [
+        -16000,
+        -4000,
+        -14000,
+        -2000
+      ],
+      "counts": {
+        "roads": 37
+      },
+      "bytes": 50336,
+      "vertices": 1962
+    },
+    {
+      "id": "-8_-3",
+      "url": "assets/tiles/-8_-3.glb",
+      "bounds": [
+        -16000,
+        -6000,
+        -14000,
+        -4000
+      ],
+      "counts": {
+        "roads": 107
+      },
+      "bytes": 161796,
+      "vertices": 6606
+    },
+    {
+      "id": "-8_-4",
+      "url": "assets/tiles/-8_-4.glb",
+      "bounds": [
+        -16000,
+        -8000,
+        -14000,
+        -6000
+      ],
+      "counts": {
+        "roads": 245
+      },
+      "bytes": 421012,
+      "vertices": 17406
+    },
+    {
+      "id": "-8_-5",
+      "url": "assets/tiles/-8_-5.glb",
+      "bounds": [
+        -16000,
+        -10000,
+        -14000,
+        -8000
+      ],
+      "counts": {
+        "roads": 53,
+        "building": 1
+      },
+      "bytes": 155684,
+      "vertices": 6294
+    },
+    {
+      "id": "-8_-6",
+      "url": "assets/tiles/-8_-6.glb",
+      "bounds": [
+        -16000,
+        -12000,
+        -14000,
+        -10000
+      ],
+      "counts": {
+        "roads": 8,
+        "water": 1
+      },
+      "bytes": 21328,
+      "vertices": 726
+    },
+    {
+      "id": "-8_-7",
+      "url": "assets/tiles/-8_-7.glb",
+      "bounds": [
+        -16000,
+        -14000,
+        -14000,
+        -12000
+      ],
+      "counts": {
+        "roads": 65,
+        "water": 1
+      },
+      "bytes": 138764,
+      "vertices": 5619
+    },
+    {
+      "id": "-8_-8",
+      "url": "assets/tiles/-8_-8.glb",
+      "bounds": [
+        -16000,
+        -16000,
+        -14000,
+        -14000
+      ],
+      "counts": {
+        "roads": 294,
+        "water": 1,
+        "building": 8
+      },
+      "bytes": 811812,
+      "vertices": 33603
+    },
+    {
+      "id": "-8_-9",
+      "url": "assets/tiles/-8_-9.glb",
+      "bounds": [
+        -16000,
+        -18000,
+        -14000,
+        -16000
+      ],
+      "counts": {
+        "roads": 230,
+        "building": 19,
+        "green": 2
+      },
+      "bytes": 542488,
+      "vertices": 22380
+    },
+    {
+      "id": "-8_0",
+      "url": "assets/tiles/-8_0.glb",
+      "bounds": [
+        -16000,
+        0,
+        -14000,
+        2000
+      ],
+      "counts": {
+        "roads": 241,
+        "water": 3,
+        "building": 1
+      },
+      "bytes": 369416,
+      "vertices": 15171
+    },
+    {
+      "id": "-8_1",
+      "url": "assets/tiles/-8_1.glb",
+      "bounds": [
+        -16000,
+        2000,
+        -14000,
+        4000
+      ],
+      "counts": {
+        "roads": 302,
+        "water": 4,
+        "green": 3,
+        "building": 14
+      },
+      "bytes": 631888,
+      "vertices": 26049
+    },
+    {
+      "id": "-8_2",
+      "url": "assets/tiles/-8_2.glb",
+      "bounds": [
+        -16000,
+        4000,
+        -14000,
+        6000
+      ],
+      "counts": {
+        "roads": 66,
+        "water": 2,
+        "building": 13,
+        "green": 3
+      },
+      "bytes": 102932,
+      "vertices": 4071
+    },
+    {
+      "id": "-8_3",
+      "url": "assets/tiles/-8_3.glb",
+      "bounds": [
+        -16000,
+        6000,
+        -14000,
+        8000
+      ],
+      "counts": {
+        "roads": 84,
+        "water": 5
+      },
+      "bytes": 133000,
+      "vertices": 5379
+    },
+    {
+      "id": "-8_4",
+      "url": "assets/tiles/-8_4.glb",
+      "bounds": [
+        -16000,
+        8000,
+        -14000,
+        10000
+      ],
+      "counts": {
+        "roads": 90,
+        "water": 7
+      },
+      "bytes": 228328,
+      "vertices": 9351
+    },
+    {
+      "id": "-8_5",
+      "url": "assets/tiles/-8_5.glb",
+      "bounds": [
+        -16000,
+        10000,
+        -14000,
+        12000
+      ],
+      "counts": {
+        "roads": 61,
+        "water": 1
+      },
+      "bytes": 151100,
+      "vertices": 6132
+    },
+    {
+      "id": "-8_6",
+      "url": "assets/tiles/-8_6.glb",
+      "bounds": [
+        -16000,
+        12000,
+        -14000,
+        14000
+      ],
+      "counts": {
+        "roads": 73,
+        "water": 1
+      },
+      "bytes": 218560,
+      "vertices": 8943
+    },
+    {
+      "id": "-8_7",
+      "url": "assets/tiles/-8_7.glb",
+      "bounds": [
+        -16000,
+        14000,
+        -14000,
+        16000
+      ],
+      "counts": {
+        "roads": 101,
+        "water": 1,
+        "building": 2
+      },
+      "bytes": 309104,
+      "vertices": 12687
+    },
+    {
+      "id": "-8_8",
+      "url": "assets/tiles/-8_8.glb",
+      "bounds": [
+        -16000,
+        16000,
+        -14000,
+        18000
+      ],
+      "counts": {
+        "roads": 145,
+        "building": 8
+      },
+      "bytes": 352124,
+      "vertices": 14478
+    },
+    {
+      "id": "-8_9",
+      "url": "assets/tiles/-8_9.glb",
+      "bounds": [
+        -16000,
+        18000,
+        -14000,
+        20000
+      ],
+      "counts": {
+        "roads": 151,
+        "building": 10
+      },
+      "bytes": 303196,
+      "vertices": 12468
+    },
+    {
+      "id": "-9_-1",
+      "url": "assets/tiles/-9_-1.glb",
+      "bounds": [
+        -18000,
+        -2000,
+        -16000,
+        0
+      ],
+      "counts": {
+        "roads": 164
+      },
+      "bytes": 398532,
+      "vertices": 16470
+    },
+    {
+      "id": "-9_-10",
+      "url": "assets/tiles/-9_-10.glb",
+      "bounds": [
+        -18000,
+        -20000,
+        -16000,
+        -18000
+      ],
+      "counts": {
+        "roads": 259,
+        "building": 26,
+        "green": 2
+      },
+      "bytes": 596480,
+      "vertices": 24630
+    },
+    {
+      "id": "-9_-11",
+      "url": "assets/tiles/-9_-11.glb",
+      "bounds": [
+        -18000,
+        -22000,
+        -16000,
+        -20000
+      ],
+      "counts": {
+        "roads": 64
+      },
+      "bytes": 150564,
+      "vertices": 6138
+    },
+    {
+      "id": "-9_-2",
+      "url": "assets/tiles/-9_-2.glb",
+      "bounds": [
+        -18000,
+        -4000,
+        -16000,
+        -2000
+      ],
+      "counts": {
+        "roads": 134
+      },
+      "bytes": 290356,
+      "vertices": 11934
+    },
+    {
+      "id": "-9_-3",
+      "url": "assets/tiles/-9_-3.glb",
+      "bounds": [
+        -18000,
+        -6000,
+        -16000,
+        -4000
+      ],
+      "counts": {
+        "roads": 232
+      },
+      "bytes": 429812,
+      "vertices": 17802
+    },
+    {
+      "id": "-9_-4",
+      "url": "assets/tiles/-9_-4.glb",
+      "bounds": [
+        -18000,
+        -8000,
+        -16000,
+        -6000
+      ],
+      "counts": {
+        "roads": 262,
+        "building": 1
+      },
+      "bytes": 500604,
+      "vertices": 20694
+    },
+    {
+      "id": "-9_-5",
+      "url": "assets/tiles/-9_-5.glb",
+      "bounds": [
+        -18000,
+        -10000,
+        -16000,
+        -8000
+      ],
+      "counts": {
+        "roads": 100
+      },
+      "bytes": 337368,
+      "vertices": 13950
+    },
+    {
+      "id": "-9_-6",
+      "url": "assets/tiles/-9_-6.glb",
+      "bounds": [
+        -18000,
+        -12000,
+        -16000,
+        -10000
+      ],
+      "counts": {
+        "roads": 11,
+        "water": 1
+      },
+      "bytes": 30936,
+      "vertices": 1125
+    },
+    {
+      "id": "-9_-7",
+      "url": "assets/tiles/-9_-7.glb",
+      "bounds": [
+        -18000,
+        -14000,
+        -16000,
+        -12000
+      ],
+      "counts": {
+        "roads": 13,
+        "water": 1
+      },
+      "bytes": 43156,
+      "vertices": 1635
+    },
+    {
+      "id": "-9_-8",
+      "url": "assets/tiles/-9_-8.glb",
+      "bounds": [
+        -18000,
+        -16000,
+        -16000,
+        -14000
+      ],
+      "counts": {
+        "roads": 74,
+        "water": 1
+      },
+      "bytes": 209512,
+      "vertices": 8595
+    },
+    {
+      "id": "-9_-9",
+      "url": "assets/tiles/-9_-9.glb",
+      "bounds": [
+        -18000,
+        -18000,
+        -16000,
+        -16000
+      ],
+      "counts": {
+        "roads": 227,
+        "building": 7,
+        "green": 2
+      },
+      "bytes": 609436,
+      "vertices": 25170
+    },
+    {
+      "id": "-9_0",
+      "url": "assets/tiles/-9_0.glb",
+      "bounds": [
+        -18000,
+        0,
+        -16000,
+        2000
+      ],
+      "counts": {
+        "roads": 239,
+        "building": 1
+      },
+      "bytes": 539496,
+      "vertices": 22314
+    },
+    {
+      "id": "-9_1",
+      "url": "assets/tiles/-9_1.glb",
+      "bounds": [
+        -18000,
+        2000,
+        -16000,
+        4000
+      ],
+      "counts": {
+        "roads": 180,
+        "water": 3
+      },
+      "bytes": 398336,
+      "vertices": 16434
+    },
+    {
+      "id": "-9_2",
+      "url": "assets/tiles/-9_2.glb",
+      "bounds": [
+        -18000,
+        4000,
+        -16000,
+        6000
+      ],
+      "counts": {
+        "roads": 84,
+        "water": 1,
+        "building": 1,
+        "green": 1
+      },
+      "bytes": 155664,
+      "vertices": 6294
+    },
+    {
+      "id": "-9_3",
+      "url": "assets/tiles/-9_3.glb",
+      "bounds": [
+        -18000,
+        6000,
+        -16000,
+        8000
+      ],
+      "counts": {
+        "roads": 100,
+        "water": 4
+      },
+      "bytes": 294808,
+      "vertices": 12150
+    },
+    {
+      "id": "-9_4",
+      "url": "assets/tiles/-9_4.glb",
+      "bounds": [
+        -18000,
+        8000,
+        -16000,
+        10000
+      ],
+      "counts": {
+        "roads": 60,
+        "water": 1
+      },
+      "bytes": 176880,
+      "vertices": 7236
+    },
+    {
+      "id": "-9_5",
+      "url": "assets/tiles/-9_5.glb",
+      "bounds": [
+        -18000,
+        10000,
+        -16000,
+        12000
+      ],
+      "counts": {
+        "roads": 75
+      },
+      "bytes": 129992,
+      "vertices": 5310
+    },
+    {
+      "id": "-9_6",
+      "url": "assets/tiles/-9_6.glb",
+      "bounds": [
+        -18000,
+        12000,
+        -16000,
+        14000
+      ],
+      "counts": {
+        "roads": 87
+      },
+      "bytes": 122216,
+      "vertices": 4986
+    },
+    {
+      "id": "-9_7",
+      "url": "assets/tiles/-9_7.glb",
+      "bounds": [
+        -18000,
+        14000,
+        -16000,
+        16000
+      ],
+      "counts": {
+        "roads": 69,
+        "water": 1
+      },
+      "bytes": 175524,
+      "vertices": 7179
+    },
+    {
+      "id": "-9_8",
+      "url": "assets/tiles/-9_8.glb",
+      "bounds": [
+        -18000,
+        16000,
+        -16000,
+        18000
+      ],
+      "counts": {
+        "roads": 75,
+        "water": 1
+      },
+      "bytes": 209884,
+      "vertices": 8553
+    },
+    {
+      "id": "-9_9",
+      "url": "assets/tiles/-9_9.glb",
+      "bounds": [
+        -18000,
+        18000,
+        -16000,
+        20000
+      ],
+      "counts": {
+        "roads": 246,
+        "building": 8,
+        "green": 1
+      },
+      "bytes": 482740,
+      "vertices": 19920
+    },
+    {
+      "id": "0_-1",
+      "url": "assets/tiles/0_-1.glb",
+      "bounds": [
+        0,
+        -2000,
+        2000,
+        0
+      ],
+      "counts": {
+        "roads": 352,
+        "building": 266,
+        "green": 1,
+        "water": 4
+      },
+      "bytes": 1065264,
+      "vertices": 44076
+    },
+    {
+      "id": "0_-10",
+      "url": "assets/tiles/0_-10.glb",
+      "bounds": [
+        0,
+        -20000,
+        2000,
+        -18000
+      ],
+      "counts": {
+        "roads": 553,
+        "water": 11,
+        "building": 94,
+        "green": 5
+      },
+      "bytes": 1709228,
+      "vertices": 70938
+    },
+    {
+      "id": "0_-11",
+      "url": "assets/tiles/0_-11.glb",
+      "bounds": [
+        0,
+        -22000,
+        2000,
+        -20000
+      ],
+      "counts": {
+        "roads": 280,
+        "building": 46,
+        "green": 2,
+        "water": 2
+      },
+      "bytes": 801848,
+      "vertices": 33129
+    },
+    {
+      "id": "0_-2",
+      "url": "assets/tiles/0_-2.glb",
+      "bounds": [
+        0,
+        -4000,
+        2000,
+        -2000
+      ],
+      "counts": {
+        "roads": 1386,
+        "green": 8,
+        "building": 443,
+        "water": 5
+      },
+      "bytes": 2535784,
+      "vertices": 105378
+    },
+    {
+      "id": "0_-3",
+      "url": "assets/tiles/0_-3.glb",
+      "bounds": [
+        0,
+        -6000,
+        2000,
+        -4000
+      ],
+      "counts": {
+        "roads": 1265,
+        "water": 4,
+        "building": 28,
+        "green": 1
+      },
+      "bytes": 1890268,
+      "vertices": 78480
+    },
+    {
+      "id": "0_-4",
+      "url": "assets/tiles/0_-4.glb",
+      "bounds": [
+        0,
+        -8000,
+        2000,
+        -6000
+      ],
+      "counts": {
+        "roads": 560,
+        "water": 3,
+        "building": 39,
+        "green": 1
+      },
+      "bytes": 1246608,
+      "vertices": 51690
+    },
+    {
+      "id": "0_-5",
+      "url": "assets/tiles/0_-5.glb",
+      "bounds": [
+        0,
+        -10000,
+        2000,
+        -8000
+      ],
+      "counts": {
+        "roads": 296,
+        "water": 4
+      },
+      "bytes": 790500,
+      "vertices": 32775
+    },
+    {
+      "id": "0_-6",
+      "url": "assets/tiles/0_-6.glb",
+      "bounds": [
+        0,
+        -12000,
+        2000,
+        -10000
+      ],
+      "counts": {
+        "roads": 374,
+        "water": 5,
+        "building": 3
+      },
+      "bytes": 858392,
+      "vertices": 35574
+    },
+    {
+      "id": "0_-7",
+      "url": "assets/tiles/0_-7.glb",
+      "bounds": [
+        0,
+        -14000,
+        2000,
+        -12000
+      ],
+      "counts": {
+        "roads": 225,
+        "water": 5,
+        "building": 2
+      },
+      "bytes": 466916,
+      "vertices": 19263
+    },
+    {
+      "id": "0_-8",
+      "url": "assets/tiles/0_-8.glb",
+      "bounds": [
+        0,
+        -16000,
+        2000,
+        -14000
+      ],
+      "counts": {
+        "roads": 246,
+        "water": 3,
+        "building": 2
+      },
+      "bytes": 618892,
+      "vertices": 25596
+    },
+    {
+      "id": "0_-9",
+      "url": "assets/tiles/0_-9.glb",
+      "bounds": [
+        0,
+        -18000,
+        2000,
+        -16000
+      ],
+      "counts": {
+        "roads": 378,
+        "water": 2,
+        "building": 23
+      },
+      "bytes": 1155956,
+      "vertices": 47913
+    },
+    {
+      "id": "0_0",
+      "url": "assets/tiles/0_0.glb",
+      "bounds": [
+        0,
+        0,
+        2000,
+        2000
+      ],
+      "counts": {
+        "roads": 1403,
+        "green": 8,
+        "building": 872,
+        "water": 5
+      },
+      "bytes": 3132832,
+      "vertices": 130224
+    },
+    {
+      "id": "0_1",
+      "url": "assets/tiles/0_1.glb",
+      "bounds": [
+        0,
+        2000,
+        2000,
+        4000
+      ],
+      "counts": {
+        "roads": 1690,
+        "green": 14,
+        "building": 668,
+        "water": 4
+      },
+      "bytes": 3281564,
+      "vertices": 136422
+    },
+    {
+      "id": "0_2",
+      "url": "assets/tiles/0_2.glb",
+      "bounds": [
+        0,
+        4000,
+        2000,
+        6000
+      ],
+      "counts": {
+        "roads": 1906,
+        "building": 1216,
+        "green": 17,
+        "water": 4
+      },
+      "bytes": 4023808,
+      "vertices": 167379
+    },
+    {
+      "id": "0_3",
+      "url": "assets/tiles/0_3.glb",
+      "bounds": [
+        0,
+        6000,
+        2000,
+        8000
+      ],
+      "counts": {
+        "roads": 1649,
+        "building": 1747,
+        "water": 13,
+        "green": 18
+      },
+      "bytes": 4247580,
+      "vertices": 176676
+    },
+    {
+      "id": "0_4",
+      "url": "assets/tiles/0_4.glb",
+      "bounds": [
+        0,
+        8000,
+        2000,
+        10000
+      ],
+      "counts": {
+        "roads": 743,
+        "water": 99,
+        "green": 10,
+        "building": 247
+      },
+      "bytes": 1340864,
+      "vertices": 55563
+    },
+    {
+      "id": "0_5",
+      "url": "assets/tiles/0_5.glb",
+      "bounds": [
+        0,
+        10000,
+        2000,
+        12000
+      ],
+      "counts": {
+        "roads": 317,
+        "water": 7,
+        "green": 14,
+        "building": 165
+      },
+      "bytes": 781356,
+      "vertices": 32277
+    },
+    {
+      "id": "0_6",
+      "url": "assets/tiles/0_6.glb",
+      "bounds": [
+        0,
+        12000,
+        2000,
+        14000
+      ],
+      "counts": {
+        "roads": 167,
+        "water": 7,
+        "building": 73
+      },
+      "bytes": 428056,
+      "vertices": 17643
+    },
+    {
+      "id": "0_7",
+      "url": "assets/tiles/0_7.glb",
+      "bounds": [
+        0,
+        14000,
+        2000,
+        16000
+      ],
+      "counts": {
+        "roads": 181,
+        "water": 6,
+        "building": 3
+      },
+      "bytes": 478004,
+      "vertices": 19665
+    },
+    {
+      "id": "0_8",
+      "url": "assets/tiles/0_8.glb",
+      "bounds": [
+        0,
+        16000,
+        2000,
+        18000
+      ],
+      "counts": {
+        "roads": 229,
+        "water": 9,
+        "building": 37
+      },
+      "bytes": 687288,
+      "vertices": 28416
+    },
+    {
+      "id": "0_9",
+      "url": "assets/tiles/0_9.glb",
+      "bounds": [
+        0,
+        18000,
+        2000,
+        20000
+      ],
+      "counts": {
+        "roads": 171,
+        "water": 4,
+        "building": 3
+      },
+      "bytes": 507520,
+      "vertices": 20925
+    },
+    {
+      "id": "10_-1",
+      "url": "assets/tiles/10_-1.glb",
+      "bounds": [
+        20000,
+        -2000,
+        22000,
+        0
+      ],
+      "counts": {
+        "roads": 131,
+        "water": 6,
+        "building": 1
+      },
+      "bytes": 349432,
+      "vertices": 14367
+    },
+    {
+      "id": "10_-10",
+      "url": "assets/tiles/10_-10.glb",
+      "bounds": [
+        20000,
+        -20000,
+        22000,
+        -18000
+      ],
+      "counts": {
+        "roads": 510,
+        "water": 11,
+        "building": 705,
+        "green": 2
+      },
+      "bytes": 1646828,
+      "vertices": 68337
+    },
+    {
+      "id": "10_-11",
+      "url": "assets/tiles/10_-11.glb",
+      "bounds": [
+        20000,
+        -22000,
+        22000,
+        -20000
+      ],
+      "counts": {
+        "roads": 153,
+        "building": 109,
+        "water": 2,
+        "green": 10
+      },
+      "bytes": 471180,
+      "vertices": 19410
+    },
+    {
+      "id": "10_-2",
+      "url": "assets/tiles/10_-2.glb",
+      "bounds": [
+        20000,
+        -4000,
+        22000,
+        -2000
+      ],
+      "counts": {
+        "roads": 419,
+        "water": 23,
+        "building": 65,
+        "green": 31
+      },
+      "bytes": 1729396,
+      "vertices": 71808
+    },
+    {
+      "id": "10_-3",
+      "url": "assets/tiles/10_-3.glb",
+      "bounds": [
+        20000,
+        -6000,
+        22000,
+        -4000
+      ],
+      "counts": {
+        "roads": 386,
+        "building": 21,
+        "green": 2,
+        "water": 3
+      },
+      "bytes": 1012568,
+      "vertices": 41910
+    },
+    {
+      "id": "10_-4",
+      "url": "assets/tiles/10_-4.glb",
+      "bounds": [
+        20000,
+        -8000,
+        22000,
+        -6000
+      ],
+      "counts": {
+        "roads": 233,
+        "green": 1,
+        "building": 12,
+        "water": 4
+      },
+      "bytes": 633064,
+      "vertices": 26127
+    },
+    {
+      "id": "10_-5",
+      "url": "assets/tiles/10_-5.glb",
+      "bounds": [
+        20000,
+        -10000,
+        22000,
+        -8000
+      ],
+      "counts": {
+        "roads": 324,
+        "building": 25,
+        "water": 13,
+        "green": 1
+      },
+      "bytes": 662916,
+      "vertices": 27372
+    },
+    {
+      "id": "10_-6",
+      "url": "assets/tiles/10_-6.glb",
+      "bounds": [
+        20000,
+        -12000,
+        22000,
+        -10000
+      ],
+      "counts": {
+        "roads": 498,
+        "green": 1,
+        "building": 54,
+        "water": 7
+      },
+      "bytes": 1077124,
+      "vertices": 44571
+    },
+    {
+      "id": "10_-7",
+      "url": "assets/tiles/10_-7.glb",
+      "bounds": [
+        20000,
+        -14000,
+        22000,
+        -12000
+      ],
+      "counts": {
+        "roads": 302,
+        "building": 46,
+        "water": 62
+      },
+      "bytes": 884424,
+      "vertices": 36630
+    },
+    {
+      "id": "10_-8",
+      "url": "assets/tiles/10_-8.glb",
+      "bounds": [
+        20000,
+        -16000,
+        22000,
+        -14000
+      ],
+      "counts": {
+        "roads": 390,
+        "green": 2,
+        "building": 130,
+        "water": 31
+      },
+      "bytes": 1202012,
+      "vertices": 49806
+    },
+    {
+      "id": "10_-9",
+      "url": "assets/tiles/10_-9.glb",
+      "bounds": [
+        20000,
+        -18000,
+        22000,
+        -16000
+      ],
+      "counts": {
+        "roads": 738,
+        "building": 707,
+        "water": 18,
+        "green": 4
+      },
+      "bytes": 2629404,
+      "vertices": 109278
+    },
+    {
+      "id": "10_0",
+      "url": "assets/tiles/10_0.glb",
+      "bounds": [
+        20000,
+        0,
+        22000,
+        2000
+      ],
+      "counts": {
+        "roads": 197,
+        "water": 9,
+        "building": 1
+      },
+      "bytes": 599888,
+      "vertices": 24804
+    },
+    {
+      "id": "10_1",
+      "url": "assets/tiles/10_1.glb",
+      "bounds": [
+        20000,
+        2000,
+        22000,
+        4000
+      ],
+      "counts": {
+        "roads": 44,
+        "water": 8
+      },
+      "bytes": 145192,
+      "vertices": 5859
+    },
+    {
+      "id": "10_2",
+      "url": "assets/tiles/10_2.glb",
+      "bounds": [
+        20000,
+        4000,
+        22000,
+        6000
+      ],
+      "counts": {
+        "roads": 73,
+        "green": 1,
+        "water": 4,
+        "building": 2
+      },
+      "bytes": 245552,
+      "vertices": 9981
+    },
+    {
+      "id": "10_3",
+      "url": "assets/tiles/10_3.glb",
+      "bounds": [
+        20000,
+        6000,
+        22000,
+        8000
+      ],
+      "counts": {
+        "roads": 111,
+        "building": 11,
+        "water": 3,
+        "green": 3
+      },
+      "bytes": 547324,
+      "vertices": 22554
+    },
+    {
+      "id": "10_4",
+      "url": "assets/tiles/10_4.glb",
+      "bounds": [
+        20000,
+        8000,
+        22000,
+        10000
+      ],
+      "counts": {
+        "roads": 259,
+        "building": 86,
+        "green": 6,
+        "water": 2
+      },
+      "bytes": 1292496,
+      "vertices": 53604
+    },
+    {
+      "id": "10_5",
+      "url": "assets/tiles/10_5.glb",
+      "bounds": [
+        20000,
+        10000,
+        22000,
+        12000
+      ],
+      "counts": {
+        "roads": 151,
+        "building": 10
+      },
+      "bytes": 272252,
+      "vertices": 11208
+    },
+    {
+      "id": "10_6",
+      "url": "assets/tiles/10_6.glb",
+      "bounds": [
+        20000,
+        12000,
+        22000,
+        14000
+      ],
+      "counts": {
+        "roads": 268,
+        "building": 32
+      },
+      "bytes": 510816,
+      "vertices": 21120
+    },
+    {
+      "id": "10_7",
+      "url": "assets/tiles/10_7.glb",
+      "bounds": [
+        20000,
+        14000,
+        22000,
+        16000
+      ],
+      "counts": {
+        "roads": 89,
+        "water": 1
+      },
+      "bytes": 173612,
+      "vertices": 7071
+    },
+    {
+      "id": "10_8",
+      "url": "assets/tiles/10_8.glb",
+      "bounds": [
+        20000,
+        16000,
+        22000,
+        18000
+      ],
+      "counts": {
+        "water": 1
+      },
+      "bytes": 2260,
+      "vertices": 18
+    },
+    {
+      "id": "10_9",
+      "url": "assets/tiles/10_9.glb",
+      "bounds": [
+        20000,
+        18000,
+        22000,
+        20000
+      ],
+      "counts": {
+        "roads": 62,
+        "water": 1,
+        "building": 52
+      },
+      "bytes": 220448,
+      "vertices": 9021
+    },
+    {
+      "id": "11_-1",
+      "url": "assets/tiles/11_-1.glb",
+      "bounds": [
+        22000,
+        -2000,
+        24000,
+        0
+      ],
+      "counts": {
+        "roads": 167,
+        "water": 4
+      },
+      "bytes": 434792,
+      "vertices": 17982
+    },
+    {
+      "id": "11_-10",
+      "url": "assets/tiles/11_-10.glb",
+      "bounds": [
+        22000,
+        -20000,
+        24000,
+        -18000
+      ],
+      "counts": {
+        "roads": 334,
+        "building": 46,
+        "water": 1,
+        "green": 1
+      },
+      "bytes": 629964,
+      "vertices": 25968
+    },
+    {
+      "id": "11_-11",
+      "url": "assets/tiles/11_-11.glb",
+      "bounds": [
+        22000,
+        -22000,
+        24000,
+        -20000
+      ],
+      "counts": {
+        "roads": 134,
+        "water": 2,
+        "building": 15
+      },
+      "bytes": 244748,
+      "vertices": 10032
+    },
+    {
+      "id": "11_-2",
+      "url": "assets/tiles/11_-2.glb",
+      "bounds": [
+        22000,
+        -4000,
+        24000,
+        -2000
+      ],
+      "counts": {
+        "roads": 66,
+        "building": 1,
+        "water": 5,
+        "green": 2
+      },
+      "bytes": 202708,
+      "vertices": 8226
+    },
+    {
+      "id": "11_-3",
+      "url": "assets/tiles/11_-3.glb",
+      "bounds": [
+        22000,
+        -6000,
+        24000,
+        -4000
+      ],
+      "counts": {
+        "roads": 58,
+        "water": 3,
+        "green": 2
+      },
+      "bytes": 158368,
+      "vertices": 6378
+    },
+    {
+      "id": "11_-4",
+      "url": "assets/tiles/11_-4.glb",
+      "bounds": [
+        22000,
+        -8000,
+        24000,
+        -6000
+      ],
+      "counts": {
+        "roads": 171,
+        "building": 9,
+        "water": 3
+      },
+      "bytes": 551100,
+      "vertices": 22770
+    },
+    {
+      "id": "11_-5",
+      "url": "assets/tiles/11_-5.glb",
+      "bounds": [
+        22000,
+        -10000,
+        24000,
+        -8000
+      ],
+      "counts": {
+        "roads": 293,
+        "building": 17,
+        "water": 24
+      },
+      "bytes": 714092,
+      "vertices": 29532
+    },
+    {
+      "id": "11_-6",
+      "url": "assets/tiles/11_-6.glb",
+      "bounds": [
+        22000,
+        -12000,
+        24000,
+        -10000
+      ],
+      "counts": {
+        "roads": 286,
+        "building": 195,
+        "water": 6,
+        "green": 6
+      },
+      "bytes": 928864,
+      "vertices": 38421
+    },
+    {
+      "id": "11_-7",
+      "url": "assets/tiles/11_-7.glb",
+      "bounds": [
+        22000,
+        -14000,
+        24000,
+        -12000
+      ],
+      "counts": {
+        "roads": 296,
+        "building": 59,
+        "water": 1
+      },
+      "bytes": 637940,
+      "vertices": 26388
+    },
+    {
+      "id": "11_-8",
+      "url": "assets/tiles/11_-8.glb",
+      "bounds": [
+        22000,
+        -16000,
+        24000,
+        -14000
+      ],
+      "counts": {
+        "roads": 360,
+        "building": 259,
+        "water": 4
+      },
+      "bytes": 1161276,
+      "vertices": 48135
+    },
+    {
+      "id": "11_-9",
+      "url": "assets/tiles/11_-9.glb",
+      "bounds": [
+        22000,
+        -18000,
+        24000,
+        -16000
+      ],
+      "counts": {
+        "roads": 419,
+        "building": 873,
+        "water": 3
+      },
+      "bytes": 1770236,
+      "vertices": 73479
+    },
+    {
+      "id": "11_0",
+      "url": "assets/tiles/11_0.glb",
+      "bounds": [
+        22000,
+        0,
+        24000,
+        2000
+      ],
+      "counts": {
+        "roads": 173,
+        "building": 3,
+        "water": 9
+      },
+      "bytes": 461840,
+      "vertices": 19080
+    },
+    {
+      "id": "11_1",
+      "url": "assets/tiles/11_1.glb",
+      "bounds": [
+        22000,
+        2000,
+        24000,
+        4000
+      ],
+      "counts": {
+        "roads": 109,
+        "building": 2,
+        "water": 8
+      },
+      "bytes": 282652,
+      "vertices": 11556
+    },
+    {
+      "id": "11_2",
+      "url": "assets/tiles/11_2.glb",
+      "bounds": [
+        22000,
+        4000,
+        24000,
+        6000
+      ],
+      "counts": {
+        "roads": 39,
+        "water": 2,
+        "building": 2
+      },
+      "bytes": 79184,
+      "vertices": 3165
+    },
+    {
+      "id": "11_3",
+      "url": "assets/tiles/11_3.glb",
+      "bounds": [
+        22000,
+        6000,
+        24000,
+        8000
+      ],
+      "counts": {
+        "roads": 19
+      },
+      "bytes": 34344,
+      "vertices": 1296
+    },
+    {
+      "id": "11_4",
+      "url": "assets/tiles/11_4.glb",
+      "bounds": [
+        22000,
+        8000,
+        24000,
+        10000
+      ],
+      "counts": {
+        "roads": 106,
+        "building": 1
+      },
+      "bytes": 213584,
+      "vertices": 8706
+    },
+    {
+      "id": "11_5",
+      "url": "assets/tiles/11_5.glb",
+      "bounds": [
+        22000,
+        10000,
+        24000,
+        12000
+      ],
+      "counts": {
+        "roads": 70
+      },
+      "bytes": 123784,
+      "vertices": 5022
+    },
+    {
+      "id": "11_6",
+      "url": "assets/tiles/11_6.glb",
+      "bounds": [
+        22000,
+        12000,
+        24000,
+        14000
+      ],
+      "counts": {
+        "roads": 83,
+        "building": 7
+      },
+      "bytes": 186108,
+      "vertices": 7590
+    },
+    {
+      "id": "11_7",
+      "url": "assets/tiles/11_7.glb",
+      "bounds": [
+        22000,
+        14000,
+        24000,
+        16000
+      ],
+      "counts": {
+        "roads": 153,
+        "water": 2
+      },
+      "bytes": 339704,
+      "vertices": 13962
+    },
+    {
+      "id": "11_8",
+      "url": "assets/tiles/11_8.glb",
+      "bounds": [
+        22000,
+        16000,
+        24000,
+        18000
+      ],
+      "counts": {
+        "roads": 36,
+        "water": 1
+      },
+      "bytes": 97480,
+      "vertices": 3927
+    },
+    {
+      "id": "11_9",
+      "url": "assets/tiles/11_9.glb",
+      "bounds": [
+        22000,
+        18000,
+        24000,
+        20000
+      ],
+      "counts": {
+        "roads": 3,
+        "water": 1
+      },
+      "bytes": 25796,
+      "vertices": 969
+    },
+    {
+      "id": "1_-1",
+      "url": "assets/tiles/1_-1.glb",
+      "bounds": [
+        2000,
+        -2000,
+        4000,
+        0
+      ],
+      "counts": {
+        "roads": 1514,
+        "green": 10,
+        "building": 1715,
+        "water": 1
+      },
+      "bytes": 3968956,
+      "vertices": 165063
+    },
+    {
+      "id": "1_-10",
+      "url": "assets/tiles/1_-10.glb",
+      "bounds": [
+        2000,
+        -20000,
+        4000,
+        -18000
+      ],
+      "counts": {
+        "roads": 596,
+        "building": 102
+      },
+      "bytes": 1395540,
+      "vertices": 57924
+    },
+    {
+      "id": "1_-11",
+      "url": "assets/tiles/1_-11.glb",
+      "bounds": [
+        2000,
+        -22000,
+        4000,
+        -20000
+      ],
+      "counts": {
+        "roads": 227,
+        "green": 2,
+        "building": 18
+      },
+      "bytes": 583688,
+      "vertices": 24126
+    },
+    {
+      "id": "1_-2",
+      "url": "assets/tiles/1_-2.glb",
+      "bounds": [
+        2000,
+        -4000,
+        4000,
+        -2000
+      ],
+      "counts": {
+        "roads": 1342,
+        "water": 3,
+        "building": 549,
+        "green": 20
+      },
+      "bytes": 2564416,
+      "vertices": 106572
+    },
+    {
+      "id": "1_-3",
+      "url": "assets/tiles/1_-3.glb",
+      "bounds": [
+        2000,
+        -6000,
+        4000,
+        -4000
+      ],
+      "counts": {
+        "roads": 971,
+        "water": 6,
+        "building": 135,
+        "green": 6
+      },
+      "bytes": 1654116,
+      "vertices": 68640
+    },
+    {
+      "id": "1_-4",
+      "url": "assets/tiles/1_-4.glb",
+      "bounds": [
+        2000,
+        -8000,
+        4000,
+        -6000
+      ],
+      "counts": {
+        "roads": 983,
+        "water": 11,
+        "building": 60,
+        "green": 2
+      },
+      "bytes": 1602280,
+      "vertices": 66510
+    },
+    {
+      "id": "1_-5",
+      "url": "assets/tiles/1_-5.glb",
+      "bounds": [
+        2000,
+        -10000,
+        4000,
+        -8000
+      ],
+      "counts": {
+        "roads": 608,
+        "water": 5,
+        "building": 3
+      },
+      "bytes": 1021664,
+      "vertices": 42348
+    },
+    {
+      "id": "1_-6",
+      "url": "assets/tiles/1_-6.glb",
+      "bounds": [
+        2000,
+        -12000,
+        4000,
+        -10000
+      ],
+      "counts": {
+        "roads": 261,
+        "water": 6,
+        "building": 8
+      },
+      "bytes": 487068,
+      "vertices": 20103
+    },
+    {
+      "id": "1_-7",
+      "url": "assets/tiles/1_-7.glb",
+      "bounds": [
+        2000,
+        -14000,
+        4000,
+        -12000
+      ],
+      "counts": {
+        "roads": 235,
+        "water": 5
+      },
+      "bytes": 462876,
+      "vertices": 19095
+    },
+    {
+      "id": "1_-8",
+      "url": "assets/tiles/1_-8.glb",
+      "bounds": [
+        2000,
+        -16000,
+        4000,
+        -14000
+      ],
+      "counts": {
+        "roads": 225,
+        "water": 5,
+        "building": 13
+      },
+      "bytes": 580588,
+      "vertices": 23970
+    },
+    {
+      "id": "1_-9",
+      "url": "assets/tiles/1_-9.glb",
+      "bounds": [
+        2000,
+        -18000,
+        4000,
+        -16000
+      ],
+      "counts": {
+        "roads": 397,
+        "building": 54,
+        "green": 1,
+        "water": 1
+      },
+      "bytes": 1118480,
+      "vertices": 46353
+    },
+    {
+      "id": "1_0",
+      "url": "assets/tiles/1_0.glb",
+      "bounds": [
+        2000,
+        0,
+        4000,
+        2000
+      ],
+      "counts": {
+        "roads": 1905,
+        "green": 5,
+        "building": 855,
+        "water": 1
+      },
+      "bytes": 3708472,
+      "vertices": 154212
+    },
+    {
+      "id": "1_1",
+      "url": "assets/tiles/1_1.glb",
+      "bounds": [
+        2000,
+        2000,
+        4000,
+        4000
+      ],
+      "counts": {
+        "roads": 1806,
+        "green": 6,
+        "water": 3,
+        "building": 767
+      },
+      "bytes": 3756080,
+      "vertices": 156195
+    },
+    {
+      "id": "1_2",
+      "url": "assets/tiles/1_2.glb",
+      "bounds": [
+        2000,
+        4000,
+        4000,
+        6000
+      ],
+      "counts": {
+        "roads": 2176,
+        "green": 16,
+        "building": 2295,
+        "water": 3
+      },
+      "bytes": 5059540,
+      "vertices": 210534
+    },
+    {
+      "id": "1_3",
+      "url": "assets/tiles/1_3.glb",
+      "bounds": [
+        2000,
+        6000,
+        4000,
+        8000
+      ],
+      "counts": {
+        "roads": 1775,
+        "water": 7,
+        "building": 2614,
+        "green": 10
+      },
+      "bytes": 5205308,
+      "vertices": 216579
+    },
+    {
+      "id": "1_4",
+      "url": "assets/tiles/1_4.glb",
+      "bounds": [
+        2000,
+        8000,
+        4000,
+        10000
+      ],
+      "counts": {
+        "roads": 575,
+        "water": 7,
+        "green": 10,
+        "building": 177
+      },
+      "bytes": 1064312,
+      "vertices": 44040
+    },
+    {
+      "id": "1_5",
+      "url": "assets/tiles/1_5.glb",
+      "bounds": [
+        2000,
+        10000,
+        4000,
+        12000
+      ],
+      "counts": {
+        "roads": 193,
+        "water": 8,
+        "building": 333,
+        "green": 1
+      },
+      "bytes": 611044,
+      "vertices": 25212
+    },
+    {
+      "id": "1_6",
+      "url": "assets/tiles/1_6.glb",
+      "bounds": [
+        2000,
+        12000,
+        4000,
+        14000
+      ],
+      "counts": {
+        "roads": 144,
+        "water": 12,
+        "building": 1
+      },
+      "bytes": 383084,
+      "vertices": 15741
+    },
+    {
+      "id": "1_7",
+      "url": "assets/tiles/1_7.glb",
+      "bounds": [
+        2000,
+        14000,
+        4000,
+        16000
+      ],
+      "counts": {
+        "roads": 25,
+        "water": 7
+      },
+      "bytes": 160448,
+      "vertices": 6552
+    },
+    {
+      "id": "1_8",
+      "url": "assets/tiles/1_8.glb",
+      "bounds": [
+        2000,
+        16000,
+        4000,
+        18000
+      ],
+      "counts": {
+        "roads": 71,
+        "water": 7,
+        "building": 2
+      },
+      "bytes": 243764,
+      "vertices": 9936
+    },
+    {
+      "id": "1_9",
+      "url": "assets/tiles/1_9.glb",
+      "bounds": [
+        2000,
+        18000,
+        4000,
+        20000
+      ],
+      "counts": {
+        "roads": 102,
+        "water": 6,
+        "building": 2
+      },
+      "bytes": 281008,
+      "vertices": 11517
+    },
+    {
+      "id": "2_-1",
+      "url": "assets/tiles/2_-1.glb",
+      "bounds": [
+        4000,
+        -2000,
+        6000,
+        0
+      ],
+      "counts": {
+        "roads": 1660,
+        "water": 9,
+        "building": 1572,
+        "green": 6
+      },
+      "bytes": 3995880,
+      "vertices": 166215
+    },
+    {
+      "id": "2_-10",
+      "url": "assets/tiles/2_-10.glb",
+      "bounds": [
+        4000,
+        -20000,
+        6000,
+        -18000
+      ],
+      "counts": {
+        "roads": 372
+      },
+      "bytes": 924720,
+      "vertices": 38394
+    },
+    {
+      "id": "2_-11",
+      "url": "assets/tiles/2_-11.glb",
+      "bounds": [
+        4000,
+        -22000,
+        6000,
+        -20000
+      ],
+      "counts": {
+        "roads": 100,
+        "building": 1
+      },
+      "bytes": 204004,
+      "vertices": 8364
+    },
+    {
+      "id": "2_-2",
+      "url": "assets/tiles/2_-2.glb",
+      "bounds": [
+        4000,
+        -4000,
+        6000,
+        -2000
+      ],
+      "counts": {
+        "roads": 632,
+        "building": 407,
+        "water": 9,
+        "green": 9
+      },
+      "bytes": 1312480,
+      "vertices": 54408
+    },
+    {
+      "id": "2_-3",
+      "url": "assets/tiles/2_-3.glb",
+      "bounds": [
+        4000,
+        -6000,
+        6000,
+        -4000
+      ],
+      "counts": {
+        "roads": 687,
+        "water": 7,
+        "building": 23,
+        "green": 5
+      },
+      "bytes": 1193132,
+      "vertices": 49464
+    },
+    {
+      "id": "2_-4",
+      "url": "assets/tiles/2_-4.glb",
+      "bounds": [
+        4000,
+        -8000,
+        6000,
+        -6000
+      ],
+      "counts": {
+        "roads": 668,
+        "water": 3,
+        "building": 14,
+        "green": 1
+      },
+      "bytes": 953028,
+      "vertices": 39459
+    },
+    {
+      "id": "2_-5",
+      "url": "assets/tiles/2_-5.glb",
+      "bounds": [
+        4000,
+        -10000,
+        6000,
+        -8000
+      ],
+      "counts": {
+        "roads": 489,
+        "water": 4,
+        "building": 9,
+        "green": 1
+      },
+      "bytes": 873396,
+      "vertices": 36141
+    },
+    {
+      "id": "2_-6",
+      "url": "assets/tiles/2_-6.glb",
+      "bounds": [
+        4000,
+        -12000,
+        6000,
+        -10000
+      ],
+      "counts": {
+        "roads": 484,
+        "water": 5,
+        "green": 4,
+        "building": 51
+      },
+      "bytes": 1108840,
+      "vertices": 45921
+    },
+    {
+      "id": "2_-7",
+      "url": "assets/tiles/2_-7.glb",
+      "bounds": [
+        4000,
+        -14000,
+        6000,
+        -12000
+      ],
+      "counts": {
+        "roads": 356,
+        "water": 10,
+        "building": 4,
+        "green": 1
+      },
+      "bytes": 1032444,
+      "vertices": 42768
+    },
+    {
+      "id": "2_-8",
+      "url": "assets/tiles/2_-8.glb",
+      "bounds": [
+        4000,
+        -16000,
+        6000,
+        -14000
+      ],
+      "counts": {
+        "roads": 423,
+        "water": 1,
+        "building": 8
+      },
+      "bytes": 933916,
+      "vertices": 38661
+    },
+    {
+      "id": "2_-9",
+      "url": "assets/tiles/2_-9.glb",
+      "bounds": [
+        4000,
+        -18000,
+        6000,
+        -16000
+      ],
+      "counts": {
+        "roads": 291,
+        "green": 1,
+        "building": 6,
+        "water": 1
+      },
+      "bytes": 703972,
+      "vertices": 29082
+    },
+    {
+      "id": "2_0",
+      "url": "assets/tiles/2_0.glb",
+      "bounds": [
+        4000,
+        0,
+        6000,
+        2000
+      ],
+      "counts": {
+        "roads": 1916,
+        "building": 746,
+        "water": 2,
+        "green": 5
+      },
+      "bytes": 3549152,
+      "vertices": 147573
+    },
+    {
+      "id": "2_1",
+      "url": "assets/tiles/2_1.glb",
+      "bounds": [
+        4000,
+        2000,
+        6000,
+        4000
+      ],
+      "counts": {
+        "roads": 1550,
+        "green": 47,
+        "building": 1711,
+        "water": 15
+      },
+      "bytes": 4837076,
+      "vertices": 201237
+    },
+    {
+      "id": "2_2",
+      "url": "assets/tiles/2_2.glb",
+      "bounds": [
+        4000,
+        4000,
+        6000,
+        6000
+      ],
+      "counts": {
+        "roads": 2452,
+        "water": 10,
+        "building": 1523,
+        "green": 30
+      },
+      "bytes": 5186696,
+      "vertices": 215805
+    },
+    {
+      "id": "2_3",
+      "url": "assets/tiles/2_3.glb",
+      "bounds": [
+        4000,
+        6000,
+        6000,
+        8000
+      ],
+      "counts": {
+        "roads": 1362,
+        "water": 15,
+        "building": 950,
+        "green": 24
+      },
+      "bytes": 3018288,
+      "vertices": 125454
+    },
+    {
+      "id": "2_4",
+      "url": "assets/tiles/2_4.glb",
+      "bounds": [
+        4000,
+        8000,
+        6000,
+        10000
+      ],
+      "counts": {
+        "roads": 1004,
+        "water": 9,
+        "green": 27,
+        "building": 520
+      },
+      "bytes": 2907396,
+      "vertices": 120834
+    },
+    {
+      "id": "2_5",
+      "url": "assets/tiles/2_5.glb",
+      "bounds": [
+        4000,
+        10000,
+        6000,
+        12000
+      ],
+      "counts": {
+        "roads": 348,
+        "water": 6,
+        "green": 8,
+        "building": 161
+      },
+      "bytes": 725832,
+      "vertices": 29937
+    },
+    {
+      "id": "2_6",
+      "url": "assets/tiles/2_6.glb",
+      "bounds": [
+        4000,
+        12000,
+        6000,
+        14000
+      ],
+      "counts": {
+        "roads": 191,
+        "water": 8,
+        "building": 1
+      },
+      "bytes": 404020,
+      "vertices": 16614
+    },
+    {
+      "id": "2_7",
+      "url": "assets/tiles/2_7.glb",
+      "bounds": [
+        4000,
+        14000,
+        6000,
+        16000
+      ],
+      "counts": {
+        "roads": 206,
+        "water": 8,
+        "building": 7
+      },
+      "bytes": 461880,
+      "vertices": 19053
+    },
+    {
+      "id": "2_8",
+      "url": "assets/tiles/2_8.glb",
+      "bounds": [
+        4000,
+        16000,
+        6000,
+        18000
+      ],
+      "counts": {
+        "roads": 222,
+        "building": 3,
+        "water": 7
+      },
+      "bytes": 488072,
+      "vertices": 20115
+    },
+    {
+      "id": "2_9",
+      "url": "assets/tiles/2_9.glb",
+      "bounds": [
+        4000,
+        18000,
+        6000,
+        20000
+      ],
+      "counts": {
+        "roads": 268,
+        "water": 5,
+        "building": 278,
+        "green": 3
+      },
+      "bytes": 738772,
+      "vertices": 30531
+    },
+    {
+      "id": "3_-1",
+      "url": "assets/tiles/3_-1.glb",
+      "bounds": [
+        6000,
+        -2000,
+        8000,
+        0
+      ],
+      "counts": {
+        "roads": 902,
+        "water": 8,
+        "building": 4933,
+        "green": 7
+      },
+      "bytes": 5853140,
+      "vertices": 243573
+    },
+    {
+      "id": "3_-10",
+      "url": "assets/tiles/3_-10.glb",
+      "bounds": [
+        6000,
+        -20000,
+        8000,
+        -18000
+      ],
+      "counts": {
+        "roads": 429,
+        "building": 19
+      },
+      "bytes": 826352,
+      "vertices": 34266
+    },
+    {
+      "id": "3_-11",
+      "url": "assets/tiles/3_-11.glb",
+      "bounds": [
+        6000,
+        -22000,
+        8000,
+        -20000
+      ],
+      "counts": {
+        "roads": 245,
+        "building": 1
+      },
+      "bytes": 483068,
+      "vertices": 19992
+    },
+    {
+      "id": "3_-2",
+      "url": "assets/tiles/3_-2.glb",
+      "bounds": [
+        6000,
+        -4000,
+        8000,
+        -2000
+      ],
+      "counts": {
+        "roads": 828,
+        "water": 5,
+        "building": 7225,
+        "green": 6
+      },
+      "bytes": 8296644,
+      "vertices": 345414
+    },
+    {
+      "id": "3_-3",
+      "url": "assets/tiles/3_-3.glb",
+      "bounds": [
+        6000,
+        -6000,
+        8000,
+        -4000
+      ],
+      "counts": {
+        "roads": 524,
+        "building": 56,
+        "water": 3,
+        "green": 2
+      },
+      "bytes": 936364,
+      "vertices": 38736
+    },
+    {
+      "id": "3_-4",
+      "url": "assets/tiles/3_-4.glb",
+      "bounds": [
+        6000,
+        -8000,
+        8000,
+        -6000
+      ],
+      "counts": {
+        "roads": 576,
+        "water": 6,
+        "building": 20,
+        "green": 1
+      },
+      "bytes": 1011560,
+      "vertices": 41898
+    },
+    {
+      "id": "3_-5",
+      "url": "assets/tiles/3_-5.glb",
+      "bounds": [
+        6000,
+        -10000,
+        8000,
+        -8000
+      ],
+      "counts": {
+        "roads": 526,
+        "water": 7,
+        "building": 6
+      },
+      "bytes": 896536,
+      "vertices": 37134
+    },
+    {
+      "id": "3_-6",
+      "url": "assets/tiles/3_-6.glb",
+      "bounds": [
+        6000,
+        -12000,
+        8000,
+        -10000
+      ],
+      "counts": {
+        "roads": 347,
+        "green": 1,
+        "building": 81
+      },
+      "bytes": 888860,
+      "vertices": 36813
+    },
+    {
+      "id": "3_-7",
+      "url": "assets/tiles/3_-7.glb",
+      "bounds": [
+        6000,
+        -14000,
+        8000,
+        -12000
+      ],
+      "counts": {
+        "roads": 402,
+        "building": 78,
+        "green": 1,
+        "water": 10
+      },
+      "bytes": 1880764,
+      "vertices": 78114
+    },
+    {
+      "id": "3_-8",
+      "url": "assets/tiles/3_-8.glb",
+      "bounds": [
+        6000,
+        -16000,
+        8000,
+        -14000
+      ],
+      "counts": {
+        "roads": 324,
+        "building": 33
+      },
+      "bytes": 735900,
+      "vertices": 30498
+    },
+    {
+      "id": "3_-9",
+      "url": "assets/tiles/3_-9.glb",
+      "bounds": [
+        6000,
+        -18000,
+        8000,
+        -16000
+      ],
+      "counts": {
+        "roads": 310,
+        "building": 9
+      },
+      "bytes": 710328,
+      "vertices": 29403
+    },
+    {
+      "id": "3_0",
+      "url": "assets/tiles/3_0.glb",
+      "bounds": [
+        6000,
+        0,
+        8000,
+        2000
+      ],
+      "counts": {
+        "roads": 1513,
+        "water": 16,
+        "green": 11,
+        "building": 1809
+      },
+      "bytes": 4118452,
+      "vertices": 171294
+    },
+    {
+      "id": "3_1",
+      "url": "assets/tiles/3_1.glb",
+      "bounds": [
+        6000,
+        2000,
+        8000,
+        4000
+      ],
+      "counts": {
+        "roads": 1067,
+        "green": 33,
+        "building": 504,
+        "water": 22
+      },
+      "bytes": 3037848,
+      "vertices": 126270
+    },
+    {
+      "id": "3_2",
+      "url": "assets/tiles/3_2.glb",
+      "bounds": [
+        6000,
+        4000,
+        8000,
+        6000
+      ],
+      "counts": {
+        "roads": 1010,
+        "building": 1083,
+        "water": 10,
+        "green": 25
+      },
+      "bytes": 3230952,
+      "vertices": 134316
+    },
+    {
+      "id": "3_3",
+      "url": "assets/tiles/3_3.glb",
+      "bounds": [
+        6000,
+        6000,
+        8000,
+        8000
+      ],
+      "counts": {
+        "roads": 973,
+        "water": 7,
+        "building": 832,
+        "green": 8
+      },
+      "bytes": 2208020,
+      "vertices": 91722
+    },
+    {
+      "id": "3_4",
+      "url": "assets/tiles/3_4.glb",
+      "bounds": [
+        6000,
+        8000,
+        8000,
+        10000
+      ],
+      "counts": {
+        "roads": 955,
+        "water": 23,
+        "green": 85,
+        "building": 1560
+      },
+      "bytes": 3573848,
+      "vertices": 148602
+    },
+    {
+      "id": "3_5",
+      "url": "assets/tiles/3_5.glb",
+      "bounds": [
+        6000,
+        10000,
+        8000,
+        12000
+      ],
+      "counts": {
+        "roads": 177,
+        "water": 6,
+        "green": 4,
+        "building": 64
+      },
+      "bytes": 480860,
+      "vertices": 19758
+    },
+    {
+      "id": "3_6",
+      "url": "assets/tiles/3_6.glb",
+      "bounds": [
+        6000,
+        12000,
+        8000,
+        14000
+      ],
+      "counts": {
+        "roads": 302,
+        "water": 15,
+        "building": 58,
+        "green": 2
+      },
+      "bytes": 964372,
+      "vertices": 39903
+    },
+    {
+      "id": "3_7",
+      "url": "assets/tiles/3_7.glb",
+      "bounds": [
+        6000,
+        14000,
+        8000,
+        16000
+      ],
+      "counts": {
+        "roads": 198,
+        "water": 10,
+        "building": 1
+      },
+      "bytes": 479228,
+      "vertices": 19776
+    },
+    {
+      "id": "3_8",
+      "url": "assets/tiles/3_8.glb",
+      "bounds": [
+        6000,
+        16000,
+        8000,
+        18000
+      ],
+      "counts": {
+        "roads": 85,
+        "water": 6,
+        "building": 1
+      },
+      "bytes": 254208,
+      "vertices": 10401
+    },
+    {
+      "id": "3_9",
+      "url": "assets/tiles/3_9.glb",
+      "bounds": [
+        6000,
+        18000,
+        8000,
+        20000
+      ],
+      "counts": {
+        "roads": 127,
+        "water": 4,
+        "building": 1
+      },
+      "bytes": 325236,
+      "vertices": 13359
+    },
+    {
+      "id": "4_-1",
+      "url": "assets/tiles/4_-1.glb",
+      "bounds": [
+        8000,
+        -2000,
+        10000,
+        0
+      ],
+      "counts": {
+        "roads": 470,
+        "building": 2009,
+        "water": 33,
+        "green": 3
+      },
+      "bytes": 2639604,
+      "vertices": 109704
+    },
+    {
+      "id": "4_-10",
+      "url": "assets/tiles/4_-10.glb",
+      "bounds": [
+        8000,
+        -20000,
+        10000,
+        -18000
+      ],
+      "counts": {
+        "roads": 508,
+        "building": 8
+      },
+      "bytes": 1097068,
+      "vertices": 45546
+    },
+    {
+      "id": "4_-11",
+      "url": "assets/tiles/4_-11.glb",
+      "bounds": [
+        8000,
+        -22000,
+        10000,
+        -20000
+      ],
+      "counts": {
+        "roads": 184
+      },
+      "bytes": 358364,
+      "vertices": 14796
+    },
+    {
+      "id": "4_-2",
+      "url": "assets/tiles/4_-2.glb",
+      "bounds": [
+        8000,
+        -4000,
+        10000,
+        -2000
+      ],
+      "counts": {
+        "roads": 810,
+        "water": 15,
+        "building": 13068
+      },
+      "bytes": 13376924,
+      "vertices": 557121
+    },
+    {
+      "id": "4_-3",
+      "url": "assets/tiles/4_-3.glb",
+      "bounds": [
+        8000,
+        -6000,
+        10000,
+        -4000
+      ],
+      "counts": {
+        "roads": 634,
+        "water": 8,
+        "building": 2976,
+        "green": 3
+      },
+      "bytes": 3708892,
+      "vertices": 154257
+    },
+    {
+      "id": "4_-4",
+      "url": "assets/tiles/4_-4.glb",
+      "bounds": [
+        8000,
+        -8000,
+        10000,
+        -6000
+      ],
+      "counts": {
+        "roads": 877,
+        "water": 5,
+        "building": 91,
+        "green": 3
+      },
+      "bytes": 1659924,
+      "vertices": 68883
+    },
+    {
+      "id": "4_-5",
+      "url": "assets/tiles/4_-5.glb",
+      "bounds": [
+        8000,
+        -10000,
+        10000,
+        -8000
+      ],
+      "counts": {
+        "roads": 426,
+        "building": 320,
+        "water": 28,
+        "green": 2
+      },
+      "bytes": 1193260,
+      "vertices": 49470
+    },
+    {
+      "id": "4_-6",
+      "url": "assets/tiles/4_-6.glb",
+      "bounds": [
+        8000,
+        -12000,
+        10000,
+        -10000
+      ],
+      "counts": {
+        "roads": 311,
+        "building": 365,
+        "water": 16,
+        "green": 3
+      },
+      "bytes": 1004164,
+      "vertices": 41559
+    },
+    {
+      "id": "4_-7",
+      "url": "assets/tiles/4_-7.glb",
+      "bounds": [
+        8000,
+        -14000,
+        10000,
+        -12000
+      ],
+      "counts": {
+        "roads": 250,
+        "building": 110,
+        "water": 10
+      },
+      "bytes": 525440,
+      "vertices": 21729
+    },
+    {
+      "id": "4_-8",
+      "url": "assets/tiles/4_-8.glb",
+      "bounds": [
+        8000,
+        -16000,
+        10000,
+        -14000
+      ],
+      "counts": {
+        "roads": 397,
+        "building": 154,
+        "green": 1
+      },
+      "bytes": 784376,
+      "vertices": 32460
+    },
+    {
+      "id": "4_-9",
+      "url": "assets/tiles/4_-9.glb",
+      "bounds": [
+        8000,
+        -18000,
+        10000,
+        -16000
+      ],
+      "counts": {
+        "roads": 410,
+        "building": 8
+      },
+      "bytes": 758540,
+      "vertices": 31470
+    },
+    {
+      "id": "4_0",
+      "url": "assets/tiles/4_0.glb",
+      "bounds": [
+        8000,
+        0,
+        10000,
+        2000
+      ],
+      "counts": {
+        "roads": 925,
+        "water": 14,
+        "green": 19,
+        "building": 1752
+      },
+      "bytes": 3337748,
+      "vertices": 138765
+    },
+    {
+      "id": "4_1",
+      "url": "assets/tiles/4_1.glb",
+      "bounds": [
+        8000,
+        2000,
+        10000,
+        4000
+      ],
+      "counts": {
+        "roads": 551,
+        "water": 10,
+        "building": 452,
+        "green": 15
+      },
+      "bytes": 1675836,
+      "vertices": 69549
+    },
+    {
+      "id": "4_2",
+      "url": "assets/tiles/4_2.glb",
+      "bounds": [
+        8000,
+        4000,
+        10000,
+        6000
+      ],
+      "counts": {
+        "roads": 310,
+        "water": 5,
+        "building": 174,
+        "green": 11
+      },
+      "bytes": 1039664,
+      "vertices": 43041
+    },
+    {
+      "id": "4_3",
+      "url": "assets/tiles/4_3.glb",
+      "bounds": [
+        8000,
+        6000,
+        10000,
+        8000
+      ],
+      "counts": {
+        "roads": 898,
+        "water": 3,
+        "building": 90,
+        "green": 7
+      },
+      "bytes": 1516136,
+      "vertices": 62862
+    },
+    {
+      "id": "4_4",
+      "url": "assets/tiles/4_4.glb",
+      "bounds": [
+        8000,
+        8000,
+        10000,
+        10000
+      ],
+      "counts": {
+        "roads": 876,
+        "water": 8,
+        "building": 196,
+        "green": 8
+      },
+      "bytes": 2284964,
+      "vertices": 94899
+    },
+    {
+      "id": "4_5",
+      "url": "assets/tiles/4_5.glb",
+      "bounds": [
+        8000,
+        10000,
+        10000,
+        12000
+      ],
+      "counts": {
+        "roads": 675,
+        "green": 12,
+        "building": 493,
+        "water": 5
+      },
+      "bytes": 2150364,
+      "vertices": 89319
+    },
+    {
+      "id": "4_6",
+      "url": "assets/tiles/4_6.glb",
+      "bounds": [
+        8000,
+        12000,
+        10000,
+        14000
+      ],
+      "counts": {
+        "roads": 481,
+        "water": 7,
+        "building": 61,
+        "green": 2
+      },
+      "bytes": 987364,
+      "vertices": 40860
+    },
+    {
+      "id": "4_7",
+      "url": "assets/tiles/4_7.glb",
+      "bounds": [
+        8000,
+        14000,
+        10000,
+        16000
+      ],
+      "counts": {
+        "roads": 312,
+        "building": 40,
+        "water": 14,
+        "green": 5
+      },
+      "bytes": 727944,
+      "vertices": 30081
+    },
+    {
+      "id": "4_8",
+      "url": "assets/tiles/4_8.glb",
+      "bounds": [
+        8000,
+        16000,
+        10000,
+        18000
+      ],
+      "counts": {
+        "roads": 215,
+        "water": 6,
+        "building": 17,
+        "green": 1
+      },
+      "bytes": 591952,
+      "vertices": 24444
+    },
+    {
+      "id": "4_9",
+      "url": "assets/tiles/4_9.glb",
+      "bounds": [
+        8000,
+        18000,
+        10000,
+        20000
+      ],
+      "counts": {
+        "roads": 279,
+        "water": 10,
+        "building": 2
+      },
+      "bytes": 622312,
+      "vertices": 25737
+    },
+    {
+      "id": "5_-1",
+      "url": "assets/tiles/5_-1.glb",
+      "bounds": [
+        10000,
+        -2000,
+        12000,
+        0
+      ],
+      "counts": {
+        "roads": 389,
+        "water": 65,
+        "building": 42,
+        "green": 3
+      },
+      "bytes": 634368,
+      "vertices": 26124
+    },
+    {
+      "id": "5_-10",
+      "url": "assets/tiles/5_-10.glb",
+      "bounds": [
+        10000,
+        -20000,
+        12000,
+        -18000
+      ],
+      "counts": {
+        "roads": 409,
+        "building": 14,
+        "water": 1
+      },
+      "bytes": 887124,
+      "vertices": 36741
+    },
+    {
+      "id": "5_-11",
+      "url": "assets/tiles/5_-11.glb",
+      "bounds": [
+        10000,
+        -22000,
+        12000,
+        -20000
+      ],
+      "counts": {
+        "roads": 182,
+        "water": 1,
+        "building": 2
+      },
+      "bytes": 461932,
+      "vertices": 19053
+    },
+    {
+      "id": "5_-2",
+      "url": "assets/tiles/5_-2.glb",
+      "bounds": [
+        10000,
+        -4000,
+        12000,
+        -2000
+      ],
+      "counts": {
+        "roads": 652,
+        "water": 21,
+        "green": 2,
+        "building": 33
+      },
+      "bytes": 1197180,
+      "vertices": 49602
+    },
+    {
+      "id": "5_-3",
+      "url": "assets/tiles/5_-3.glb",
+      "bounds": [
+        10000,
+        -6000,
+        12000,
+        -4000
+      ],
+      "counts": {
+        "roads": 956,
+        "water": 3,
+        "building": 515,
+        "green": 2
+      },
+      "bytes": 2257968,
+      "vertices": 93801
+    },
+    {
+      "id": "5_-4",
+      "url": "assets/tiles/5_-4.glb",
+      "bounds": [
+        10000,
+        -8000,
+        12000,
+        -6000
+      ],
+      "counts": {
+        "roads": 760,
+        "building": 185,
+        "green": 4
+      },
+      "bytes": 1527852,
+      "vertices": 63408
+    },
+    {
+      "id": "5_-5",
+      "url": "assets/tiles/5_-5.glb",
+      "bounds": [
+        10000,
+        -10000,
+        12000,
+        -8000
+      ],
+      "counts": {
+        "roads": 426,
+        "building": 124,
+        "water": 5,
+        "green": 1
+      },
+      "bytes": 931160,
+      "vertices": 38547
+    },
+    {
+      "id": "5_-6",
+      "url": "assets/tiles/5_-6.glb",
+      "bounds": [
+        10000,
+        -12000,
+        12000,
+        -10000
+      ],
+      "counts": {
+        "roads": 567,
+        "building": 147,
+        "green": 5
+      },
+      "bytes": 1238040,
+      "vertices": 51390
+    },
+    {
+      "id": "5_-7",
+      "url": "assets/tiles/5_-7.glb",
+      "bounds": [
+        10000,
+        -14000,
+        12000,
+        -12000
+      ],
+      "counts": {
+        "roads": 664,
+        "building": 5,
+        "green": 2
+      },
+      "bytes": 1157684,
+      "vertices": 48012
+    },
+    {
+      "id": "5_-8",
+      "url": "assets/tiles/5_-8.glb",
+      "bounds": [
+        10000,
+        -16000,
+        12000,
+        -14000
+      ],
+      "counts": {
+        "roads": 518,
+        "building": 12
+      },
+      "bytes": 965224,
+      "vertices": 40023
+    },
+    {
+      "id": "5_-9",
+      "url": "assets/tiles/5_-9.glb",
+      "bounds": [
+        10000,
+        -18000,
+        12000,
+        -16000
+      ],
+      "counts": {
+        "roads": 444,
+        "building": 7,
+        "water": 1
+      },
+      "bytes": 917720,
+      "vertices": 38016
+    },
+    {
+      "id": "5_0",
+      "url": "assets/tiles/5_0.glb",
+      "bounds": [
+        10000,
+        0,
+        12000,
+        2000
+      ],
+      "counts": {
+        "roads": 794,
+        "water": 7,
+        "building": 528,
+        "green": 9
+      },
+      "bytes": 1938076,
+      "vertices": 80445
+    },
+    {
+      "id": "5_1",
+      "url": "assets/tiles/5_1.glb",
+      "bounds": [
+        10000,
+        2000,
+        12000,
+        4000
+      ],
+      "counts": {
+        "roads": 753,
+        "building": 371,
+        "water": 8,
+        "green": 11
+      },
+      "bytes": 2042464,
+      "vertices": 84795
+    },
+    {
+      "id": "5_2",
+      "url": "assets/tiles/5_2.glb",
+      "bounds": [
+        10000,
+        4000,
+        12000,
+        6000
+      ],
+      "counts": {
+        "roads": 183,
+        "water": 3,
+        "building": 116,
+        "green": 5
+      },
+      "bytes": 603236,
+      "vertices": 24915
+    },
+    {
+      "id": "5_3",
+      "url": "assets/tiles/5_3.glb",
+      "bounds": [
+        10000,
+        6000,
+        12000,
+        8000
+      ],
+      "counts": {
+        "roads": 151,
+        "water": 7,
+        "building": 14,
+        "green": 2
+      },
+      "bytes": 271028,
+      "vertices": 11043
+    },
+    {
+      "id": "5_4",
+      "url": "assets/tiles/5_4.glb",
+      "bounds": [
+        10000,
+        8000,
+        12000,
+        10000
+      ],
+      "counts": {
+        "roads": 118,
+        "water": 6,
+        "building": 15
+      },
+      "bytes": 278824,
+      "vertices": 11397
+    },
+    {
+      "id": "5_5",
+      "url": "assets/tiles/5_5.glb",
+      "bounds": [
+        10000,
+        10000,
+        12000,
+        12000
+      ],
+      "counts": {
+        "roads": 110,
+        "water": 4,
+        "building": 54
+      },
+      "bytes": 308844,
+      "vertices": 12678
+    },
+    {
+      "id": "5_6",
+      "url": "assets/tiles/5_6.glb",
+      "bounds": [
+        10000,
+        12000,
+        12000,
+        14000
+      ],
+      "counts": {
+        "roads": 405,
+        "water": 8,
+        "building": 7
+      },
+      "bytes": 722932,
+      "vertices": 29901
+    },
+    {
+      "id": "5_7",
+      "url": "assets/tiles/5_7.glb",
+      "bounds": [
+        10000,
+        14000,
+        12000,
+        16000
+      ],
+      "counts": {
+        "roads": 343,
+        "water": 5,
+        "building": 14,
+        "green": 2
+      },
+      "bytes": 757012,
+      "vertices": 31293
+    },
+    {
+      "id": "5_8",
+      "url": "assets/tiles/5_8.glb",
+      "bounds": [
+        10000,
+        16000,
+        12000,
+        18000
+      ],
+      "counts": {
+        "roads": 16,
+        "water": 204,
+        "green": 30
+      },
+      "bytes": 371104,
+      "vertices": 15273
+    },
+    {
+      "id": "5_9",
+      "url": "assets/tiles/5_9.glb",
+      "bounds": [
+        10000,
+        18000,
+        12000,
+        20000
+      ],
+      "counts": {
+        "roads": 160,
+        "water": 3,
+        "building": 42
+      },
+      "bytes": 408400,
+      "vertices": 16824
+    },
+    {
+      "id": "6_-1",
+      "url": "assets/tiles/6_-1.glb",
+      "bounds": [
+        12000,
+        -2000,
+        14000,
+        0
+      ],
+      "counts": {
+        "roads": 803,
+        "water": 2,
+        "building": 276,
+        "green": 4
+      },
+      "bytes": 1501824,
+      "vertices": 62295
+    },
+    {
+      "id": "6_-10",
+      "url": "assets/tiles/6_-10.glb",
+      "bounds": [
+        12000,
+        -20000,
+        14000,
+        -18000
+      ],
+      "counts": {
+        "roads": 343,
+        "building": 16,
+        "water": 4
+      },
+      "bytes": 867164,
+      "vertices": 35910
+    },
+    {
+      "id": "6_-11",
+      "url": "assets/tiles/6_-11.glb",
+      "bounds": [
+        12000,
+        -22000,
+        14000,
+        -20000
+      ],
+      "counts": {
+        "roads": 73,
+        "building": 11,
+        "water": 2
+      },
+      "bytes": 190560,
+      "vertices": 7776
+    },
+    {
+      "id": "6_-2",
+      "url": "assets/tiles/6_-2.glb",
+      "bounds": [
+        12000,
+        -4000,
+        14000,
+        -2000
+      ],
+      "counts": {
+        "roads": 928,
+        "building": 2374,
+        "green": 3,
+        "water": 2
+      },
+      "bytes": 3924508,
+      "vertices": 163239
+    },
+    {
+      "id": "6_-3",
+      "url": "assets/tiles/6_-3.glb",
+      "bounds": [
+        12000,
+        -6000,
+        14000,
+        -4000
+      ],
+      "counts": {
+        "roads": 921,
+        "building": 4153,
+        "green": 12,
+        "water": 3
+      },
+      "bytes": 5624484,
+      "vertices": 234072
+    },
+    {
+      "id": "6_-4",
+      "url": "assets/tiles/6_-4.glb",
+      "bounds": [
+        12000,
+        -8000,
+        14000,
+        -6000
+      ],
+      "counts": {
+        "roads": 1011,
+        "building": 750,
+        "green": 3
+      },
+      "bytes": 2438636,
+      "vertices": 101328
+    },
+    {
+      "id": "6_-5",
+      "url": "assets/tiles/6_-5.glb",
+      "bounds": [
+        12000,
+        -10000,
+        14000,
+        -8000
+      ],
+      "counts": {
+        "roads": 731,
+        "building": 57,
+        "green": 7
+      },
+      "bytes": 1211760,
+      "vertices": 50265
+    },
+    {
+      "id": "6_-6",
+      "url": "assets/tiles/6_-6.glb",
+      "bounds": [
+        12000,
+        -12000,
+        14000,
+        -10000
+      ],
+      "counts": {
+        "roads": 801,
+        "building": 47,
+        "green": 2,
+        "water": 1
+      },
+      "bytes": 1668972,
+      "vertices": 69288
+    },
+    {
+      "id": "6_-7",
+      "url": "assets/tiles/6_-7.glb",
+      "bounds": [
+        12000,
+        -14000,
+        14000,
+        -12000
+      ],
+      "counts": {
+        "roads": 574,
+        "green": 1,
+        "building": 10,
+        "water": 2
+      },
+      "bytes": 1176476,
+      "vertices": 48768
+    },
+    {
+      "id": "6_-8",
+      "url": "assets/tiles/6_-8.glb",
+      "bounds": [
+        12000,
+        -16000,
+        14000,
+        -14000
+      ],
+      "counts": {
+        "roads": 313,
+        "building": 14,
+        "water": 35
+      },
+      "bytes": 719316,
+      "vertices": 29778
+    },
+    {
+      "id": "6_-9",
+      "url": "assets/tiles/6_-9.glb",
+      "bounds": [
+        12000,
+        -18000,
+        14000,
+        -16000
+      ],
+      "counts": {
+        "roads": 234,
+        "water": 103
+      },
+      "bytes": 707036,
+      "vertices": 29268
+    },
+    {
+      "id": "6_0",
+      "url": "assets/tiles/6_0.glb",
+      "bounds": [
+        12000,
+        0,
+        14000,
+        2000
+      ],
+      "counts": {
+        "roads": 389,
+        "water": 10,
+        "building": 403,
+        "green": 8
+      },
+      "bytes": 1345448,
+      "vertices": 55752
+    },
+    {
+      "id": "6_1",
+      "url": "assets/tiles/6_1.glb",
+      "bounds": [
+        12000,
+        2000,
+        14000,
+        4000
+      ],
+      "counts": {
+        "roads": 707,
+        "green": 8,
+        "building": 244,
+        "water": 2
+      },
+      "bytes": 1679992,
+      "vertices": 69720
+    },
+    {
+      "id": "6_2",
+      "url": "assets/tiles/6_2.glb",
+      "bounds": [
+        12000,
+        4000,
+        14000,
+        6000
+      ],
+      "counts": {
+        "roads": 469,
+        "water": 3,
+        "building": 43,
+        "green": 4
+      },
+      "bytes": 817612,
+      "vertices": 33789
+    },
+    {
+      "id": "6_3",
+      "url": "assets/tiles/6_3.glb",
+      "bounds": [
+        12000,
+        6000,
+        14000,
+        8000
+      ],
+      "counts": {
+        "roads": 44,
+        "water": 6,
+        "building": 3
+      },
+      "bytes": 92848,
+      "vertices": 3678
+    },
+    {
+      "id": "6_4",
+      "url": "assets/tiles/6_4.glb",
+      "bounds": [
+        12000,
+        8000,
+        14000,
+        10000
+      ],
+      "counts": {
+        "roads": 152,
+        "water": 2
+      },
+      "bytes": 423332,
+      "vertices": 17505
+    },
+    {
+      "id": "6_5",
+      "url": "assets/tiles/6_5.glb",
+      "bounds": [
+        12000,
+        10000,
+        14000,
+        12000
+      ],
+      "counts": {
+        "roads": 98,
+        "water": 1
+      },
+      "bytes": 293068,
+      "vertices": 12048
+    },
+    {
+      "id": "6_6",
+      "url": "assets/tiles/6_6.glb",
+      "bounds": [
+        12000,
+        12000,
+        14000,
+        14000
+      ],
+      "counts": {
+        "roads": 66,
+        "water": 4
+      },
+      "bytes": 177876,
+      "vertices": 7278
+    },
+    {
+      "id": "6_7",
+      "url": "assets/tiles/6_7.glb",
+      "bounds": [
+        12000,
+        14000,
+        14000,
+        16000
+      ],
+      "counts": {
+        "roads": 120,
+        "water": 1,
+        "building": 56
+      },
+      "bytes": 408180,
+      "vertices": 16845
+    },
+    {
+      "id": "6_8",
+      "url": "assets/tiles/6_8.glb",
+      "bounds": [
+        12000,
+        16000,
+        14000,
+        18000
+      ],
+      "counts": {
+        "roads": 98,
+        "water": 100,
+        "green": 25
+      },
+      "bytes": 375152,
+      "vertices": 15411
+    },
+    {
+      "id": "6_9",
+      "url": "assets/tiles/6_9.glb",
+      "bounds": [
+        12000,
+        18000,
+        14000,
+        20000
+      ],
+      "counts": {
+        "roads": 35,
+        "water": 4,
+        "building": 1
+      },
+      "bytes": 69212,
+      "vertices": 2721
+    },
+    {
+      "id": "7_-1",
+      "url": "assets/tiles/7_-1.glb",
+      "bounds": [
+        14000,
+        -2000,
+        16000,
+        0
+      ],
+      "counts": {
+        "roads": 488,
+        "water": 6,
+        "green": 2,
+        "building": 127
+      },
+      "bytes": 988328,
+      "vertices": 40902
+    },
+    {
+      "id": "7_-10",
+      "url": "assets/tiles/7_-10.glb",
+      "bounds": [
+        14000,
+        -20000,
+        16000,
+        -18000
+      ],
+      "counts": {
+        "roads": 130,
+        "building": 5,
+        "water": 1
+      },
+      "bytes": 361292,
+      "vertices": 14862
+    },
+    {
+      "id": "7_-11",
+      "url": "assets/tiles/7_-11.glb",
+      "bounds": [
+        14000,
+        -22000,
+        16000,
+        -20000
+      ],
+      "counts": {
+        "roads": 118,
+        "water": 3,
+        "building": 14
+      },
+      "bytes": 267540,
+      "vertices": 11013
+    },
+    {
+      "id": "7_-2",
+      "url": "assets/tiles/7_-2.glb",
+      "bounds": [
+        14000,
+        -4000,
+        16000,
+        -2000
+      ],
+      "counts": {
+        "roads": 754,
+        "building": 146,
+        "green": 4,
+        "water": 2
+      },
+      "bytes": 1443704,
+      "vertices": 59874
+    },
+    {
+      "id": "7_-3",
+      "url": "assets/tiles/7_-3.glb",
+      "bounds": [
+        14000,
+        -6000,
+        16000,
+        -4000
+      ],
+      "counts": {
+        "roads": 838,
+        "building": 249,
+        "green": 4,
+        "water": 2
+      },
+      "bytes": 1699352,
+      "vertices": 70497
+    },
+    {
+      "id": "7_-4",
+      "url": "assets/tiles/7_-4.glb",
+      "bounds": [
+        14000,
+        -8000,
+        16000,
+        -6000
+      ],
+      "counts": {
+        "roads": 557,
+        "water": 24,
+        "building": 121,
+        "green": 19
+      },
+      "bytes": 1508548,
+      "vertices": 62577
+    },
+    {
+      "id": "7_-5",
+      "url": "assets/tiles/7_-5.glb",
+      "bounds": [
+        14000,
+        -10000,
+        16000,
+        -8000
+      ],
+      "counts": {
+        "roads": 765,
+        "water": 7,
+        "building": 107,
+        "green": 25
+      },
+      "bytes": 1596400,
+      "vertices": 66237
+    },
+    {
+      "id": "7_-6",
+      "url": "assets/tiles/7_-6.glb",
+      "bounds": [
+        14000,
+        -12000,
+        16000,
+        -10000
+      ],
+      "counts": {
+        "roads": 601,
+        "building": 79,
+        "green": 3,
+        "water": 1
+      },
+      "bytes": 1352592,
+      "vertices": 56136
+    },
+    {
+      "id": "7_-7",
+      "url": "assets/tiles/7_-7.glb",
+      "bounds": [
+        14000,
+        -14000,
+        16000,
+        -12000
+      ],
+      "counts": {
+        "roads": 200,
+        "water": 7,
+        "building": 39
+      },
+      "bytes": 659796,
+      "vertices": 27270
+    },
+    {
+      "id": "7_-8",
+      "url": "assets/tiles/7_-8.glb",
+      "bounds": [
+        14000,
+        -16000,
+        16000,
+        -14000
+      ],
+      "counts": {
+        "roads": 272,
+        "water": 8,
+        "building": 7
+      },
+      "bytes": 626380,
+      "vertices": 25878
+    },
+    {
+      "id": "7_-9",
+      "url": "assets/tiles/7_-9.glb",
+      "bounds": [
+        14000,
+        -18000,
+        16000,
+        -16000
+      ],
+      "counts": {
+        "roads": 388,
+        "water": 24,
+        "building": 1221,
+        "green": 1
+      },
+      "bytes": 2807468,
+      "vertices": 116727
+    },
+    {
+      "id": "7_0",
+      "url": "assets/tiles/7_0.glb",
+      "bounds": [
+        14000,
+        0,
+        16000,
+        2000
+      ],
+      "counts": {
+        "roads": 619,
+        "water": 10,
+        "building": 189,
+        "green": 4
+      },
+      "bytes": 1162760,
+      "vertices": 48168
+    },
+    {
+      "id": "7_1",
+      "url": "assets/tiles/7_1.glb",
+      "bounds": [
+        14000,
+        2000,
+        16000,
+        4000
+      ],
+      "counts": {
+        "roads": 493,
+        "water": 9,
+        "building": 221,
+        "green": 1
+      },
+      "bytes": 1147220,
+      "vertices": 47520
+    },
+    {
+      "id": "7_2",
+      "url": "assets/tiles/7_2.glb",
+      "bounds": [
+        14000,
+        4000,
+        16000,
+        6000
+      ],
+      "counts": {
+        "roads": 444,
+        "water": 4,
+        "building": 90,
+        "green": 3
+      },
+      "bytes": 968612,
+      "vertices": 40110
+    },
+    {
+      "id": "7_3",
+      "url": "assets/tiles/7_3.glb",
+      "bounds": [
+        14000,
+        6000,
+        16000,
+        8000
+      ],
+      "counts": {
+        "roads": 173,
+        "water": 7,
+        "building": 25
+      },
+      "bytes": 408380,
+      "vertices": 16824
+    },
+    {
+      "id": "7_4",
+      "url": "assets/tiles/7_4.glb",
+      "bounds": [
+        14000,
+        8000,
+        16000,
+        10000
+      ],
+      "counts": {
+        "roads": 19,
+        "building": 1,
+        "water": 5
+      },
+      "bytes": 100176,
+      "vertices": 4011
+    },
+    {
+      "id": "7_5",
+      "url": "assets/tiles/7_5.glb",
+      "bounds": [
+        14000,
+        10000,
+        16000,
+        12000
+      ],
+      "counts": {
+        "roads": 5,
+        "water": 3
+      },
+      "bytes": 23056,
+      "vertices": 798
+    },
+    {
+      "id": "7_6",
+      "url": "assets/tiles/7_6.glb",
+      "bounds": [
+        14000,
+        12000,
+        16000,
+        14000
+      ],
+      "counts": {
+        "roads": 70,
+        "water": 6
+      },
+      "bytes": 142232,
+      "vertices": 5793
+    },
+    {
+      "id": "7_7",
+      "url": "assets/tiles/7_7.glb",
+      "bounds": [
+        14000,
+        14000,
+        16000,
+        16000
+      ],
+      "counts": {
+        "roads": 221,
+        "water": 3,
+        "building": 2
+      },
+      "bytes": 398184,
+      "vertices": 16428
+    },
+    {
+      "id": "7_8",
+      "url": "assets/tiles/7_8.glb",
+      "bounds": [
+        14000,
+        16000,
+        16000,
+        18000
+      ],
+      "counts": {
+        "roads": 114,
+        "water": 5
+      },
+      "bytes": 317440,
+      "vertices": 13035
+    },
+    {
+      "id": "7_9",
+      "url": "assets/tiles/7_9.glb",
+      "bounds": [
+        14000,
+        18000,
+        16000,
+        20000
+      ],
+      "counts": {
+        "roads": 232,
+        "water": 6,
+        "building": 24
+      },
+      "bytes": 585092,
+      "vertices": 24186
+    },
+    {
+      "id": "8_-1",
+      "url": "assets/tiles/8_-1.glb",
+      "bounds": [
+        16000,
+        -2000,
+        18000,
+        0
+      ],
+      "counts": {
+        "roads": 467,
+        "water": 6,
+        "building": 35,
+        "green": 1
+      },
+      "bytes": 841752,
+      "vertices": 34794
+    },
+    {
+      "id": "8_-10",
+      "url": "assets/tiles/8_-10.glb",
+      "bounds": [
+        16000,
+        -20000,
+        18000,
+        -18000
+      ],
+      "counts": {
+        "roads": 169,
+        "building": 38,
+        "water": 2
+      },
+      "bytes": 551104,
+      "vertices": 22740
+    },
+    {
+      "id": "8_-11",
+      "url": "assets/tiles/8_-11.glb",
+      "bounds": [
+        16000,
+        -22000,
+        18000,
+        -20000
+      ],
+      "counts": {
+        "roads": 155,
+        "water": 1,
+        "building": 13
+      },
+      "bytes": 451712,
+      "vertices": 18657
+    },
+    {
+      "id": "8_-2",
+      "url": "assets/tiles/8_-2.glb",
+      "bounds": [
+        16000,
+        -4000,
+        18000,
+        -2000
+      ],
+      "counts": {
+        "roads": 474,
+        "water": 3,
+        "building": 156
+      },
+      "bytes": 1108392,
+      "vertices": 45933
+    },
+    {
+      "id": "8_-3",
+      "url": "assets/tiles/8_-3.glb",
+      "bounds": [
+        16000,
+        -6000,
+        18000,
+        -4000
+      ],
+      "counts": {
+        "roads": 702,
+        "building": 169,
+        "water": 3,
+        "green": 1
+      },
+      "bytes": 1561704,
+      "vertices": 64761
+    },
+    {
+      "id": "8_-4",
+      "url": "assets/tiles/8_-4.glb",
+      "bounds": [
+        16000,
+        -8000,
+        18000,
+        -6000
+      ],
+      "counts": {
+        "roads": 1158,
+        "green": 30,
+        "building": 379,
+        "water": 17
+      },
+      "bytes": 2634404,
+      "vertices": 109458
+    },
+    {
+      "id": "8_-5",
+      "url": "assets/tiles/8_-5.glb",
+      "bounds": [
+        16000,
+        -10000,
+        18000,
+        -8000
+      ],
+      "counts": {
+        "roads": 514,
+        "water": 11,
+        "building": 71,
+        "green": 3
+      },
+      "bytes": 1257600,
+      "vertices": 52149
+    },
+    {
+      "id": "8_-6",
+      "url": "assets/tiles/8_-6.glb",
+      "bounds": [
+        16000,
+        -12000,
+        18000,
+        -10000
+      ],
+      "counts": {
+        "roads": 458,
+        "water": 6,
+        "building": 7,
+        "green": 2
+      },
+      "bytes": 1212396,
+      "vertices": 50205
+    },
+    {
+      "id": "8_-7",
+      "url": "assets/tiles/8_-7.glb",
+      "bounds": [
+        16000,
+        -14000,
+        18000,
+        -12000
+      ],
+      "counts": {
+        "roads": 584,
+        "green": 1,
+        "water": 14,
+        "building": 114
+      },
+      "bytes": 1443420,
+      "vertices": 59892
+    },
+    {
+      "id": "8_-8",
+      "url": "assets/tiles/8_-8.glb",
+      "bounds": [
+        16000,
+        -16000,
+        18000,
+        -14000
+      ],
+      "counts": {
+        "roads": 571,
+        "building": 143,
+        "water": 9,
+        "green": 1
+      },
+      "bytes": 1654300,
+      "vertices": 68649
+    },
+    {
+      "id": "8_-9",
+      "url": "assets/tiles/8_-9.glb",
+      "bounds": [
+        16000,
+        -18000,
+        18000,
+        -16000
+      ],
+      "counts": {
+        "roads": 513,
+        "building": 423,
+        "green": 6,
+        "water": 16
+      },
+      "bytes": 1730184,
+      "vertices": 71811
+    },
+    {
+      "id": "8_0",
+      "url": "assets/tiles/8_0.glb",
+      "bounds": [
+        16000,
+        0,
+        18000,
+        2000
+      ],
+      "counts": {
+        "roads": 498,
+        "water": 6,
+        "building": 81
+      },
+      "bytes": 1141340,
+      "vertices": 47334
+    },
+    {
+      "id": "8_1",
+      "url": "assets/tiles/8_1.glb",
+      "bounds": [
+        16000,
+        2000,
+        18000,
+        4000
+      ],
+      "counts": {
+        "roads": 420,
+        "water": 5,
+        "building": 5
+      },
+      "bytes": 897044,
+      "vertices": 37185
+    },
+    {
+      "id": "8_2",
+      "url": "assets/tiles/8_2.glb",
+      "bounds": [
+        16000,
+        4000,
+        18000,
+        6000
+      ],
+      "counts": {
+        "roads": 117,
+        "building": 31,
+        "water": 6
+      },
+      "bytes": 257652,
+      "vertices": 10572
+    },
+    {
+      "id": "8_3",
+      "url": "assets/tiles/8_3.glb",
+      "bounds": [
+        16000,
+        6000,
+        18000,
+        8000
+      ],
+      "counts": {
+        "roads": 195,
+        "water": 6,
+        "building": 5
+      },
+      "bytes": 498668,
+      "vertices": 20586
+    },
+    {
+      "id": "8_4",
+      "url": "assets/tiles/8_4.glb",
+      "bounds": [
+        16000,
+        8000,
+        18000,
+        10000
+      ],
+      "counts": {
+        "roads": 93,
+        "building": 5,
+        "water": 8
+      },
+      "bytes": 197344,
+      "vertices": 8031
+    },
+    {
+      "id": "8_5",
+      "url": "assets/tiles/8_5.glb",
+      "bounds": [
+        16000,
+        10000,
+        18000,
+        12000
+      ],
+      "counts": {
+        "roads": 152,
+        "water": 4
+      },
+      "bytes": 294948,
+      "vertices": 12156
+    },
+    {
+      "id": "8_6",
+      "url": "assets/tiles/8_6.glb",
+      "bounds": [
+        16000,
+        12000,
+        18000,
+        14000
+      ],
+      "counts": {
+        "roads": 65,
+        "water": 4
+      },
+      "bytes": 154552,
+      "vertices": 6306
+    },
+    {
+      "id": "8_7",
+      "url": "assets/tiles/8_7.glb",
+      "bounds": [
+        16000,
+        14000,
+        18000,
+        16000
+      ],
+      "counts": {
+        "roads": 80,
+        "water": 1
+      },
+      "bytes": 176940,
+      "vertices": 7209
+    },
+    {
+      "id": "8_8",
+      "url": "assets/tiles/8_8.glb",
+      "bounds": [
+        16000,
+        16000,
+        18000,
+        18000
+      ],
+      "counts": {
+        "roads": 49,
+        "water": 2,
+        "building": 6
+      },
+      "bytes": 124224,
+      "vertices": 5013
+    },
+    {
+      "id": "8_9",
+      "url": "assets/tiles/8_9.glb",
+      "bounds": [
+        16000,
+        18000,
+        18000,
+        20000
+      ],
+      "counts": {
+        "roads": 51,
+        "water": 2
+      },
+      "bytes": 225048,
+      "vertices": 9243
+    },
+    {
+      "id": "9_-1",
+      "url": "assets/tiles/9_-1.glb",
+      "bounds": [
+        18000,
+        -2000,
+        20000,
+        0
+      ],
+      "counts": {
+        "roads": 388,
+        "water": 3,
+        "building": 1,
+        "green": 1
+      },
+      "bytes": 791944,
+      "vertices": 32748
+    },
+    {
+      "id": "9_-10",
+      "url": "assets/tiles/9_-10.glb",
+      "bounds": [
+        18000,
+        -20000,
+        20000,
+        -18000
+      ],
+      "counts": {
+        "roads": 163,
+        "water": 1,
+        "building": 95
+      },
+      "bytes": 485124,
+      "vertices": 20079
+    },
+    {
+      "id": "9_-11",
+      "url": "assets/tiles/9_-11.glb",
+      "bounds": [
+        18000,
+        -22000,
+        20000,
+        -20000
+      ],
+      "counts": {
+        "roads": 126,
+        "building": 16,
+        "green": 2
+      },
+      "bytes": 303208,
+      "vertices": 12468
+    },
+    {
+      "id": "9_-2",
+      "url": "assets/tiles/9_-2.glb",
+      "bounds": [
+        18000,
+        -4000,
+        20000,
+        -2000
+      ],
+      "counts": {
+        "roads": 426,
+        "water": 2,
+        "building": 63
+      },
+      "bytes": 899044,
+      "vertices": 37209
+    },
+    {
+      "id": "9_-3",
+      "url": "assets/tiles/9_-3.glb",
+      "bounds": [
+        18000,
+        -6000,
+        20000,
+        -4000
+      ],
+      "counts": {
+        "roads": 399,
+        "green": 28,
+        "water": 20,
+        "building": 10
+      },
+      "bytes": 1347244,
+      "vertices": 55884
+    },
+    {
+      "id": "9_-4",
+      "url": "assets/tiles/9_-4.glb",
+      "bounds": [
+        18000,
+        -8000,
+        20000,
+        -6000
+      ],
+      "counts": {
+        "roads": 329,
+        "green": 7,
+        "water": 5,
+        "building": 21
+      },
+      "bytes": 765308,
+      "vertices": 31608
+    },
+    {
+      "id": "9_-5",
+      "url": "assets/tiles/9_-5.glb",
+      "bounds": [
+        18000,
+        -10000,
+        20000,
+        -8000
+      ],
+      "counts": {
+        "roads": 608,
+        "water": 15,
+        "building": 31,
+        "green": 8
+      },
+      "bytes": 1286836,
+      "vertices": 53337
+    },
+    {
+      "id": "9_-6",
+      "url": "assets/tiles/9_-6.glb",
+      "bounds": [
+        18000,
+        -12000,
+        20000,
+        -10000
+      ],
+      "counts": {
+        "roads": 370,
+        "building": 46,
+        "water": 25,
+        "green": 1
+      },
+      "bytes": 1121872,
+      "vertices": 46494
+    },
+    {
+      "id": "9_-7",
+      "url": "assets/tiles/9_-7.glb",
+      "bounds": [
+        18000,
+        -14000,
+        20000,
+        -12000
+      ],
+      "counts": {
+        "roads": 508,
+        "building": 76,
+        "water": 30
+      },
+      "bytes": 1281980,
+      "vertices": 53196
+    },
+    {
+      "id": "9_-8",
+      "url": "assets/tiles/9_-8.glb",
+      "bounds": [
+        18000,
+        -16000,
+        20000,
+        -14000
+      ],
+      "counts": {
+        "roads": 737,
+        "green": 6,
+        "building": 402,
+        "water": 13
+      },
+      "bytes": 2568144,
+      "vertices": 106698
+    },
+    {
+      "id": "9_-9",
+      "url": "assets/tiles/9_-9.glb",
+      "bounds": [
+        18000,
+        -18000,
+        20000,
+        -16000
+      ],
+      "counts": {
+        "roads": 487,
+        "building": 451,
+        "green": 4,
+        "water": 4
+      },
+      "bytes": 1654916,
+      "vertices": 68703
+    },
+    {
+      "id": "9_0",
+      "url": "assets/tiles/9_0.glb",
+      "bounds": [
+        18000,
+        0,
+        20000,
+        2000
+      ],
+      "counts": {
+        "roads": 423,
+        "water": 5,
+        "building": 24,
+        "green": 2
+      },
+      "bytes": 826456,
+      "vertices": 34185
+    },
+    {
+      "id": "9_1",
+      "url": "assets/tiles/9_1.glb",
+      "bounds": [
+        18000,
+        2000,
+        20000,
+        4000
+      ],
+      "counts": {
+        "roads": 85,
+        "water": 8,
+        "building": 3
+      },
+      "bytes": 194984,
+      "vertices": 7932
+    },
+    {
+      "id": "9_2",
+      "url": "assets/tiles/9_2.glb",
+      "bounds": [
+        18000,
+        4000,
+        20000,
+        6000
+      ],
+      "counts": {
+        "roads": 6,
+        "water": 9,
+        "building": 1,
+        "green": 4
+      },
+      "bytes": 150152,
+      "vertices": 6066
+    },
+    {
+      "id": "9_3",
+      "url": "assets/tiles/9_3.glb",
+      "bounds": [
+        18000,
+        6000,
+        20000,
+        8000
+      ],
+      "counts": {
+        "roads": 168,
+        "water": 14,
+        "building": 7,
+        "green": 4
+      },
+      "bytes": 1189084,
+      "vertices": 49326
+    },
+    {
+      "id": "9_4",
+      "url": "assets/tiles/9_4.glb",
+      "bounds": [
+        18000,
+        8000,
+        20000,
+        10000
+      ],
+      "counts": {
+        "roads": 516,
+        "water": 8,
+        "building": 42,
+        "green": 11
+      },
+      "bytes": 1982524,
+      "vertices": 82356
+    },
+    {
+      "id": "9_5",
+      "url": "assets/tiles/9_5.glb",
+      "bounds": [
+        18000,
+        10000,
+        20000,
+        12000
+      ],
+      "counts": {
+        "roads": 215,
+        "water": 1
+      },
+      "bytes": 427100,
+      "vertices": 17604
+    },
+    {
+      "id": "9_6",
+      "url": "assets/tiles/9_6.glb",
+      "bounds": [
+        18000,
+        12000,
+        20000,
+        14000
+      ],
+      "counts": {
+        "roads": 177,
+        "water": 1,
+        "building": 18
+      },
+      "bytes": 409644,
+      "vertices": 16848
+    },
+    {
+      "id": "9_7",
+      "url": "assets/tiles/9_7.glb",
+      "bounds": [
+        18000,
+        14000,
+        20000,
+        16000
+      ],
+      "counts": {
+        "roads": 6,
+        "water": 1,
+        "building": 3
+      },
+      "bytes": 29660,
+      "vertices": 1044
+    },
+    {
+      "id": "9_8",
+      "url": "assets/tiles/9_8.glb",
+      "bounds": [
+        18000,
+        16000,
+        20000,
+        18000
+      ],
+      "counts": {
+        "roads": 63
+      },
+      "bytes": 135872,
+      "vertices": 5526
+    },
+    {
+      "id": "9_9",
+      "url": "assets/tiles/9_9.glb",
+      "bounds": [
+        18000,
+        18000,
+        20000,
+        20000
+      ],
+      "counts": {
+        "roads": 73,
+        "water": 2
+      },
+      "bytes": 182444,
+      "vertices": 7467
+    }
+  ],
+  "totalModelBytes": 487426256,
+  "skyline": {
+    "url": "assets/skyline.glb",
+    "bytes": 1482648,
+    "vertices": 59385,
+    "minimumHeightMetres": 40,
+    "maximumHeightMetres": 461.2799987792969,
+    "tileIds": [
+      "-1_-3",
+      "-1_0",
+      "-1_1",
+      "-1_5",
+      "-1_9",
+      "-2_-1",
+      "-2_-2",
+      "-2_3",
+      "-2_4",
+      "-3_0",
+      "-4_0",
+      "-4_2",
+      "0_-1",
+      "0_-4",
+      "0_-9",
+      "0_0",
+      "0_3",
+      "0_4",
+      "0_5",
+      "10_-2",
+      "10_-3",
+      "10_-9",
+      "1_0",
+      "1_1",
+      "1_2",
+      "1_3",
+      "1_4",
+      "2_-1",
+      "2_0",
+      "2_1",
+      "2_2",
+      "2_3",
+      "2_4",
+      "2_5",
+      "3_-1",
+      "3_0",
+      "3_1",
+      "3_2",
+      "3_4",
+      "4_-1",
+      "4_-2",
+      "4_-3",
+      "4_-4",
+      "4_0",
+      "4_1",
+      "4_2",
+      "4_4",
+      "4_6",
+      "5_-2",
+      "5_-3",
+      "5_-4",
+      "5_-6",
+      "5_-7",
+      "5_-8",
+      "5_0",
+      "5_1",
+      "6_-1",
+      "6_-2",
+      "6_-3",
+      "6_-4",
+      "6_-5",
+      "6_-6",
+      "6_0",
+      "6_1",
+      "7_-1",
+      "7_-3",
+      "7_-5",
+      "7_0",
+      "8_-3",
+      "8_-4",
+      "8_-6",
+      "9_-2"
+    ]
+  }
+}
