@@ -361,6 +361,93 @@ TWO_FRAME_PRE = (
 )
 
 
+# What one camera's own scene needs said, inserted after PROMPT_HEAD for that camera only.
+#
+# Nguyen Van Linh - duong so 1 (662a8b061afb9c00172d27d7) looks across a wide junction that
+# drains badly. After rain a broad shallow pond lies in the middle of the junction and
+# spreads toward the zebra crossing on the right for hours, and a dark patch by the right
+# kerb is there even on dry days. The perception path reads that pond as 'soaked' or
+# 'standing water', and decide() turns either into rain: on 26 Sep the camera reported
+# Light from 16:24 to 02:43 local although the two nearest VRAIN gauges (Da Phuoc, Co Bac,
+# 5.6 km) went flat at 20:00; on 24 Sep at 16:03 it called Light on a dry, sunlit road with
+# only the pond wet and nobody in rain gear. Spray from vehicles crossing the pond also
+# answers FALLING_Q's "spray thrown up behind a moving vehicle".
+CAMERA_NOTES = {
+    "662a8b061afb9c00172d27d7": (
+        "About this camera (Nguyen Van Linh - duong so 1). It looks across a wide junction that "
+        "drains badly, and it has ponds that are NOT evidence of rain:\n"
+        "- After rain, a broad shallow pond lies in the middle of the junction and spreads toward "
+        "the zebra crossing on the right. It stays for many hours after the rain has stopped, in "
+        "sunshine and at night alike. There is also a dark wet-looking patch by the right-hand "
+        "kerb near the crossing that is there even on dry days.\n"
+        "- Leave those ponds out when you report the water on the road. Judge the level from the "
+        "rest of the carriageway instead: the lanes on the left, the far approach under the "
+        "trees, and the road nearest the camera. If those are dry or only damp, the answer is "
+        "'dry' or 'damp' however much water sits in the pond. Report 'soaked' or 'standing "
+        "water' only when that rest of the road is itself mirror-like or covered.\n"
+        "- Vehicles driving through the pond throw up spray and ripples, and at night the pond "
+        "mirrors the traffic lights and headlights. None of that is falling water. Count spray, "
+        "splashes or ripples only where they appear away from the pond.\n\n"
+    ),
+    # Nguyen Xien - Nguyen Van Tang (63b54a9ebfd3d90017ea7911): a close-up of a corner beside a
+    # brightly lit phone shop. By day its rain calls look right -- riders in raincoats are easy to
+    # see this close. After dark the shop signs and street lights keep the wet road mirror-like
+    # for hours after rain stops, and water pools by the drain grate at the corner: on 22-23 Sep
+    # it called rain until 03:37 although the three nearest VRAIN gauges (Do Xuan Hop, Di An 1,
+    # Thu Duc, 7-8 km, all agreeing) went dry at 22:00; on 21-22 Sep, three hours past the rain.
+    "63b54a9ebfd3d90017ea7911": (
+        "About this camera (Nguyen Xien - Nguyen Van Tang). It looks down on a street corner "
+        "beside a brightly lit phone shop, close enough that rain, when it falls, is plain to "
+        "see: streaks through the shop signs and street lights, rings and splashes in the "
+        "puddles, riders in raincoats and people under umbrellas.\n"
+        "- After dark the shop signs and street lights make a wet road look glossy and "
+        "mirror-like for hours after the rain has stopped, and water pools by the drain grate at "
+        "the corner in front of the shop and along the gutters. That glare, the pool and the wet "
+        "gutters are NOT evidence of rain.\n"
+        "- So after dark, report the water on the road as 'wet' when it is merely glossy and "
+        "reflecting the lights, however bright the reflections. Report 'soaked' or 'standing "
+        "water' only when water visibly covers the lanes themselves -- a sheet of water across "
+        "the road, or wheels throwing up spray away from the corner pool.\n"
+        "- At this camera, answer 'yes' to falling water only for what you can actually see: "
+        "streaks in the lights, rings or splashes in the puddles, or drops on the lens.\n\n"
+    ),
+    # Nut giao Cho Dem 1 (CT Trung Luong - Bui Thanh Khiet): the foreground of the junction is
+    # broken, patched asphalt full of potholes that hold water for days. Production called it
+    # Medium on 103 of 154 frames, all day on 22 Sep on a dry, overcast road.
+    "58d7b5a7c1e33c00112b320a": (
+        "About this camera (Nut giao Cho Dem 1). The near half of this junction, the lower part "
+        "of the picture, is badly broken asphalt: patched, rutted and full of potholes. Those "
+        "potholes hold water for days after rain, and the patches and tyre smears look dark and "
+        "wet even when the road is dry. None of that is evidence of rain:\n"
+        "- Leave the potholes, puddles and dark patches in the broken foreground out when you "
+        "report the water on the road. Judge the level from the smooth carriageway across the "
+        "middle and far side of the junction, where the buses and trucks run. If that is dry or "
+        "only damp, the answer is 'dry' or 'damp' however much water sits in the potholes. "
+        "Report 'soaked' or 'standing water' only when that smooth carriageway is itself "
+        "mirror-like or covered.\n"
+        "- Vehicles crossing the broken part splash through the potholes, and at night the "
+        "potholes mirror the street lights and shop signs. None of that is falling water. Count "
+        "spray, splashes or ripples only on the smooth carriageway.\n\n"
+    ),
+    # Nut giao Cho Dem 2 (CT Trung Luong - Bui Thanh Khiet): a broad road whose broken edges
+    # hold puddles, by the shops on the left and along the right verge. Called Medium at 10:33
+    # and 12:32 on 26 Sep on a dry road.
+    "58d7b756c1e33c00112b320d": (
+        "About this camera (Nut giao Cho Dem 2). The edges of this road are broken and hold "
+        "puddles long after rain -- on the left beside the shops and the side road, and along the "
+        "right-hand verge by the grass. They are NOT evidence of rain:\n"
+        "- Leave those edge puddles out when you report the water on the road. Judge the level "
+        "from the main lanes down the middle, where the trucks and containers run. If those are "
+        "dry or only damp, the answer is 'dry' or 'damp' however much water lies along the "
+        "edges. Report 'soaked' or 'standing water' only when the main lanes are themselves "
+        "mirror-like or covered.\n"
+        "- Spray from a vehicle running through an edge puddle, and street lights mirrored in "
+        "the puddles at night, are not falling water. Count spray, splashes or ripples only in "
+        "the main lanes.\n\n"
+    ),
+}
+
+
 def phase_for(hour: int) -> str:
     """What this hour means on these streets.
 
@@ -430,6 +517,7 @@ def build_prompt(
     captured_at_iso: str | None,
     two_frame: bool = False,
     prev: dict | None = None,
+    camera_id: str | None = None,
 ) -> str:
     """Assemble the prompt, telling the model what local time it is looking at.
 
@@ -443,8 +531,12 @@ def build_prompt(
     the level has held). When absent -- first sight of a camera, or the last
     judgment is too old to mean anything -- the prompt falls back to the
     stateless wording, byte-for-byte what it was before any of this existed.
+
+    camera_id adds that camera's CAMERA_NOTES, if it has any, right after PROMPT_HEAD; for
+    every other camera the prompt is unchanged.
     """
     pre = TWO_FRAME_PRE if two_frame else ""
+    head = PROMPT_HEAD + CAMERA_NOTES.get(camera_id or "", "")
     # Checked before STATEFUL_ENABLED: the perception path replaces the in-prompt
     # verdict entirely, so the stateful block's decision wording would only be
     # instructions for a judgment this prompt no longer asks the model to make.
@@ -457,7 +549,7 @@ def build_prompt(
             local = datetime.fromisoformat(captured_at_iso).astimezone(ICT)
             when = (f"This frame was captured at {local.strftime('%H:%M')} local time in Ho Chi "
                     f"Minh City ({local.strftime('%A')}), which is {phase_for(local.hour)}.\n\n")
-        return (PROMPT_HEAD + when + PERCEPTION_TASK + LEVEL_RULES + FALLING_Q + BEHAVIOUR_Q
+        return (head + when + PERCEPTION_TASK + LEVEL_RULES + FALLING_Q + BEHAVIOUR_Q
                 + PERCEPTION_SCHEMA)
     # The water level must be asked for even on the FIRST sight of a camera,
     # when there is no prior judgment to compare against. Gating the whole
@@ -481,7 +573,7 @@ def build_prompt(
             + TAIL_SCHEMA
         )
     if not captured_at_iso:
-        return pre + PROMPT_HEAD + tail
+        return pre + head + tail
 
     local = datetime.fromisoformat(captured_at_iso).astimezone(ICT)
     hour = local.hour
@@ -498,7 +590,7 @@ def build_prompt(
         f"({local.strftime('%A')}), which is {phase}.\n\n"
     )
     guidance = DARK_GUIDANCE if is_dark else DAY_GUIDANCE + DAY_RELAX
-    return pre + PROMPT_HEAD + when + guidance + tail
+    return pre + head + when + guidance + tail
 
 
 def load_json(path: Path, default):
@@ -600,11 +692,12 @@ def annotate(
     captured_at_iso: str | None = None,
     prev_path: Path | None = None,
     prev: dict | None = None,
+    camera_id: str | None = None,
 ) -> dict:
     images = [prev_path, image_path] if prev_path else [image_path]
     text = svc.google_generate_with_prompt(
         images=images,
-        prompt=build_prompt(captured_at_iso, two_frame=prev_path is not None, prev=prev),
+        prompt=build_prompt(captured_at_iso, two_frame=prev_path is not None, prev=prev, camera_id=camera_id),
     )
     cleaned = re.sub(r"^```(json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
     return json.loads(cleaned)
@@ -742,7 +835,7 @@ def main():
             try:
                 captured = captured_at_from(img_path)
                 result = annotate(svc, img_path, captured, prev_path,
-                                  prev=prior_state(rec, captured))
+                                  prev=prior_state(rec, captured), camera_id=cam["camera_id"])
                 return item, result, time.monotonic() - started, None
             except Exception as e:
                 wait = quota_retry_after(e)
