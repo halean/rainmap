@@ -166,3 +166,8 @@ For the riverfront towers (`3d/riverfront.js`: detailed near, blocks far):
 ```sh
 node --loader ./tests/three-loader.mjs tests/riverfront.mjs
 ```
+
+For the Đồng Khởi walking tour (`3d/walktour.js`: under 1M triangles, loaded on demand):
+```sh
+node --loader ./tests/three-loader.mjs tests/walktour.mjs
+```

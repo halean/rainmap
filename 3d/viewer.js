@@ -148,7 +148,7 @@ async function init(){
  // Every landmark's flag: the same flag, turned by the same wind, waving when near.
  flagSet=createFlagSet({scene,camera});
  for(const l of [palace,majestic,rex,...Object.values(landmarks)])for(const f of l?.flags??[])flagSet.add({parent:l.group,...f});
- window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get lighting(){return cityLighting?.state;},get flag(){return flag?.state;},get flags(){return flagSet?.state;},get railway(){return railway?.state;},get openTour(){return openTour?.state;},get riverTour(){return riverTour?.state;},get metro(){return metro?.state;},get palace(){return palace?.state;},get majestic(){return majestic?.state;},get rex(){return rex?.state;},get landmarks(){return Object.fromEntries(Object.entries(landmarks).map(([key,l])=>[key,l.state]));},get cathedral(){return cathedral?.state;},get market(){return market?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
+ window.cityModel={get skyline(){const visible=new Set();skyline?.traverse(o=>{if(o.isMesh&&o.visible)visible.add(o.name.split('__')[1]);});return {loaded:!!skyline,visibleTiles:[...visible],detailedTiles:[...tiles].filter(([,entry])=>entry.group.visible).map(([id])=>id),maximumHeight:manifest.skyline?.maximumHeightMetres};},get weather(){return weather.state;},get flights(){return flights.state;},get flightPositions(){return flights.aircraft;},get lightning(){return lightning.state;},get sky(){return sky.state;},get lighting(){return cityLighting?.state;},get flag(){return flag?.state;},get flags(){return flagSet?.state;},get railway(){return railway?.state;},get openTour(){return openTour?.state;},get riverTour(){return riverTour?.state;},get walkTour(){return walkTour?.state??null;},get metro(){return metro?.state;},get palace(){return palace?.state;},get majestic(){return majestic?.state;},get rex(){return rex?.state;},get landmarks(){return Object.fromEntries(Object.entries(landmarks).map(([key,l])=>[key,l.state]));},get cathedral(){return cathedral?.state;},get market(){return market?.state;},get ready(){return ready;},get loadedTiles(){return tiles.size;},get pendingTiles(){return pending.size;},get failedTiles(){return failed.size;},get focusTile(){return focusTile;},get statistics(){return manifest.statistics;},get bounds(){return manifest.boundsXZ;}};
 }
 $('overview').onclick=()=>{if(ready)wholeCity();};
 $('downtown').onclick=()=>{if(ready)centralCity();};
@@ -163,7 +163,7 @@ $('airport').onclick=()=>{if(!ready)return;const [x,z]=project(106.6525,10.8185)
 const CHASE_PITCH=0.38;          // radians above the horizontal, ~22°
 const CHASE_TURN=2.5;            // how quickly the view swings round, per second
 let following=null;
-function stopFollowing(){if(!following)return;following.source?.setFollowing?.(false);following=null;controls.enableZoom=true;}
+function stopFollowing(){if(!following)return;following.source?.setFollowing?.(false);following.onStop?.();following=null;controls.enableZoom=true;}
 const behindYaw=v=>Math.atan2(-v.forward.x,-v.forward.z);        // direction from train to camera
 function placeChase(v){const {yaw,distance}=following,pitch=following.pitch??CHASE_PITCH,flat=distance*Math.cos(pitch);
  controls.target.copy(v.pos);
@@ -185,6 +185,17 @@ $('river-tour').onclick=()=>{if(!ready||!riverTour)return;stopFollowing();riverT
  following={yaw:behindYaw(v),distance:48,pitch:0.07,last:v.pos.clone(),at:performance.now(),button:'river-tour',source:riverTour,view:()=>riverTour.followView()};
  controls.enableZoom=false;placeChase(v);controls.update();lastLoad=0;setActive('river-tour');};
 $('jade-emperor').onclick=()=>{const l=landmarks.jadeEmperor;if(!ready||!l)return;stopFollowing();controls.target.copy(l.view.target);camera.position.copy(l.view.eye);controls.update();lastLoad=0;setActive('jade-emperor');};
+// Walking tour: Đồng Khởi's shopfronts, trees and sidewalks are built only
+// now (walktour.js, ~1M triangles) and freed when the tour ends. The camera
+// follows the walker like the river tour's chase: turn, tilt, zoom.
+let walkTour=null;
+$('walk-tour').onclick=async()=>{if(!ready)return;stopFollowing();setActive('walk-tour');
+ if(!walkTour){const {createWalkTour}=await import('./walktour.js');walkTour=createWalkTour({scene,project});}
+ const v=walkTour.followView(),saved={min:controls.minDistance,polar:controls.maxPolarAngle};
+ controls.minDistance=2;controls.maxPolarAngle=Math.PI/2+0.35;          // close in, and look up at the trees
+ following={yaw:behindYaw(v),distance:11,pitch:0.12,last:v.pos.clone(),at:performance.now(),button:'walk-tour',source:walkTour,view:()=>walkTour.followView(),
+  onStop:()=>{controls.minDistance=saved.min;controls.maxPolarAngle=saved.polar;walkTour?.dispose();walkTour=null;}};
+ controls.enableZoom=false;placeChase(v);controls.update();lastLoad=0;};
 $('open-tour').onclick=()=>{if(!ready||!openTour)return;stopFollowing();openTour.update(Date.now());const v=openTour.followView(controls.target.clone());
  if(!v){const [x,z]=project(106.70305,10.7764);controls.target.set(x,4,z);camera.position.copy(controls.target).add(new THREE.Vector3(-.5,.35,.8).normalize().multiplyScalar(160));controls.update();lastLoad=0;setActive('open-tour');return;}
  following={yaw:behindYaw(v),distance:32,last:v.pos.clone(),at:performance.now(),button:'open-tour',source:openTour,view:()=>openTour.followView()};
@@ -210,7 +221,7 @@ function followTrain(){
  placeChase(v);
 }
 renderer.domElement.addEventListener('wheel',e=>{if(!following)return;
- following.distance=Math.min(2000,Math.max(following.button==='open-tour'?12:following.button==='river-tour'?20:40,following.distance*Math.exp(e.deltaY*0.001)));},{passive:true});
+ following.distance=Math.min(2000,Math.max(following.button==='walk-tour'?2.5:following.button==='open-tour'?12:following.button==='river-tour'?20:40,following.distance*Math.exp(e.deltaY*0.001)));},{passive:true});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&following){stopFollowing();setActive('');}});
 $('top').onclick=()=>{if(!ready)return;goTo(controls.target.x,controls.target.z,camera.position.distanceTo(controls.target),true);setActive('top');};
 for(const id of ['buildings','minor'])$(id).onchange=()=>{if(cathedral)cathedral.group.visible=$('buildings').checked;if(market)market.group.visible=$('buildings').checked;if(palace)palace.group.visible=$('buildings').checked;if(majestic)majestic.group.visible=$('buildings').checked;if(rex)rex.group.visible=$('buildings').checked;for(const l of Object.values(landmarks))l.group.visible=$('buildings').checked;if(overview)updateLayer(overview);for(const e of tiles.values())updateLayer(e.group);updateSkyline();};
@@ -237,7 +248,7 @@ $('about').onclick=()=>$('info').showModal();$('close').onclick=()=>$('info').cl
 controls.addEventListener('start',()=>{if(!following)setActive('');else following.dragging=true;});
 // After a drag the orbit keeps turning a little (damping): hold the chase off until it settles.
 controls.addEventListener('end',()=>{if(following){following.dragging=false;following.settle=performance.now()+600;}});
-function animate(now){requestAnimationFrame(animate);followTrain();controls.update();if(camera.position.y<3)camera.position.y=3;   // zooming to the cursor must not take the camera below the ground
+function animate(now){requestAnimationFrame(animate);followTrain();controls.update();if(camera.position.y<(following?.button==='walk-tour'?0.9:3))camera.position.y=following?.button==='walk-tour'?0.9:3;   // zooming to the cursor must not take the camera below the ground
  weather?.update(now,camera);flights?.update(now);lightning?.update(now);flag?.update?.(now);riverTour?.update(Date.now());flagSet?.update(now);for(const l of Object.values(landmarks))l.update?.(camera,now);openTour?.update(Date.now());metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}cityLighting?.update(now);renderer.render(scene,camera);}
 requestAnimationFrame(animate);
 init().catch(error=>{console.error(error);$('loading').innerHTML='';const title=document.createElement('strong');title.textContent='Model could not be loaded';const p=document.createElement('p');p.textContent=error.message;$('loading').append(title,p);});

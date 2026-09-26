@@ -143,6 +143,9 @@ Along the river tour, 27 riverfront towers are modelled in detail -- every
 floor and bay, ~100k triangles each, built only near the camera
 (`riverfront.js`, see `RIVERFRONT.md`).
 
+The **Walking tour** strolls down Đồng Khởi among close-up shopfronts and tall
+trees, built only while the tour runs (`walktour.js`, see `WALKTOUR.md`).
+
 Bitexco was missing from the generic model (only its podium was there), and
 Landmark 81 was a slab over its whole site. The flag now stands on Landmark
 81's modelled spire.
