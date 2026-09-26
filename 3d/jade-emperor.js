@@ -101,7 +101,8 @@ export function createJadeEmperor({scene, project}) {
   const triangles = finish(group);
   scene.add(group);
   const replaceGeneric = genericReplacer(group, outline, {flag: 'jadeEmperorReplaced', top: 40});
-  const view = {target: group.localToWorld(new THREE.Vector3(0, 6, FRONT)), eye: group.localToWorld(new THREE.Vector3(10, 10, FRONT - 32))};
+  // From above the forecourt: lower, the buildings across it hide the front.
+  const view = {target: group.localToWorld(new THREE.Vector3(0, 6, FRONT + 3.5)), eye: group.localToWorld(new THREE.Vector3(-20, 30, FRONT - 24))};
   const state = {name: 'Jade Emperor Pagoda (Chùa Ngọc Hoàng)', lon: JADE_EMPEROR.lon, lat: JADE_EMPEROR.lat, height: GATE + 3.4, triangles, drawCalls: group.children.length, schematic: true};
   return {group, state, view, replaceGeneric, dispose() { scene.remove(group); for (const m of group.children) m.geometry.dispose(); for (const m of Object.values(materials)) m.dispose(); }};
 }

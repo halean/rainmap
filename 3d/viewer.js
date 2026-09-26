@@ -17,6 +17,7 @@ import {createCityHall} from './city-hall.js';
 import {createBitexco} from './bitexco.js';
 import {createLandmark81} from './landmark81.js';
 import {createNhaRong} from './nha-rong.js';
+import {createHoConRua} from './ho-con-rua.js';
 import {createContinental} from './continental.js';
 import {createCityMuseum} from './city-museum.js';
 import {createTanDinh} from './tan-dinh.js';
@@ -32,7 +33,7 @@ import {createRiverTour} from './rivertour.js';
 import {createRiverfront} from './riverfront.js';
 // Landmark models built on OSM outlines: each replaces its generic block as
 // tiles stream in, and follows the Buildings checkbox.
-const LANDMARKS=[['opera',createOperaHouse],['stateBank',createStateBank],['postOffice',createPostOffice],['cityHall',createCityHall],['bitexco',createBitexco],['landmark81',createLandmark81],['nhaRong',createNhaRong],['continental',createContinental],['cityMuseum',createCityMuseum],['tanDinh',createTanDinh],['jadeEmperor',createJadeEmperor],['binhTay',createBinhTay],['thienHau',createThienHau],['bridges',createBridges],['yacht',createYacht],['riverfront',createRiverfront],['princess60',createMooredPrincess60]];
+const LANDMARKS=[['opera',createOperaHouse],['stateBank',createStateBank],['postOffice',createPostOffice],['cityHall',createCityHall],['bitexco',createBitexco],['landmark81',createLandmark81],['nhaRong',createNhaRong],['hoConRua',createHoConRua],['continental',createContinental],['cityMuseum',createCityMuseum],['tanDinh',createTanDinh],['jadeEmperor',createJadeEmperor],['binhTay',createBinhTay],['thienHau',createThienHau],['bridges',createBridges],['yacht',createYacht],['riverfront',createRiverfront],['princess60',createMooredPrincess60]];
 const landmarks={};
 import {createRex} from './rex.js';
 let weather,flights,lightning,sky,flag,flagSet,railway,openTour,riverTour,metro,cityLighting,cathedral,market,palace,majestic,rex;
@@ -121,7 +122,7 @@ async function init(){
  rex=createRex({scene,project});rex.group.visible=$('buildings').checked;rex.replaceGeneric(skyline);
  railway=createRailway({scene,project});
  openTour=createOpenTour({scene,project});   // the open-top tour bus, simulated from its timetable   // the North-South railway and its yards: not in the generic model
- for(const [key,create] of LANDMARKS){const l=landmarks[key]=create({scene,project});l.group.visible=$('buildings').checked;l.replaceGeneric(skyline);}
+ for(const [key,create] of LANDMARKS){const l=landmarks[key]=create({scene,project});l.group.visible=$('buildings').checked;l.replaceGeneric(skyline);if(key==='hoConRua')l.replaceGeneric(overview);}
  sky=createSky({scene,manifest,directionalLight:sunLight,hemisphereLight:hemiLight});
  sky.registerWater(overview);sky.registerBuildings(skyline);sky.registerRoads(overview);
  cityLighting=createCityLighting({scene,camera,controls,sky});
@@ -183,6 +184,7 @@ $('river-tour').onclick=()=>{if(!ready||!riverTour)return;stopFollowing();riverT
  // Low astern and aimed above the yacht, looking up the river at the skyline.
  following={yaw:behindYaw(v),distance:48,pitch:0.07,last:v.pos.clone(),at:performance.now(),button:'river-tour',source:riverTour,view:()=>riverTour.followView()};
  controls.enableZoom=false;placeChase(v);controls.update();lastLoad=0;setActive('river-tour');};
+$('jade-emperor').onclick=()=>{const l=landmarks.jadeEmperor;if(!ready||!l)return;stopFollowing();controls.target.copy(l.view.target);camera.position.copy(l.view.eye);controls.update();lastLoad=0;setActive('jade-emperor');};
 $('open-tour').onclick=()=>{if(!ready||!openTour)return;stopFollowing();openTour.update(Date.now());const v=openTour.followView(controls.target.clone());
  if(!v){const [x,z]=project(106.70305,10.7764);controls.target.set(x,4,z);camera.position.copy(controls.target).add(new THREE.Vector3(-.5,.35,.8).normalize().multiplyScalar(160));controls.update();lastLoad=0;setActive('open-tour');return;}
  following={yaw:behindYaw(v),distance:32,last:v.pos.clone(),at:performance.now(),button:'open-tour',source:openTour,view:()=>openTour.followView()};
@@ -240,3 +242,5 @@ function animate(now){requestAnimationFrame(animate);followTrain();controls.upda
 requestAnimationFrame(animate);
 init().catch(error=>{console.error(error);$('loading').innerHTML='';const title=document.createElement('strong');title.textContent='Model could not be loaded';const p=document.createElement('p');p.textContent=error.message;$('loading').append(title,p);});
 
+
+$('turtle-lake-view').onclick=()=>{const l=landmarks.hoConRua;if(!l)return;setActive('turtle-lake-view');controls.target.copy(l.view.target);camera.position.copy(l.view.eye);controls.update();lastLoad=0;};

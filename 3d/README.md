@@ -115,6 +115,10 @@ approximate, are beside them:
   `city-museum.js`, `tan-dinh.js`, `jade-emperor.js`, `binh-tay.js` and
   `thien-hau.js`, listed in `LANDMARKS` in `viewer.js`.
 
+Hồ Con Rùa is modelled at its mapped lake centre (`ho-con-rua.js`, see
+[HO-CON-RUA.md](HO-CON-RUA.md)), with its five-pier tower, flared crown, basin
+and footbridges. The **Hồ Con Rùa** button opens its camera view.
+
 Twenty-one bridges -- Ba Son, Phú Mỹ, Thủ Thiêm, the Mống, the Bình Lợi
 railway bridge, Sài Gòn 1 and 2, Khánh Hội, Ông Lãnh, Calmette, Nguyễn Văn
 Cừ, Chữ Y, Tân Thuận 1 and 2, and over the Đồng Nai Nhơn Trạch, Đồng Nai

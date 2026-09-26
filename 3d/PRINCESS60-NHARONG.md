@@ -1,8 +1,13 @@
 # Princess 60 — Nha Rong (second yacht)
 
-**Built and refined; awaiting the user's explicit signal to moor at Bến Nhà Rồng.**
-This is an independent model. It does not import or modify `yacht.js`, attach itself
-to the city, choose geographic coordinates, or create a berth or shoreside ropes.
+**Moored beside Saigon Star at Vinhomes Central Park Marina**, on its open-water
+side, per the user's updated placement instruction. The yacht retains the name
+*Nha Rong*; Bến Nhà Rồng is no longer its destination.
+
+`princess60-berth.js` derives the berth from the other yacht's anchor and heading,
+with 5.8 m centreline spacing, approximately 0.73 m minimum clearance including
+fittings, a waterline of -0.12 m, and four inter-boat lines. The existing pontoon
+and original yacht remain unchanged. [Moored pair preview](assets/princess60-moored-pair.png).
 
 ## Inspect and download
 
@@ -21,8 +26,7 @@ python3 -m http.server 8789 --bind 127.0.0.1
 ```
 
 Open `http://127.0.0.1:8789/3d/princess60-nharong.html`.
-The preview is a studio inspection, with the boat above a neutral floor, not a
-representation of a moored vessel. No external services or texture downloads are required.
+The preview is a studio inspection, with the boat above a neutral floor, separate from the city berth. No external services or texture downloads are required.
 
 ## Model
 
@@ -32,8 +36,9 @@ side effects. The caller may attach `group` to an inspection scene. `dispose()`
 removes it and releases its geometry and materials; repeated calls are safe.
 
 Metres, Y up, +X toward the bow, +Z to port, design waterline Y = 0. Metadata stores
-`destination: 'Bến Nhà Rồng'` and `status: 'awaiting-mooring-signal'`; no latitude,
-longitude or heading has been assigned.
+`destination: 'Vinhomes Central Park Marina'` and
+`status: 'moored-alongside-saigon-star'`. The standalone asset stays in local
+coordinates; the berth wrapper supplies the city transform.
 
 **1,723,097 triangles, 108 material-batched meshes, 12 named assemblies:**
 
@@ -94,7 +99,7 @@ asset directory in this repository). Its twelve assemblies and named materials
 remain separate in the GLB.
 
 Checks cover finite vertex/normal buffers, outward-facing hull normals on both
-sides, dimensions and draft, upper stairwell clearance, local-space unmoored
+sides, dimensions and draft, upper stairwell clearance, local-space asset
 construction, disposal, and loading the generated GLB back through the vendored
 Three.js GLTFLoader with matching triangle count, bounds and placement metadata.
 The WebGL preview was inspected in Chromium from overview, profile, stern,
@@ -102,11 +107,16 @@ flybridge and underwater views. Refinements corrected hull winding, opened the
 flybridge and transom boarding paths, moved the aft sunpad clear of the stairs,
 raised the foredeck upholstery, corrected the ensign star and adjusted running gear.
 
-## Next placement step — only after the signal
+## Berth verification
 
-Verify the water edge and a suitable berth at Bến Nhà Rồng, then assign geographic
-position/orientation and add berth-specific fenders/lines and city integration.
-That work has intentionally not been performed yet.
+```sh
+node --loader ./tests/three-loader.mjs tests/princess60_berth.mjs
+node --loader ./tests/three-loader.mjs tests/yacht.mjs
+```
+
+Checks cover relative placement, parallel headings, clearance, waterline, four
+lines, independent disposal and preservation of the other yacht. The actual city
+viewer was loaded in Chromium and its Yachts camera action verified.
 
 ## In the city: levels of detail
 
