@@ -1,9 +1,10 @@
 # Hotel Majestic Saigon
 
-`majestic.js` builds a schematic, exterior-only model of the Majestic (1925) on
-the corner of Đồng Khởi and Tôn Đức Thắng, facing the Saigon River. It follows
-the Buildings checkbox and has no dedicated camera button (`view` holds a
-riverside viewpoint).
+`majestic.js` builds an exterior model of the Majestic (1925) on the corner
+of Đồng Khởi and Tôn Đức Thắng, facing the Saigon River, detailed enough to
+hold up from the river tour: every bay, arch, balcony and baluster. It
+follows the Buildings checkbox and has no dedicated camera button (`view`
+holds a riverside viewpoint).
 
 ## Placement and references
 
@@ -32,34 +33,71 @@ no source found ties it to the hotel.
   colonnade; and [Hotel Majestic, Saigon (20230705 1506)](https://commons.wikimedia.org/wiki/File:Hotel_Majestic,_Saigon_(20230705_1506).jpg)
   (Syced, CC0), the river front.
 
-The model follows the photographs:
-- **Street level:** an arcade of round arches under a continuous white canopy,
-  with HOTEL MAJESTIC in gold on a curved pediment over the corner entrance.
-- **Mezzanine:** a floor of small windows above the canopy.
-- **Main floors:** four floors of rectangular windows in pairs. On the
-  straight fronts each pair shares a balcony with an iron railing; round the
-  corner there are no balconies, only gold ornaments. Pilasters with gold
-  capitals divide the bays.
-- **Top:** a heavy main cornice with a balustrade, then a top floor set back
-  2 m, and MAJESTIC in gold letters over the corner. On the river side the
-  top floor is set back 6 m behind a white colonnade and pergola, where the
-  rooftop bar is.
+The model follows the photographs of the floodlit front. The facade runs
+unbroken along three frontages: Đồng Khởi, the corner, and the river along
+Tôn Đức Thắng. The corner is the smooth curve it is: a quadratic tangent to
+both streets, replacing the outline's three corner segments. Bays are 4.4 m,
+laid out along each frontage, so they follow the curve.
 
-Heights are scaled from the photographs' proportions, not measured: a 6 m
-arcade, a 3 m mezzanine, 3.6 m floors, the cornice at 23.4 m, the top floor to
-26.8 m, and the letters to 30.6 m. OSM's 35 m is above anything the
-photographs show on this block, so it is not used; the taller wing seen at
-the end of the river front is outside this outline and not modelled. The
-colours, window sizes and bay widths are approximations. Signage other than
-the two names, the Saigontourist band, flags, lamps and interiors are
-omitted.
+- **Arcade:** a tall round arch per bay in a moulded ring with a keystone,
+  between piers rusticated in bands. The arcade's depth glows gold at night.
+  A three-step moulded cornice runs above it.
+- **Mezzanine:** two square windows per bay under drip mouldings, and a
+  lantern on each pier.
+- **Four balcony floors:**
+  - French windows in pairs in moulded surrounds, crowned alternately with
+    pediments and gilded cartouches;
+  - each pair on a balcony slab carried on two consoles, behind a
+    wrought-iron railing with real balusters, returned at the ends;
+  - string courses at each floor, and pilasters with gilded capitals between
+    the bays.
+- **Top:**
+  - the main cornice in three steps with dentils, and a balustrade of turned
+    balusters;
+  - the top floor set back 2 m, with its windows;
+  - on the river side, the rooftop bar's colonnade and pergola, 6 m back.
+- **The corner's crown:** a curved attic following the corner, with three
+  arched windows, a cornice and a crest, and MAJESTIC in gold on top.
+  HOTEL MAJESTIC is on a curved pediment over the corner entrance, and two
+  flags fly from raked staffs above it (the shared, waving flag,
+  `flag.js`).
+- **At night** (`setNight`, driven by the sky's night level):
+  - the stucco is floodlit warm;
+  - the arcade, the windows and the lanterns glow;
+  - the lettering is lit.
+
+About 119k triangles in 11 batches, always drawn. Heights are scaled from
+the photographs' proportions, not measured:
+
+| Part | Height |
+|---|---|
+| arcade | 6.5 m |
+| mezzanine | 3.2 m |
+| each of the four balcony floors | 3.6 m |
+| main cornice | 24.1 m |
+| top floor, to | 27.6 m |
+| corner attic, to | 31.0 m |
+| lettering, to | ~33.6 m (OSM tags 35 m) |
+
+The taller wing seen at the end of the river front is outside this outline
+and not modelled. The following are approximations:
+- colours, window sizes and ornament;
+- the Saigontourist band, other signage, and interiors, which are omitted.
 
 ## Rendering and integration
 
-Built with `landmark-kit.js`: the outline extruded, the set-back floor from
-`insetOutline`, detail added edge by edge, the letters from `letters`, and
-geometry merged into six meshes (12,032 triangles). The railings are a
-see-through panel rather than individual bars. No textures, lights or per-frame updates.
+Built with `landmark-kit.js`:
+- the body is the outline, with its corner replaced by the curve, extruded;
+- the set-back floor comes from `insetOutline`;
+- detail is laid out bay by bay along each frontage, and the letters come
+  from `letters`;
+- geometry is merged into 11 batches (118,544 triangles), plus the two flag
+  staffs.
+
+There are no textures or lights of its own. The only per-frame work is
+`setNight(level)`, called by the viewer with `sky.state.cityLights`. It sets
+the emissive glow of the stucco, arcade, windows, lanterns and gold, and
+does nothing unless the level changed.
 
 The generic OSM building is replaced when its tile (`3_2`) loads: only
 building triangles lying inside the outline or within 0.8 m of it, which is

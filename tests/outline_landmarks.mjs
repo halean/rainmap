@@ -44,7 +44,8 @@ for (const [spec,create,tileId,expected,height,name] of [
 ]) {
   const scene=new THREE.Scene(), h=create({scene,project});
   assert.equal(h.group.parent,scene);
-  assert(h.state.triangles<25000,`${name}: ${h.state.triangles} triangles`);
+  // Schematic landmarks stay light; the Majestic is modelled in detail for the river tour (every bay, balusters and all).
+  assert(h.state.triangles<(name==='Majestic'?150000:25000),`${name}: ${h.state.triangles} triangles`);
   const bounds=new THREE.Box3().setFromObject(h.group);
   if(height)assert(Math.abs(bounds.max.y-height)<1e-3,`${name}: height ${bounds.max.y}`);
   h.group.traverse(o=>{if(o.isMesh){assert(!o.name.startsWith('building'));for(const a of Object.values(o.geometry.attributes))assert(a.array.every(Number.isFinite));}});
