@@ -172,8 +172,8 @@ a finer level is drawn, LOD2 stays on the reflection layer alone.
   per figure).
 
 The city's worker build and both proxies use the touring crew. Rebuild the
-proxies after changing it: `build-princess60-lod.mjs` passes
-`{crew: 'underway'}`.
+proxies after changing it: `build-princess60-lod.mjs` (a wrapper for the shared
+`tools/build-lod.mjs princess60`) builds it with `{crew: 'underway'}`.
 
 `state.lod`, `state.triangles` and `state.cameraDistance` report the current
 level.
