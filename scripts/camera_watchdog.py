@@ -357,6 +357,15 @@ def prune_recent(recent):
             if datetime.fromisoformat(v).timestamp() > cutoff}
 
 
+# Cameras never to sample, whatever state they are in: kept by hand, with the reason. Unlike the
+# blocklist (offline cameras, released after BLOCKLIST_TTL_SEC) these are live cameras that are no
+# use for reading rain.
+PERMANENT_BLACKLIST = {
+    "5deb576d1dc17d7c5515ad20": "Hong Bang - Ngo Quyen 2: turned away from the junction; since 27 Sep "
+                                "it looks into a breadfruit tree and its own pole",
+}
+
+
 def load_blocklist():
     """{camera_id: iso time blocked}, with expired entries released.
 
@@ -369,10 +378,12 @@ def load_blocklist():
         raw = {cid: stamp for cid in raw}
     cutoff = now_utc().timestamp() - BLOCKLIST_TTL_SEC
     kept = {k: v for k, v in raw.items() if datetime.fromisoformat(v).timestamp() > cutoff}
-    released = sorted(set(raw) - set(kept))
+    released = sorted(set(raw) - set(kept) - set(PERMANENT_BLACKLIST))
     if released:
         log.info("blocklist: releasing %d camera(s) after %dh: %s",
                  len(released), BLOCKLIST_TTL_SEC // 3600, released)
+    stamp = now_utc().isoformat()
+    kept.update({cid: stamp for cid in PERMANENT_BLACKLIST})   # re-stamped each load: they never expire
     return kept
 
 
