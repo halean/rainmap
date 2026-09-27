@@ -20,14 +20,16 @@ const SKY_RADIUS = 320000;
 // Below this altitude a body is considered "set": haze/horizon murk hides it
 // before it would visually clip the ground plane, matching ordinary dusk.
 const RISE_SET_ALTITUDE = -3 * Math.PI / 180;
-// The default camera presets look somewhat down at street level, not level
-// with the true horizon, so the literal astronomical altitude often placed
-// the disc above the frame or uncomfortably high once found. Capping the
-// *displayed* position (never the physics: day/night switching and the
-// scene's directional light below both still use the real altitude) keeps
-// it near the skyline, which also happens to be what a river reflection
-// needs -- a grazing, near-horizon light casts the dramatic long one.
-const DISPLAY_ALTITUDE_CAP = 12 * Math.PI / 180;
+// The sun and moon are drawn where they really are. (They used to be held
+// at most 12 deg above the horizon so the downward-looking presets would
+// show them, which put a 2:30 pm sun on the skyline. With reflections on the
+// river and the towers, the sky need not show the disc; it appears when
+// someone looks up.) Sizes are angular, as fractions of SKY_RADIUS: the sun
+// with its glare ~2.5-3 deg, the moon ~1.5 deg (the real discs are 0.5 deg).
+const SUN_SIZE = 0.05, MOON_SIZE = 0.026;
+// Water glint is strongest for a grazing light; this altitude is where it has
+// eased to its overhead level.
+const GLINT_GRAZING = 12 * Math.PI / 180;
 // Re-render the moon's phase texture only when the illuminated fraction has
 // moved enough to actually look different -- it changes over days, not
 // frames, so redrawing every update() would be pure waste.
@@ -418,18 +420,17 @@ export function createSky({ scene, manifest, directionalLight, hemisphereLight, 
     state.cityLights = nightUniform.value;
     const sunUp = s.altitude > RISE_SET_ALTITUDE;
     const moonUp = !sunUp && m.altitude > RISE_SET_ALTITUDE;
-    const displayAlt = (alt) => Math.min(alt, DISPLAY_ALTITUDE_CAP);
 
     if (sunUp) {
-      const dir = directionFromAltAz(displayAlt(s.altitude), s.azimuth);
+      const dir = directionFromAltAz(s.altitude, s.azimuth);
       sun.position.copy(dir).multiplyScalar(SKY_RADIUS);
       // Lower sun = more atmosphere traversed = hazier, dimmer, more amber --
       // real extinction, not just a fade for its own sake. Driven by the
-      // true altitude (extinction is a real-sky fact), not the display cap.
+      // true altitude (extinction is a real-sky fact).
       const climb = Math.max(0, Math.sin(s.altitude));
       sun.material.opacity = 0.55 + 0.4 * climb;
       sun.material.color.setRGB(1, 0.75 + 0.2 * climb, 0.55 + 0.35 * climb);
-      const scale = SKY_RADIUS * (0.24 - 0.07 * climb); // visibly bigger and softer near the horizon, like real haze
+      const scale = SKY_RADIUS * SUN_SIZE * (1.35 - 0.35 * climb); // bigger and softer near the horizon, like real haze
       sun.scale.set(scale, scale, 1);
       moon.material.opacity = 0;
       state.body = 'sun'; state.altitudeDeg = s.altitude * 180 / Math.PI; state.azimuthDeg = compassBearing(s.azimuth);
@@ -438,18 +439,18 @@ export function createSky({ scene, manifest, directionalLight, hemisphereLight, 
       glintUniforms.uGlintColor.value.setRGB(1, 0.82 + 0.15 * climb, 0.62 + 0.3 * climb);
       // Grazing (near-horizon) light throws the longest, brightest path --
       // real Fresnel behaviour on water, and also just the better-looking case.
-      glintUniforms.uGlintIntensity.value = 1.1 - 0.55 * Math.min(1, s.altitude / DISPLAY_ALTITUDE_CAP);
+      glintUniforms.uGlintIntensity.value = 1.1 - 0.55 * Math.min(1, s.altitude / GLINT_GRAZING);
     } else if (moonUp) {
       if (lastMoonFraction === null || Math.abs(illum.fraction - lastMoonFraction) > MOON_TEXTURE_STEP) {
         moon.material.map.dispose();
         moon.material.map = moonTexture(illum.fraction);
         lastMoonFraction = illum.fraction;
       }
-      const dir = directionFromAltAz(displayAlt(m.altitude), m.azimuth);
+      const dir = directionFromAltAz(m.altitude, m.azimuth);
       moon.position.copy(dir).multiplyScalar(SKY_RADIUS);
       moon.material.rotation = -illum.brightLimbAngle;
       moon.material.opacity = 0.9;
-      const scale = SKY_RADIUS * 0.1; // smaller and sharp -- "clear", not hazy
+      const scale = SKY_RADIUS * MOON_SIZE; // smaller and sharp -- "clear", not hazy
       moon.scale.set(scale, scale, 1);
       sun.material.opacity = 0;
       state.body = 'moon'; state.altitudeDeg = m.altitude * 180 / Math.PI; state.azimuthDeg = compassBearing(m.azimuth);
@@ -457,7 +458,7 @@ export function createSky({ scene, manifest, directionalLight, hemisphereLight, 
       glintUniforms.uGlintDir.value.copy(dir);
       glintUniforms.uGlintColor.value.set('#d7e2ff');
       // Keep the lunar glint on the river.
-      glintUniforms.uGlintIntensity.value = (0.55 - 0.25 * Math.min(1, m.altitude / DISPLAY_ALTITUDE_CAP)) * illum.fraction;
+      glintUniforms.uGlintIntensity.value = (0.55 - 0.25 * Math.min(1, m.altitude / GLINT_GRAZING)) * illum.fraction;
     } else {
       sun.material.opacity = 0; moon.material.opacity = 0;
       state.body = 'none'; state.altitudeDeg = Math.max(s.altitude, m.altitude) * 180 / Math.PI; state.azimuthDeg = null;
