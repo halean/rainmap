@@ -263,6 +263,8 @@ def main():
     (ASSETS/'cameras.json').write_text(json.dumps([{**c,'x':project(c['lon'],c['lat'])[0],'z':project(c['lon'],c['lat'])[1]} for c in valid],ensure_ascii=False,separators=(',',':')))
     from skyline import generate
     generate(ASSETS)
+    from overview_base import generate as generate_base
+    generate_base(ASSETS)
     print('DONE',dict(stats),'tiles',len(tiles),'model MB',round(manifest['totalModelBytes']/1e6,1),'seconds',round(time.time()-t),flush=True)
 
 if __name__=='__main__':main()

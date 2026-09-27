@@ -57,6 +57,12 @@ other on their one assumed runway):
 ```bash
 node --loader ./tests/three-loader.mjs tests/flights_anim.mjs
 ```
+
+For the 3D viewer's startup layer (`3d/assets/overview-base.glb` draws the same
+water and green as the full overview and places the street lamps identically):
+```bash
+node --loader ./tests/three-loader.mjs tests/overview_base.mjs
+```
 (`three-loader.mjs` redirects the bare `three` import to the vendored copy
 and forces ESM for `3d/*.js`, since Node otherwise treats a plain `.js` file
 as CommonJS.) In the browser, the **Lightning** checkbox under RAIN & CLOUDS

@@ -208,6 +208,23 @@ For staged assets, pass `--assets "$build_stage"` to both commands. The skyline
 is generated output under the already-ignored `3d/assets/` directory. The
 original snapshot produces a roughly 1.5 MB skyline across 72 tiles.
 
+## Startup layer
+
+The viewer's loading screen waits on `assets/overview-base.glb`, not the full
+`assets/overview.glb`. The viewer hides every overview road line, yet those lines
+are about 80% of the overview; the base layer keeps the water and green it draws
+and, of the major and street lines, only the vertices `city-lighting.js` samples
+for street lamps. It is 5.3 MB (0.9 MB gzipped) against 14.4 MB (4.9 MB), which
+halves the time to a first picture on a slow phone. `overview.glb` stays whole
+as the download. nginx gzips `.glb` under `/3d/`.
+
+The full builder generates it after the skyline. To regenerate it alone:
+
+```sh
+3d/.venv-build/bin/python 3d/tools/overview_base.py
+3d/.venv-build/bin/python 3d/tools/validate_models.py
+```
+
 ## Flights at Tân Sơn Nhất
 
 The **FLIGHTS · TÂN SƠN NHẤT** panel and the **Airport** view animate arrivals

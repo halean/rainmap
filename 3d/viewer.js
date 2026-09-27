@@ -109,9 +109,17 @@ function updateTiles(){
  const nearest=selected[0];focusTile=nearest?.id??null;
  $('download').href=nearest?nearest.url:manifest.overview.url;$('download').textContent=nearest?'↓ Download local tile GLB':'↓ Download overview GLB';
 }
+// The loading screen lists what the first picture waits on. GLB totals come from the manifest:
+// gzip drops Content-Length, and three's progress counts the decoded bytes anyway.
+let loadingStep=null;
+function fileStep(id,text,state='active'){const row=$('loading-files')?.querySelector(`[data-file="${id}"]`);if(!row)return;row.dataset.state=state;row.querySelector('b').textContent=text;if(state==='active')loadingStep=id;}
+const done=id=>{fileStep(id,'✓','done');loadingStep=null;};
+const mb=n=>(n/1e6).toFixed(1);
+const glbProgress=(id,bytes)=>event=>fileStep(id,bytes?`${mb(Math.min(event.loaded,bytes))} / ${mb(bytes)} MB`:`${mb(event.loaded)} MB`);
 async function init(){
- const response=await fetch('assets/manifest.json');if(!response.ok)throw new Error('The model manifest is not available yet');manifest=await response.json();limitNavigation();
- const cameraData=await fetch('assets/cameras.json').then(r=>r.json());
+ done('code');fileStep('manifest','…');
+ const response=await fetch('assets/manifest.json');if(!response.ok)throw new Error('The model manifest is not available yet');manifest=await response.json();limitNavigation();done('manifest');
+ fileStep('cameras','…');const cameraData=await fetch('assets/cameras.json').then(r=>r.json());done('cameras');
  $('road-km').textContent=Math.round(manifest.statistics.roadLengthMetres/1000).toLocaleString();$('building-count').textContent=manifest.statistics.buildingFeatures.toLocaleString();
  const b=manifest.boundsXZ;$('extent').textContent=`${((b[2]-b[0])/1000).toFixed(0)} × ${((b[3]-b[1])/1000).toFixed(0)} km · ${manifest.cameraCount} camera locations · static 3D model`;
  const ground=new THREE.Mesh(new THREE.PlaneGeometry(600000,600000,64,64),   // split: two 600 km triangles were clipped wrongly from low down (the ground then covered everything)
@@ -119,10 +127,14 @@ async function init(){
  const positions=[];for(const c of cameraData)positions.push(c.x,14,c.z);
  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));cameraMarkers=new THREE.Points(geometry,new THREE.PointsMaterial({color:'#ffc777',size:5,sizeAttenuation:false,depthTest:false}));cameraMarkers.visible=false;cameraMarkers.renderOrder=5;scene.add(cameraMarkers);
  centralCity();
- const gltf=await loader.loadAsync(manifest.overview.url,event=>{$('loading-progress').textContent=`${(event.loaded/1e6).toFixed(1)} MB received`;});overview=gltf.scene;
+ // Startup waits only on the overview's drawn layers; the full overview.glb is the download.
+ const base=manifest.overviewBase??manifest.overview;$('loading-files').querySelector('[data-file="overview"] small').textContent=base.url.split('/').pop();
+ fileStep('overview',`0.0 / ${mb(base.bytes)} MB`);const gltf=await loader.loadAsync(base.url,glbProgress('overview',base.bytes));overview=gltf.scene;done('overview');
  // Overview lines are a cartographic guide. Use a light colour so narrow streets remain legible at city scale.
  overview.traverse(o=>{if(o.isLineSegments){o.material.color.set(o.name==='major'?'#c1d1b6':o.name==='street'?'#90aaa0':'#88a294');o.material.transparent=true;o.material.opacity=o.name==='major'?.95:.65;}});
- if(manifest.skyline){const layer=await loader.loadAsync(manifest.skyline.url);skyline=layer.scene;scene.add(skyline);updateSkyline();highrises=tallBuildings(skyline,Infinity);}
+ if(manifest.skyline){fileStep('skyline',`0.0 / ${mb(manifest.skyline.bytes)} MB`);const layer=await loader.loadAsync(manifest.skyline.url,glbProgress('skyline',manifest.skyline.bytes));done('skyline');skyline=layer.scene;scene.add(skyline);updateSkyline();highrises=tallBuildings(skyline,Infinity);}else fileStep('skyline','—','done');
+ // The landmarks are built here, on the main thread: let the list repaint before that starts.
+ fileStep('build','…');await new Promise(r=>{requestAnimationFrame(()=>setTimeout(r));setTimeout(r,150);});
  cathedral=createNotreDame({scene,project});cathedral.group.visible=$('buildings').checked;cathedral.replaceGeneric(skyline);
  market=createBenThanh({scene,project});market.group.visible=$('buildings').checked;market.replaceGeneric(skyline);
  palace=createIndependencePalace({scene,project});palace.group.visible=$('buildings').checked;palace.replaceGeneric(skyline);
@@ -139,7 +151,7 @@ async function init(){
   const input=$(id);cityLighting.state[key]=input.checked;
   input.onchange=()=>{cityLighting.state[key]=input.checked;};
  }
- updateLayer(overview);scene.add(overview);$('loading').hidden=true;ready=true;updateTiles();
+ updateLayer(overview);scene.add(overview);done('build');$('loading').hidden=true;ready=true;updateTiles();
  weather=createWeather({scene,project,manifest});
  flights=createFlights({scene,project,controls});
  metro=createMetro({scene,project});
@@ -283,7 +295,8 @@ controls.addEventListener('end',()=>{if(following){following.dragging=false;foll
 function animate(now){requestAnimationFrame(animate);followTrain();controls.update();if(camera.position.y<(following?.button==='walk-tour'?0.9:restaurantCloseView?1.1:3))camera.position.y=following?.button==='walk-tour'?0.9:restaurantCloseView?1.1:3;   // zooming to the cursor must not take the camera below the ground
  weather?.update(now,camera);flights?.update(now);lightning?.update(now);flag?.update?.(now);riverTour?.update(Date.now());flagSet?.update(now);for(const l of Object.values(landmarks))l.update?.(camera,now);openTour?.update(Date.now());metro?.update(now);sky?.update();if(ready&&now-lastLoad>400){lastLoad=now;updateTiles();const p=controls.target;$('position').textContent=`${(manifest.originLonLat[1]-p.z/111320).toFixed(4)}° N / ${(manifest.originLonLat[0]+p.x/(111320*Math.cos(manifest.originLonLat[1]*Math.PI/180))).toFixed(4)}° E`;}cityLighting?.update(now);majestic?.setNight?.(sky?.state.cityLights??0);fireworks?.update(now,camera,renderer);if(water){water.update({camera,focus:controls.target,now,boats:riverTour?.hulls()??[]});water.render(scene,camera);}else renderer.render(scene,camera);}
 requestAnimationFrame(animate);
-init().catch(error=>{console.error(error);$('loading').innerHTML='';const title=document.createElement('strong');title.textContent='Model could not be loaded';const p=document.createElement('p');p.textContent=error.message;$('loading').append(title,p);});
+// Keep the file list, marking the one that failed, so a slow or dropped download says where it stopped.
+init().catch(error=>{console.error(error);if(loadingStep)fileStep(loadingStep,'failed','failed');const box=$('loading');box.querySelector('.loader')?.remove();box.querySelector('strong').textContent='Model could not be loaded';box.querySelector('p').textContent=error.message;});
 
 
 $('fireworks').onclick=()=>{fireworks?.sound?.resume();if(!ready||!fireworks)return;stopFollowing();setActive('fireworks');controls.target.copy(fireworks.view.target);camera.position.copy(fireworks.view.eye);controls.update();lastLoad=0;fireworks.start();};   // resume() first, inside the tap: iOS allows sound only there

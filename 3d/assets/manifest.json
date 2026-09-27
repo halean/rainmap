@@ -8586,7 +8586,7 @@
       "vertices": 7467
     }
   ],
-  "totalModelBytes": 487426256,
+  "totalModelBytes": 492676468,
   "skyline": {
     "url": "assets/skyline.glb",
     "bytes": 1482648,
@@ -8667,5 +8667,10 @@
       "8_-6",
       "9_-2"
     ]
+  },
+  "overviewBase": {
+    "url": "assets/overview-base.glb",
+    "bytes": 5250212,
+    "vertices": 220119
   }
 }
