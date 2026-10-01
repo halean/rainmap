@@ -50,6 +50,19 @@ satellite cloud tops decoded straight from Himawari-9's raw instrument files.
   collection for now -- nothing reads this yet; the 3D map's lightning
   layer still dramatises from camera rain reports rather than this real
   feed.
+- **`/flood-risk`** -- where the Saigon River's tide reaches now, and where it can.
+  Ground heights from DeltaDTM (30 m, bare earth; `scripts/build_dem.py`
+  packs them and computes, for every cell, the lowest river level at which
+  water can flow there over the ground), calibrated onto the Phú An tide
+  scale against the city's tidal-flood streets. The live level is
+  interpolated from the official 5-day tide forecast, not a gauge -- none is
+  public.
+- **`scripts/tide_poller.py`** -- from 09:30 Vietnam time, every 30 min
+  until the day's bulletin is online, fetches the Southern
+  Hydro-Meteorological Station's daily tide bulletin (kttvnb.vn, a PDF read
+  with `pdftotext`): measured and forecast highs and lows for Phú An, Nhà Bè
+  and Thủ Dầu Một, into `data/derived/tide_kttvnb.json`; measured extremes
+  are also logged to `tide_observed.csv`, to score the forecast later.
 - **`scripts/flood_watch.py`** -- experiment. Sweeps the 52 cameras most
   likely to show street flooding (`data/metadata/flood_cameras.json`, chosen
   from the full camera list by the city's flood-spot lists, September 2026

@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HCMC Flood Risk</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --card: #ffffff;
+        --ink: #0f172a;
+        --muted: #475569;
+        --border: #dbe4ee;
+        --accent: #0369a1;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: "IBM Plex Sans", "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }
+      header {
+        padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--border);
+        display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+      }
+      header h1 { font-size: 19px; margin: 0; }
+      header .sub { color: var(--muted); font-size: 13px; }
+      header .sub a { color: inherit; text-underline-offset: 2px; }
+      header a.nav { color: var(--accent); font-size: 13px; font-weight: 600; text-decoration: none;
+                     padding: 4px 9px; border: 1px solid var(--border); border-radius: 5px; white-space: nowrap; }
+      header a.nav:hover { background: var(--bg); }
+      #map { position: absolute; left: 0; right: 0; bottom: 0; top: 58px; }
+      .risk-canvas { image-rendering: pixelated; }
+
+      .panel {
+        background: var(--card); padding: 10px 12px; border-radius: 8px; width: 270px;
+        box-shadow: 0 2px 10px rgba(15,23,42,0.18); font-size: 12.5px; line-height: 1.5; overflow-y: auto;
+      }
+      .panel { position: relative; }
+      .panel h2 { font-size: 13.5px; margin: 0 0 6px; padding-right: 22px; }
+      /* Same close / reopen pair as the rain map's legend. */
+      .panel-close { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border: none; border-radius: 5px;
+                     background: transparent; color: var(--muted); font-size: 15px; line-height: 1; cursor: pointer; }
+      .panel-close:hover { background: #eef2f7; color: var(--ink); }
+      .panel-reopen { display: none; width: 34px; height: 34px; border: none; border-radius: 8px; background: var(--card);
+                      box-shadow: 0 2px 10px rgba(15,23,42,0.18); color: var(--muted); font-size: 16px; cursor: pointer;
+                      align-items: center; justify-content: center; }
+      .panel-reopen.show { display: flex; }
+      .panel-reopen:hover { color: var(--ink); }
+      .panel .modes { display: flex; gap: 4px; margin-bottom: 8px; }
+      .panel .modes button {
+        flex: 1; font: inherit; font-size: 12px; padding: 4px 0; border: 1px solid var(--border);
+        background: var(--card); border-radius: 5px; cursor: pointer; color: var(--ink);
+      }
+      .panel .modes button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+      .panel .row { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
+      .panel .sw { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.15); }
+      .panel .note { color: var(--muted); font-size: 11px; margin-top: 6px; }
+      .panel .sect { margin-top: 8px; padding-top: 8px; border-top: 1px solid #eef2f7; }
+      .panel input[type=range] { width: 100%; }
+      .panel .level { font-weight: 600; font-variant-numeric: tabular-nums; }
+      .panel .ticks { display: flex; justify-content: space-between; color: var(--muted); font-size: 10.5px; }
+      .ramp { height: 12px; border-radius: 3px; margin: 4px 0 2px; }
+      .panel details summary { cursor: pointer; color: var(--accent); font-size: 11.5px; margin-top: 6px; }
+      .panel label { cursor: pointer; }
+
+      .readout {
+        background: rgba(255,255,255,0.94); padding: 6px 9px; border-radius: 6px; font-size: 12px;
+        box-shadow: 0 1px 6px rgba(15,23,42,0.2); min-width: 220px; line-height: 1.45; font-variant-numeric: tabular-nums;
+      }
+      .readout b { font-weight: 600; }
+      .readout .muted { color: var(--muted); }
+      .loading { position: absolute; z-index: 1000; left: 50%; top: 45%; transform: translate(-50%,-50%);
+                 background: var(--card); padding: 10px 16px; border-radius: 8px; box-shadow: 0 2px 10px rgba(15,23,42,0.2); font-size: 13px; }
+      .cam-dot { border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(15,23,42,0.6); }
+      .popup-card { font-size: 12.5px; min-width: 200px; line-height: 1.45; }
+      .popup-card .t { font-weight: 600; font-size: 13px; margin-bottom: 3px; }
+      .popup-card .m { color: var(--muted); font-size: 11.5px; }
+      .tide-chart { width: 100%; height: 86px; display: block; margin: 4px 0 2px; }
+      .now-level { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+      .now-sub { color: var(--muted); font-size: 11.5px; }
+      .panel button.link { font: inherit; font-size: 11.5px; color: var(--accent); background: none; border: 1px solid var(--border);
+                           border-radius: 5px; padding: 3px 8px; cursor: pointer; margin-top: 4px; }
+      @media (max-width: 600px) { .panel { width: 230px; } .readout { min-width: 0; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>HCMC Flood Risk</h1>
+      <span class="sub">Where the Saigon River's tide reaches now, and where it can, from a bare-earth terrain model and the official Phú An tide forecast
+        &middot; <span id="sourceLine"></span></span>
+      <a class="nav" href="/rain-map">Rain map &#8599;</a>
+    </header>
+    <div id="map"></div>
+    <div class="loading" id="loading">Loading terrain&hellip;</div>
+
+    <script>
+      const map = L.map("map", {zoomControl: true, preferCanvas: false}).setView([10.77, 106.70], 11);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      // The header wraps on narrow screens; keep the map below it rather than under it.
+      const fitMap = () => {
+        document.getElementById("map").style.top = document.querySelector("header").offsetHeight + "px";
+        map.invalidateSize();
+      };
+      new ResizeObserver(fitMap).observe(document.querySelector("header"));
+
+      const NODATA = -32768;
+      // Risk bands on the Phu An tide scale (Hon Dau datum), from the build's metadata. Colours run
+      // dark to light: the darker, the more ordinary the tide that reaches it.
+      const BAND_COLORS = ["#08306b", "#2171b5", "#6baed6", "#c6dbef"];
+      const HOLLOW_COLOR = [142, 68, 173];
+      const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+      const hex = (h) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+      const fmt = (m) => (m >= 0 ? "+" : "") + m.toFixed(2) + " m";
+
+      let meta, W, H, elev, spill, shade, canvas, ctx, img, overlay;
+      let mode = "now", tideLevel = 1.6, opacity = 0.75, tideNow = null;
+
+      async function loadGrid(url) {
+        const blob = await (await fetch(url)).blob();
+        // Untouched bytes: the heights are packed in the colour channels, so no colour management
+        // and no alpha premultiplication (which would zero the colour of transparent cells).
+        const bmp = await createImageBitmap(blob, {premultiplyAlpha: "none", colorSpaceConversion: "none"});
+        const c = document.createElement("canvas");
+        c.width = bmp.width; c.height = bmp.height;
+        const x = c.getContext("2d", {willReadFrequently: true});
+        x.drawImage(bmp, 0, 0);
+        const d = x.getImageData(0, 0, c.width, c.height).data;
+        const out = new Int16Array(c.width * c.height);
+        const off = meta.encoding.offset;
+        for (let i = 0, p = 0; i < out.length; i++, p += 4) {
+          out[i] = d[p + 3] === 0 ? NODATA : d[p] * 256 + d[p + 1] - off;
+        }
+        return out;
+      }
+
+      // Light relief so the delta's levees and road embankments read; computed once.
+      function hillshade() {
+        const s = new Float32Array(W * H).fill(1);
+        const z = 8;  // exaggeration: the delta's relief is a metre or two over hundreds of metres
+        for (let y = 1; y < H - 1; y++) {
+          for (let x = 1; x < W - 1; x++) {
+            const i = y * W + x;
+            const a = elev[i - 1], b = elev[i + 1], c = elev[i - W], d = elev[i + W];
+            if (a === NODATA || b === NODATA || c === NODATA || d === NODATA) continue;
+            const dx = (b - a) / 10 * z / 56, dy = (d - c) / 10 * z / 56;  // dm -> m, 2 cells of ~28 m
+            const l = (-dx * 0.7071 + dy * 0.7071 + 1) / Math.sqrt(dx * dx + dy * dy + 1);  // light from NW
+            s[i] = Math.max(0.55, Math.min(1.25, 0.35 + 0.75 * l));
+          }
+        }
+        return s;
+      }
+
+      // Plain terrain colours, in tide-scale metres, tuned for the 0-5 m band where the delta lives.
+      const TERRAIN = [[-1, "#3b2a5a"], [0, "#1f6f43"], [1, "#2e8b57"], [1.5, "#5aa955"], [2, "#8fc25a"],
+                       [2.5, "#c3d45f"], [3, "#e8d96a"], [4, "#f0c05a"], [6, "#e39a4a"], [10, "#c8743c"],
+                       [20, "#a0522d"], [40, "#7d4a36"]].map(([v, c]) => [v, hex(c)]);
+      function terrainColor(m) {
+        if (m <= TERRAIN[0][0]) return TERRAIN[0][1];
+        for (let k = 1; k < TERRAIN.length; k++) {
+          if (m <= TERRAIN[k][0]) {
+            const [v0, c0] = TERRAIN[k - 1], [v1, c1] = TERRAIN[k], t = (m - v0) / (v1 - v0);
+            return [0, 1, 2].map(j => c0[j] + (c1[j] - c0[j]) * t);
+          }
+        }
+        return TERRAIN[TERRAIN.length - 1][1];
+      }
+      // Lookup by decimetre so a full redraw is one table read per cell.
+      let terrainLut;
+      function buildTerrainLut() {
+        terrainLut = new Uint8ClampedArray(20001 * 3);  // -1000..+1000 m in dm
+        for (let dm = -10000; dm <= 10000; dm++) {
+          const c = terrainColor(dm / 10 - meta.datum.offset_m);
+          terrainLut.set(c, (dm + 10000) * 3);
+        }
+      }
+
+      function bandOf(spillTide) {
+        const b = meta.tide.bands;
+        for (let k = 0; k < b.length; k++) if (spillTide <= b[k].max_m) return k;
+        return -1;
+      }
+
+      function render() {
+        const px = img.data, off = meta.datum.offset_m * 10, hollowMin = meta.hollow_min_m * 10;
+        const bandMax = meta.tide.bands.map(b => (b.max_m * 10 + off));   // in raw dm
+        const bandRgb = BAND_COLORS.map(hex);
+        const level = mode === "now" ? (tideNow && tideNow.available ? tideNow.level_m : -99) : tideLevel;
+        const levelDm = level * 10 + off;
+        let reached = 0;
+        for (let i = 0, p = 0; i < elev.length; i++, p += 4) {
+          const e = elev[i], s = spill[i];
+          if (e === NODATA) { px[p + 3] = 0; continue; }
+          let r, g, b, a = 255;
+          if (mode === "terrain") {
+            const k = (Math.max(-10000, Math.min(10000, e)) + 10000) * 3, sh = shade[i];
+            r = terrainLut[k] * sh; g = terrainLut[k + 1] * sh; b = terrainLut[k + 2] * sh;
+          } else if (mode === "risk") {
+            let k = -1;
+            for (let j = 0; j < bandMax.length; j++) if (s <= bandMax[j]) { k = j; break; }
+            if (k >= 0) { [r, g, b] = bandRgb[k]; }
+            else if (s - e >= hollowMin) { [r, g, b] = HOLLOW_COLOR; }
+            else { a = 0; }
+            if (a) { const sh = 0.85 + 0.15 * shade[i]; r *= sh; g *= sh; b *= sh; }
+          } else {  // tide / now: where water reaches at this level, shaded by depth
+            if (s <= levelDm) {
+              reached++;
+              const depth = (levelDm - e) / 10;  // m
+              const t = Math.max(0, Math.min(1, depth / 1.5));
+              r = 198 - 190 * t; g = 219 - 171 * t; b = 239 - 132 * t;
+            } else { a = 0; }
+          }
+          px[p] = r; px[p + 1] = g; px[p + 2] = b; px[p + 3] = a;
+        }
+        ctx.putImageData(img, 0, 0);
+        const area = `${(reached * meta.cell_area_m2 / 1e6).toFixed(0)} km² of this window reached`;
+        if (mode === "tide") document.getElementById("tideArea").textContent = area;
+        if (mode === "now") document.getElementById("nowArea").textContent = tideNow && tideNow.available ? area : "";
+      }
+
+      // ---- panel -------------------------------------------------------------------------------
+      const Panel = L.Control.extend({
+        onAdd() {
+          const wrap = L.DomUtil.create("div");
+          const el = L.DomUtil.create("div", "panel", wrap);
+          L.DomEvent.disableClickPropagation(wrap);
+          L.DomEvent.disableScrollPropagation(el);
+          el.innerHTML = `
+            <button class="panel-close" title="Hide panel" aria-label="Hide panel">&times;</button>
+            <h2>Tidal flood risk</h2>
+            <div class="note" style="margin:-2px 0 8px">Where river and sea water could reach if no dike, riverside wall or tide gate held it back.</div>
+            <div class="modes">
+              <button data-mode="now" class="on">Now</button>
+              <button data-mode="risk">Risk</button>
+              <button data-mode="tide">Tide level</button>
+              <button data-mode="terrain">Terrain</button>
+            </div>
+            <div id="nowBox">
+              <div class="now-sub">Phú An, Saigon River &middot; estimated now</div>
+              <div><span class="now-level" id="nowLevel">&hellip;</span> <span id="nowTrend" class="now-sub"></span></div>
+              <svg class="tide-chart" id="tideChart" viewBox="0 0 260 86" preserveAspectRatio="none"></svg>
+              <div class="now-sub" id="nowNext"></div>
+              <div class="note" id="nowArea"></div>
+              <button class="link" id="previewHigh" style="display:none"></button>
+              <div class="note" id="nowSource"></div>
+            </div>
+            <div id="riskLegend" style="display:none"></div>
+            <div id="tideBox" style="display:none">
+              <div>Phú An tide: <span class="level" id="tideValue"></span></div>
+              <input type="range" id="tideSlider" min="0.8" max="3" step="0.05">
+              <div class="ticks"><span>0.8</span><span>1.4 BĐ I</span><span>1.6 BĐ III</span><span>3.0 m</span></div>
+              <div class="note" id="tideArea"></div>
+              <div class="note">Shaded by depth: pale is ankle-deep, dark is over 1.5 m.</div>
+            </div>
+            <div id="terrainBox" style="display:none">
+              <div class="ramp" id="ramp"></div>
+              <div class="ticks"><span>0</span><span>1</span><span>2</span><span>3</span><span>6</span><span>20+ m</span></div>
+              <div class="note">Ground height on the Phú An tide scale (Hòn Dấu datum).</div>
+            </div>
+            <div class="sect">
+              <label class="row"><input type="checkbox" id="camToggle" checked> Flood-watch cameras &amp; live floods</label>
+              <div class="row">Opacity <input type="range" id="opacity" min="0.2" max="1" step="0.05" style="flex:1"></div>
+            </div>
+            <details>
+              <summary>How this is made, and what it misses</summary>
+              <div class="note" id="method"></div>
+            </details>`;
+          const reopen = L.DomUtil.create("button", "panel-reopen", wrap);
+          reopen.title = "Show panel"; reopen.setAttribute("aria-label", "Show panel"); reopen.textContent = "\u2139";
+          const KEY = "hcmcFloodRisk.panelHidden";
+          const show = (visible) => {
+            el.style.display = visible ? "" : "none";
+            reopen.classList.toggle("show", !visible);
+            try { localStorage.setItem(KEY, visible ? "0" : "1"); } catch (e) {}
+          };
+          el.querySelector(".panel-close").addEventListener("click", () => show(false));
+          reopen.addEventListener("click", () => show(true));
+          let hidden = false;
+          try { hidden = localStorage.getItem(KEY) === "1"; } catch (e) {}
+          if (hidden) { el.style.display = "none"; reopen.classList.add("show"); }
+          return wrap;
+        },
+      });
+
+      function riskLegendHtml() {
+        const b = meta.tide.bands;
+        return b.map((x, k) => `<div class="row"><span class="sw" style="background:${BAND_COLORS[k]}"></span>${esc(x.label)}</div>`).join("") +
+          `<div class="row"><span class="sw" style="background:rgb(${HOLLOW_COLOR})"></span>Hollow &ge;${meta.hollow_min_m.toFixed(1)} m deep: water collects (a weak guide to rain flooding)</div>` +
+          `<div class="note">Colour = the lowest Phú An tide at which river water can flow here over the ground. Tides above ${b[0].max_m.toFixed(2)} m came on ${esc(meta.tide.days_over_alert1_2025)} days of 2025.</div>`;
+      }
+
+      function setMode(m) {
+        mode = m;
+        document.querySelectorAll(".panel .modes button").forEach(b => b.classList.toggle("on", b.dataset.mode === m));
+        document.getElementById("riskLegend").style.display = m === "risk" ? "" : "none";
+        document.getElementById("nowBox").style.display = m === "now" ? "" : "none";
+        document.getElementById("tideBox").style.display = m === "tide" ? "" : "none";
+        document.getElementById("terrainBox").style.display = m === "terrain" ? "" : "none";
+        render();
+      }
+
+      // ---- hover / tap readout -------------------------------------------------------------------
+      const Readout = L.Control.extend({ onAdd() { const el = L.DomUtil.create("div", "readout"); el.innerHTML = '<span class="muted">Hover or tap the map for heights</span>'; return el; } });
+      let readoutEl;
+      const mercY = (lat) => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+      function cellAt(latlng) {
+        const [[s, w], [n, e]] = meta.bounds;
+        const col = Math.floor((latlng.lng - w) / (e - w) * W);
+        const row = Math.floor((mercY(n) - mercY(latlng.lat)) / (mercY(n) - mercY(s)) * H);
+        return (col < 0 || row < 0 || col >= W || row >= H) ? -1 : row * W + col;
+      }
+      function describe(i) {
+        if (i < 0) return null;
+        const e = elev[i], s = spill[i];
+        if (e === NODATA) return {sea: true};
+        const off = meta.datum.offset_m;
+        const ground = e / 10 - off, reach = s / 10 - off, k = bandOf(reach);
+        return {ground, reach, band: k, hollow: (s - e) / 10};
+      }
+      function readoutHtml(d) {
+        if (!d) return '<span class="muted">Outside the terrain window</span>';
+        if (d.sea) return "Open water";
+        const band = d.band >= 0 ? meta.tide.bands[d.band].label : "Above the tidal bands";
+        return `Ground <b>${fmt(d.ground)}</b> <span class="muted">(Phú An scale)</span><br>` +
+               `Tidal water reaches it at <b>${fmt(d.reach)}</b><br>` +
+               `<span class="muted">${esc(band)}${d.hollow >= meta.hollow_min_m ? ` · in a ${d.hollow.toFixed(1)} m hollow` : ""}</span>`;
+      }
+
+      // ---- cameras and live floods ---------------------------------------------------------------
+      const camLayer = L.layerGroup().addTo(map);
+      function drawCameras() {
+        camLayer.clearLayers();
+        for (const c of meta.cameras) {
+          const d = describe(cellAt(L.latLng(c.lat, c.lon)));
+          const color = d && !d.sea && d.band >= 0 ? BAND_COLORS[d.band] : "#9aa5b1";
+          const icon = L.divIcon({className: "", html: `<div class="cam-dot" style="width:12px;height:12px;background:${color}"></div>`, iconSize: [12, 12], iconAnchor: [6, 6]});
+          L.marker([c.lat, c.lon], {icon, keyboard: false}).bindPopup(
+            `<div class="popup-card"><div class="t">${esc(c.name)}</div>${d && !d.sea ? readoutHtml(d) : ""}` +
+            `<div class="m" style="margin-top:4px">Flood-watch camera: ${esc((c.why || []).join("; "))}</div></div>`).addTo(camLayer);
+        }
+        refreshFloods();
+      }
+      const floodLayer = L.layerGroup().addTo(map);
+      async function refreshFloods() {
+        try {
+          const data = await (await fetch("/api/rain-map/floods")).json();
+          floodLayer.clearLayers();
+          for (const f of data.floods) {
+            const color = f.stale ? "#90a4ae" : "#0d47a1";
+            const html = `<svg width="24" height="31" viewBox="0 0 34 44"><path d="M17 1 C17 1 3 17.5 3 27 a14 14 0 0 0 28 0 C31 17.5 17 1 17 1 Z" fill="${color}" stroke="#fff" stroke-width="2.5"/>` +
+              `<path d="M8 30 q4.5 -3 9 0 t9 0" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+            const d = describe(cellAt(L.latLng(f.lat, f.lon)));
+            L.marker([f.lat, f.lon], {icon: L.divIcon({className: "", html, iconSize: [24, 31], iconAnchor: [12, 31]}), zIndexOffset: 1000})
+              .bindPopup(`<div class="popup-card"><div class="t">${esc(f.name)}</div>${f.stale ? "Flooded when last seen" : "Flooded now"} · since ${new Date(f.since).toLocaleTimeString("en-GB", {timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit"})}` +
+                `<div style="margin-top:4px">${d && !d.sea ? readoutHtml(d) : ""}</div></div>`).addTo(floodLayer);
+          }
+        } catch (e) { /* the risk map stands on its own without the live layer */ }
+      }
+
+      // ---- the tide now ---------------------------------------------------------------------------
+      const hhmm = (iso) => new Date(iso).toLocaleTimeString("en-GB", {timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit"});
+      const dayHhmm = (iso) => new Date(iso).toLocaleString("en-GB", {timeZone: "Asia/Ho_Chi_Minh", weekday: "short", hour: "2-digit", minute: "2-digit"});
+      function drawTideChart(d) {
+        const svg = document.getElementById("tideChart");
+        if (!d.series.length) { svg.innerHTML = ""; return; }
+        const t0 = Date.parse(d.series[0][0]), t1 = Date.parse(d.series[d.series.length - 1][0]);
+        const hs = d.series.map(p => p[1]), lo = Math.min(...hs, -2), hi = Math.max(...hs, 1.9);
+        const x = (t) => (t - t0) / (t1 - t0) * 260, y = (h) => 82 - (h - lo) / (hi - lo) * 78;
+        const path = d.series.map((p, i) => `${i ? "L" : "M"}${x(Date.parse(p[0])).toFixed(1)},${y(p[1]).toFixed(1)}`).join("");
+        const alerts = Object.entries(d.alert_levels_m).map(([k, v]) =>
+          `<line x1="0" x2="260" y1="${y(v)}" y2="${y(v)}" stroke="${k === "III" ? "#c0392b" : k === "II" ? "#e67e22" : "#f1c40f"}" stroke-dasharray="3 3" stroke-width="1"/>`).join("");
+        const nx = x(Date.parse(d.now));
+        svg.innerHTML = `${alerts}<path d="${path}" fill="none" stroke="#0d47a1" stroke-width="2"/>` +
+          `<line x1="${nx}" x2="${nx}" y1="0" y2="86" stroke="#475569" stroke-width="1"/>` +
+          (d.available ? `<circle cx="${nx}" cy="${y(d.level_m)}" r="4" fill="#0d47a1" stroke="#fff" stroke-width="1.5"/>` : "") +
+          `<text x="${nx + 3}" y="10" font-size="9" fill="#475569">now</text>` +
+          `<text x="257" y="${y(d.alert_levels_m.I || 1.4) - 2}" font-size="8" fill="#a07a00" text-anchor="end">BĐ I</text>`;
+      }
+      function alertName(h, a) {
+        return h >= (a.III ?? 1.6) ? "above alert III" : h >= (a.II ?? 1.5) ? "above alert II" : h >= (a.I ?? 1.4) ? "above alert I" : "below alert levels";
+      }
+      async function refreshTide() {
+        try {
+          const d = await (await fetch("/api/rain-map/tide")).json();
+          tideNow = d;
+          const lv = document.getElementById("nowLevel"), tr = document.getElementById("nowTrend");
+          if (!d.available) { lv.textContent = "unavailable"; tr.textContent = d.reason || ""; return; }
+          lv.textContent = fmt(d.level_m);
+          tr.textContent = `${d.trend === "rising" ? "\u2197 rising" : "\u2198 falling"} \u00b7 ${alertName(d.level_m, d.alert_levels_m)}`;
+          const nh = d.next_high, nl = d.next_low;
+          document.getElementById("nowNext").innerHTML =
+            (nh ? `Next high <b>${fmt(nh.h)}</b> ${dayHhmm(nh.t)}` : "") + (nh && nl ? " &middot; " : "") + (nl ? `low ${fmt(nl.h)} ${dayHhmm(nl.t)}` : "");
+          const btn = document.getElementById("previewHigh");
+          if (nh) {
+            btn.style.display = ""; btn.textContent = `Preview the next high (${nh.h.toFixed(2)} m, ${dayHhmm(nh.t)})`;
+            btn.onclick = () => { tideLevel = nh.h; const s = document.getElementById("tideSlider"); s.value = nh.h;
+              document.getElementById("tideValue").textContent = nh.h.toFixed(2) + " m"; setMode("tide"); };
+          }
+          document.getElementById("nowSource").innerHTML =
+            `Estimated between the highs and lows of the <a href="${esc(d.bulletin.source_page || "https://kttvnb.vn")}" target="_blank" rel="noopener">official 5-day tide forecast</a> ` +
+            `(Đài KTTV Nam Bộ, issued ${dayHhmm(d.bulletin.issued_at)}). Not a gauge reading: river flow and wind can move the real level 10&ndash;30 cm.` +
+            (d.bulletin.stale ? ` <b>The bulletin is over a day and a half old.</b>` : "");
+          drawTideChart(d);
+          if (mode === "now") render();
+        } catch (e) {
+          document.getElementById("nowLevel").textContent = "unavailable";
+        }
+      }
+
+      // ---- boot ----------------------------------------------------------------------------------
+      (async () => {
+        try {
+          meta = await (await fetch("/api/rain-map/dem")).json();
+          W = meta.width; H = meta.height;
+          [elev, spill] = await Promise.all([loadGrid("/api/rain-map/dem/elevation.png"), loadGrid("/api/rain-map/dem/spill.png")]);
+          shade = hillshade();
+          buildTerrainLut();
+          canvas = document.createElement("canvas");
+          canvas.width = W; canvas.height = H; canvas.className = "risk-canvas";
+          ctx = canvas.getContext("2d");
+          img = ctx.createImageData(W, H);
+          // L.SVGOverlay positions whatever element it is given, so a canvas can be redrawn in place
+          // without re-encoding 8 million pixels to a data URL on every slider move.
+          overlay = L.svgOverlay(canvas, meta.bounds, {opacity, interactive: false}).addTo(map);
+
+          document.getElementById("sourceLine").innerHTML = meta.source_short;  // built by scripts/build_dem.py, not user input
+          new Panel({position: "topright"}).addTo(map);
+          readoutEl = new Readout({position: "bottomleft"}).addTo(map).getContainer();
+          document.getElementById("riskLegend").innerHTML = riskLegendHtml();
+          document.getElementById("method").innerHTML = meta.method_html;
+          document.getElementById("ramp").style.background =
+            `linear-gradient(to right, ${["#1f6f43", "#2e8b57", "#5aa955", "#8fc25a", "#c3d45f", "#e8d96a", "#f0c05a", "#e39a4a", "#c8743c", "#a0522d"].join(",")})`;
+          document.querySelectorAll(".panel .modes button").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+          const slider = document.getElementById("tideSlider"), val = document.getElementById("tideValue");
+          slider.value = tideLevel; val.textContent = tideLevel.toFixed(2) + " m";
+          let pending = false;
+          slider.addEventListener("input", () => {
+            tideLevel = +slider.value; val.textContent = tideLevel.toFixed(2) + " m";
+            if (!pending) { pending = true; requestAnimationFrame(() => { pending = false; render(); }); }
+          });
+          const op = document.getElementById("opacity");
+          op.value = opacity;
+          op.addEventListener("input", () => overlay.setOpacity(+op.value));
+          document.getElementById("camToggle").addEventListener("change", (e) => {
+            if (e.target.checked) { camLayer.addTo(map); floodLayer.addTo(map); } else { map.removeLayer(camLayer); map.removeLayer(floodLayer); }
+          });
+          const show = (e) => { readoutEl.innerHTML = readoutHtml(describe(cellAt(e.latlng))); };
+          map.on("mousemove", show);
+          map.on("click", show);
+          await refreshTide();
+          render();
+          drawCameras();
+          setInterval(refreshTide, 5 * 60000);
+          setInterval(refreshFloods, 60000);
+          document.getElementById("loading").remove();
+        } catch (err) {
+          document.getElementById("loading").textContent = `Could not load the terrain: ${err.message}`;
+        }
+      })();
+    </script>
+  </body>
+</html>

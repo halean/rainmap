@@ -27,7 +27,8 @@ Outputs (all operational, not versioned):
   data/flood_watch/frames/<camera>/<YYYYMMDD>/<HHMMSS>[_read].jpg   frames; unread ones are pruned
   data/derived/flood_reads.csv     one row per model read
   data/derived/flood_events.csv    one row per flood, written when it ends
-  data/derived/flood_watch_state.json   per-camera mode, survives restarts
+  data/derived/flood_watch_state.json   per-camera mode and latest read, survives restarts;
+                                        the map's flood layer reads it (app/services/floods.py)
 """
 
 import argparse
@@ -48,6 +49,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app import config
+from app.atomic_write import write_json_atomic
 from app.log_setup import get_logger
 from app.services.insights import InsightsService
 from scripts.rain_annotator import ICT, quota_retry_after
@@ -200,7 +202,7 @@ def rain_around(cam: dict, sample: list[dict], now: datetime) -> dict:
 
 def new_camera_state() -> dict:
     return {"mode": SWEEP, "watch_since": None, "clear_streak": 0, "peak": None,
-            "reads": 0, "first_frame": None, "last_md5": None, "last_fetch": 0.0}
+            "reads": 0, "first_frame": None, "last_md5": None, "last_fetch": 0.0, "last_read": None}
 
 
 def apply_read(st: dict, read: dict, frame: str, now: datetime) -> str | None:
@@ -285,9 +287,7 @@ def load_json(path: Path, default):
 
 def save_state(state: dict) -> None:
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    tmp = STATE_PATH.with_suffix(".tmp")
-    tmp.write_text(json.dumps(state, ensure_ascii=False, indent=1))
-    tmp.replace(STATE_PATH)
+    write_json_atomic(STATE_PATH, state)  # the web app reads it while this writes
 
 
 class Watcher:
@@ -380,6 +380,10 @@ class Watcher:
             frame.rename(kept)
             event = apply_read(st, read, shown(kept), now)
             ended = close_watch(st, cam, now, f"{CLEAR_READS} clear reads") if event == "end" else None
+            # The map's flood layer (app/services/floods.py) reads this, so it never has to scan
+            # flood_reads.csv, which grows with every read.
+            st["last_read"] = {"read_at": now.isoformat(), "depth": read["depth"], "usable": read["usable"],
+                               "justification": read["justification"], "frame": shown(kept)}
             append_csv(READS_PATH, READ_FIELDS, {
                 "read_at": now.isoformat(), "camera_id": cid, "name": cam["name"], "reason": reason,
                 "frame": shown(kept), "usable": read["usable"], "depth": read["depth"],

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 from fastapi import FastAPI, HTTPException, Request, Query
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.config import (
@@ -14,11 +14,17 @@ from app.config import (
     HIMAWARI_MAX_AGE_HOURS,
     HIMAWARI_RETENTION_HOURS,
 )
-from app.services import flights, himawari, lightning_vn, metro, pilot_plan, radar_nhb, recent
+from app.services import floods, flights, tide, himawari, lightning_vn, metro, pilot_plan, radar_nhb, recent
 from app.services.fetch_jobs import FetchJobManager
 from app.services.vrain import rain_density
 
 RAIN_SAMPLE_PATH = Path("data/derived/rain_sample.json")
+DEM_META_PATH = Path("data/derived/dem/hcmc_dem.json")
+DEM_PNG_PATHS = {
+    "elevation": Path("data/derived/dem/hcmc_elevation.png"),
+    "spill": Path("data/derived/dem/hcmc_spill.png"),
+}
+FLOOD_CAMERAS_PATH = Path("data/metadata/flood_cameras.json")
 # The index holds this many per camera (recent.RECENT_LIMIT); the endpoint cannot return more.
 HISTORY_PER_CAMERA = recent.RECENT_LIMIT
 SCAN_STAMP = "%Y%m%d%H%M"
@@ -86,6 +92,42 @@ def register_routes(
     def rain_map(request: Request) -> HTMLResponse:
         return templates.TemplateResponse("rain_map.html", {"request": request})
 
+    @app.get("/flood-risk", response_class=HTMLResponse)
+    def flood_risk_map(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse("flood_risk.html", {"request": request})
+
+    # The terrain data is served under /api/rain-map/ on purpose: the public nginx passes that
+    # prefix through, and only that, so no new public path is needed for it.
+    @app.get("/api/rain-map/tide")
+    def tide_now() -> dict:
+        """Phu An's water level now, interpolated from the official five-day tide forecast
+        (scripts/tide_poller.py) -- an estimate, labelled as one; see app/services/tide.py."""
+        return tide.tide_now()
+
+    @app.get("/api/rain-map/dem")
+    def dem_meta() -> dict:
+        """Bounds, encoding, datum calibration and tide levels of the packed terrain
+        (scripts/build_dem.py), plus the flood watch's cameras so the risk map can show the
+        ground under each."""
+        if not DEM_META_PATH.exists():
+            raise HTTPException(status_code=404, detail="terrain not built: run scripts/build_dem.py")
+        meta = json.loads(DEM_META_PATH.read_text())
+        cams = json.loads(FLOOD_CAMERAS_PATH.read_text()).get("cameras", []) if FLOOD_CAMERAS_PATH.exists() else []
+        meta["cameras"] = [{k: c[k] for k in ("camera_id", "name", "lat", "lon", "why")} for c in cams]
+        return meta
+
+    @app.get("/api/rain-map/dem/{layer}.png")
+    def dem_png(layer: str) -> FileResponse:
+        """'elevation' (ground height) or 'spill' (the river level at which tidal water first
+        reaches each cell), both packed losslessly by scripts/build_dem.py."""
+        path = DEM_PNG_PATHS.get(layer)
+        if path is None:
+            raise HTTPException(status_code=404, detail="unknown layer")
+        if not path.exists():
+            raise HTTPException(status_code=404, detail="terrain not built: run scripts/build_dem.py")
+        # Rebuilt only by hand, so a day of browser caching costs nothing; several MB is worth not refetching.
+        return FileResponse(path, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
+
     @app.get("/api/rain-map")
     def rain_map_data() -> list[dict]:
         if not RAIN_SAMPLE_PATH.exists():
@@ -110,6 +152,13 @@ def register_routes(
         HIMAWARI_BBOX, the same regional box the satellite layer uses, so an
         approaching storm is visible before it reaches the city."""
         return lightning_vn.recent_strikes(lightning_vn.STRIKES_HISTORY_PATH, minutes=minutes, bbox=HIMAWARI_BBOX)
+
+    @app.get("/api/rain-map/floods")
+    def live_floods() -> dict:
+        """Street floods the flood watch (scripts/flood_watch.py) is following right now --
+        see app/services/floods.py. An experiment: 52 flood-prone cameras, read by the
+        vision model only when nearby rain-map cameras report rain."""
+        return floods.live_floods()
 
     @app.get("/api/rain-map/metro/timetable")
     def metro_timetable() -> dict:
