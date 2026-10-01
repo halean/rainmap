@@ -501,6 +501,35 @@ CAMERA_NOTES = {
         "the puddles at night, are not falling water. Count spray, splashes or ripples only in "
         "the main lanes.\n\n"
     ),
+    # QL50 - Cong chao Long An (6792f03d8c5ed4001b27f378): looks down QL50 from the Long An
+    # welcome gate. The broken dirt shoulder on the left and the unpaved forecourt of the food
+    # stalls on the right hold puddles for days. Of 218 rain calls from 13 Sep to 1 Oct, 98 came
+    # with the nearest VRAIN gauge (Da Phuoc, 4.5 km) dry for the previous three hours -- e.g.
+    # Medium at 14:45 on 1 Oct in full sun, and at 04:05 the same night on matte, dry lanes. The
+    # other 120 had gauge rain within three hours, so real rain does show here: the note must not
+    # talk the model out of a wet carriageway. A/B on 1 Oct, same frames with and without the
+    # note: 20 gauge-dry frames production had called rain, 18 -> 6 rain calls; 20 frames with
+    # gauge rain in the past hour, 10 -> 6.
+    "6792f03d8c5ed4001b27f378": (
+        "About this camera (QL50 - Cong chao Long An). It looks down QL50 from under the Long An "
+        "welcome gate, whose two big pillars frame the left and right edges of the picture. The "
+        "asphalt road has a yellow dashed centre line and a white edge line on the left.\n"
+        "- On the left, between the pillar and the white edge line, is a broken dirt shoulder full "
+        "of potholes. On the right, in front of the roadside food stalls with green umbrellas and "
+        "red plastic chairs, is an unpaved forecourt. Both hold brown puddles for days after rain, "
+        "in bright sunshine too, and at night the forecourt puddles mirror the stall lights. They "
+        "are NOT evidence of rain.\n"
+        "- Leave the shoulder and the forecourt out when you report the water on the road. Judge "
+        "the level only from the asphalt between the white edge line and the stalls. If that is "
+        "matte grey with a crisp centre line, the answer is 'dry' or 'damp' however much water "
+        "lies beside it. Report 'soaked' or 'standing water' only when the asphalt lanes are "
+        "themselves glossy or mirror-like, or covered.\n"
+        "- Trucks and motorbikes that run onto the shoulder splash through the potholes. That is "
+        "not falling water; count spray only where it rises from the asphalt lanes.\n"
+        "- Real rain here shows as the lanes themselves turning glossy, spray behind vehicles on "
+        "the asphalt, the far end of the road fading into haze, and riders in raincoats -- report "
+        "those as they are.\n\n"
+    ),
 }
 
 
@@ -540,6 +569,7 @@ WATER_LINGERS = frozenset({
     "58d7b5a7c1e33c00112b320a",   # Nut giao Cho Dem 1: potholes
     "58d7b756c1e33c00112b320d",   # Nut giao Cho Dem 2: edge puddles
     "63b54a9ebfd3d90017ea7911",   # Nguyen Xien - Nguyen Van Tang: glare and the corner pool
+    "6792f03d8c5ed4001b27f378",   # QL50 - Cong chao Long An: the shoulder pothole, Medium in full sun
 })
 
 
@@ -550,6 +580,7 @@ WATER_LINGERS = frozenset({
 RAIN_GEAR_COUNTS = frozenset({
     "68188d586dfb4b0018f9018d",   # Thanh Nien - Pham Van Hai
     "681883866dfb4b0018f8eef6",   # Mai Ba Huong - Le Chinh Dang
+    "6792f03d8c5ed4001b27f378",   # QL50 - Cong chao Long An: its note reads the lanes 'wet' in rain
 })
 
 
