@@ -10,6 +10,9 @@ data/raw/
 # same reasoning as data/raw/, large and reproducible via scripts/storm_snapshot.py
 data/test_sets/
 
+# frames kept by the flood-watch experiment (scripts/flood_watch.py) -- same reasoning as data/raw/
+data/flood_watch/
+
 # service logs, rotated in place -- operational data, not anything to version
 logs/
 NOTES.md

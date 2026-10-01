@@ -50,6 +50,17 @@ satellite cloud tops decoded straight from Himawari-9's raw instrument files.
   collection for now -- nothing reads this yet; the 3D map's lightning
   layer still dramatises from camera rain reports rather than this real
   feed.
+- **`scripts/flood_watch.py`** -- experiment. Sweeps the 52 cameras most
+  likely to show street flooding (`data/metadata/flood_cameras.json`, chosen
+  from the full camera list by the city's flood-spot lists, September 2026
+  press reports and ground height), one every 10 s. A frame is read by the
+  vision model only when most of the nearest rain-map cameras report rain; a
+  read that sees water deep enough for wakes puts that camera under watch,
+  fetched and read every minute until three reads in a row find the lanes
+  clear. Frames go to `data/flood_watch/` (separate from `data/raw/`); reads
+  and floods are logged to `data/derived/flood_reads.csv` and
+  `flood_events.csv`. The site keeps no image history, so a flood is only on
+  record if this was watching when it happened.
 - **`data/derived/`** -- small JSON/CSV state: camera coordinates (fetched
   from the traffic system's own coordinate API), the current 40-camera
   sample, and the live rain readings.

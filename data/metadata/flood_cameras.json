@@ -1,0 +1,614 @@
+{
+ "_about": "Cameras most likely to show street flooding, for scripts/flood_watch.py. Chosen on 2026-10-01 from the full camera list: +3 on Sở Xây dựng's list of rain flood spots, +2 on its tidal flood streets, +3 named in a September 2026 press report of flooding, +2 at <=1 m / +1 at <=3 m SRTM ground height, +1 sitting >=3 m below the cameras within 2.5 km; score >= 5 and online (cam_status UP) at selection.",
+ "cameras": [
+  {
+   "camera_id": "585b2baec3f96200127dc508",
+   "name": "Nguyễn Văn Linh - Huỳnh Tấn Phát 2",
+   "lat": 10.7525453,
+   "lon": 106.7283314,
+   "score": 8,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)",
+    "very low (-2.0m)",
+    "dip (-2.0m vs 4.0m around)"
+   ]
+  },
+  {
+   "camera_id": "585b2b1ec3f96200127dc505",
+   "name": "Nguyễn Văn Linh - Huỳnh Tấn Phát 1",
+   "lat": 10.7528826,
+   "lon": 106.7285943,
+   "score": 8,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)",
+    "very low (-2.0m)",
+    "dip (-2.0m vs 3.5m around)"
+   ]
+  },
+  {
+   "camera_id": "649da495a6068200171a6cb6",
+   "name": "Mai Chí Thọ - Trần Quý Kiên (3)",
+   "lat": 10.7817936,
+   "lon": 106.7400098,
+   "score": 8,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning",
+    "very low (0.0m)",
+    "dip (0.0m vs 3.0m around)"
+   ]
+  },
+  {
+   "camera_id": "5a8279865058170011f6eaef",
+   "name": "Nguyễn Văn Linh - Phạm Hùng 2",
+   "lat": 10.7275739,
+   "lon": 106.6778898,
+   "score": 8,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)",
+    "very low (1.0m)",
+    "dip (1.0m vs 5.0m around)"
+   ]
+  },
+  {
+   "camera_id": "5a10c79f02eb490011a0b0dd",
+   "name": "Mai Chí Thọ - Tố Hữu (C6)",
+   "lat": 10.7713172,
+   "lon": 106.7167175,
+   "score": 8,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning",
+    "very low (-1.0m)",
+    "dip (-1.0m vs 9.0m around)"
+   ]
+  },
+  {
+   "camera_id": "6623ec376f998a001b252671",
+   "name": "Tô Ký - Nguyễn Văn Quá",
+   "lat": 10.8474893,
+   "lon": 106.6351676,
+   "score": 8,
+   "why": [
+    "official rain spot",
+    "reported: 30 Sep eve",
+    "low (3.0m)",
+    "dip (3.0m vs 8.0m around)"
+   ]
+  },
+  {
+   "camera_id": "5822b5ededeb6c0012a2d66a",
+   "name": "Mai Chí Thọ - Nguyễn Cơ Thạch 1",
+   "lat": 10.7732144,
+   "lon": 106.7225862,
+   "score": 7,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning",
+    "low (3.0m)",
+    "dip (3.0m vs 6.0m around)"
+   ]
+  },
+  {
+   "camera_id": "56de42f611f398ec0c48127f",
+   "name": "Mai Chí Thọ - Lương Định Của 1",
+   "lat": 10.7915319,
+   "lon": 106.7511034,
+   "score": 7,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning",
+    "very low (1.0m)"
+   ]
+  },
+  {
+   "camera_id": "5d8cd98d766c88001718895a",
+   "name": "Phạm Văn Đồng - Tô Ngọc Vân (hướng đi Bình Dương)",
+   "lat": 10.8533953,
+   "lon": 106.7514628,
+   "score": 7,
+   "why": [
+    "official rain spot",
+    "reported: 30 Sep eve (seat-deep, Linh Dong - To Ngoc Van)",
+    "dip (5.0m vs 23.0m around)"
+   ]
+  },
+  {
+   "camera_id": "56de42f611f398ec0c481286",
+   "name": "Mai Chí Thọ - Nguyễn Cơ Thạch 2",
+   "lat": 10.773383,
+   "lon": 106.7229187,
+   "score": 7,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning",
+    "low (3.0m)",
+    "dip (3.0m vs 6.0m around)"
+   ]
+  },
+  {
+   "camera_id": "5a8278f35058170011f6eaed",
+   "name": "Nguyễn Văn Linh - Phạm Hùng 1",
+   "lat": 10.7284488,
+   "lon": 106.6771173,
+   "score": 7,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)",
+    "low (2.0m)",
+    "dip (2.0m vs 5.0m around)"
+   ]
+  },
+  {
+   "camera_id": "662a89ae1afb9c00172d26ad",
+   "name": "Nguyễn Văn Linh - Trịnh Quang Nghị",
+   "lat": 10.7028218,
+   "lon": 106.6335368,
+   "score": 7,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)",
+    "very low (-1.0m)"
+   ]
+  },
+  {
+   "camera_id": "662a8a661afb9c00172d2762",
+   "name": "Nguyễn Văn Linh - Quản Trọng Linh",
+   "lat": 10.6939873,
+   "lon": 106.6104698,
+   "score": 7,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)",
+    "very low (1.0m)"
+   ]
+  },
+  {
+   "camera_id": "662a89f51afb9c00172d26ef",
+   "name": "Nguyễn Văn Linh - Trịnh Quang Nghị 2",
+   "lat": 10.7024001,
+   "lon": 106.6346526,
+   "score": 7,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)",
+    "very low (1.0m)"
+   ]
+  },
+  {
+   "camera_id": "586e2995f9fab7001111b0b5",
+   "name": "Ung Văn Khiêm - Nguyễn Gia Trí (D2)",
+   "lat": 10.8075193,
+   "lon": 106.7163956,
+   "score": 6,
+   "why": [
+    "official rain spot",
+    "very low (1.0m)",
+    "dip (1.0m vs 4.0m around)"
+   ]
+  },
+  {
+   "camera_id": "58d7c2e6c1e33c00112b321e",
+   "name": "Trường Chinh - Phan Văn Hớn 1 (Q12-HM)",
+   "lat": 10.8269833,
+   "lon": 106.6254258,
+   "score": 6,
+   "why": [
+    "official rain spot",
+    "reported: 30 Sep eve"
+   ]
+  },
+  {
+   "camera_id": "58e49783d9d6200011e0b9ce",
+   "name": "Trường Chinh - Phan Văn Hớn 2 (HM-Q12)",
+   "lat": 10.8274733,
+   "lon": 106.6247606,
+   "score": 6,
+   "why": [
+    "official rain spot",
+    "reported: 30 Sep eve"
+   ]
+  },
+  {
+   "camera_id": "5d8cda6a766c880017188960",
+   "name": "Phạm Văn Đồng - Kha Vạn Cân (hướng đi Sân bay)",
+   "lat": 10.8411933,
+   "lon": 106.7438239,
+   "score": 6,
+   "why": [
+    "official rain spot",
+    "very low (-1.0m)",
+    "dip (-1.0m vs 5.0m around)"
+   ]
+  },
+  {
+   "camera_id": "59ca2d9d02eb490011a0a3f0",
+   "name": "QL1 - Phan Văn Hớn 2",
+   "lat": 10.8342965,
+   "lon": 106.6069615,
+   "score": 6,
+   "why": [
+    "official rain spot",
+    "reported: 30 Sep eve"
+   ]
+  },
+  {
+   "camera_id": "5a607f078576340017d0666f",
+   "name": "QL1-Phan Văn Hớn (H.Hoc Mon)",
+   "lat": 10.834444,
+   "lon": 106.6067791,
+   "score": 6,
+   "why": [
+    "official rain spot",
+    "reported: 30 Sep eve"
+   ]
+  },
+  {
+   "camera_id": "5a8266105058170011f6eadf",
+   "name": "Nguyễn Văn Linh - Quốc lộ 50 (2)",
+   "lat": 10.7190775,
+   "lon": 106.6557616,
+   "score": 6,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)",
+    "low (3.0m)"
+   ]
+  },
+  {
+   "camera_id": "6878bab06145d3001ba517f7",
+   "name": "Mai Chí Thọ - Trần Quý Kiên (1)",
+   "lat": 10.7820887,
+   "lon": 106.7397094,
+   "score": 6,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning",
+    "low (3.0m)"
+   ]
+  },
+  {
+   "camera_id": "63b54bcdbfd3d90017ea7a82",
+   "name": "Tỉnh lộ 43 - KCX Linh Trung 2",
+   "lat": 10.8960826,
+   "lon": 106.7180908,
+   "score": 6,
+   "why": [
+    "official rain spot",
+    "reported: 30 Sep ~16:10-16:45 (seen on camera)"
+   ]
+  },
+  {
+   "camera_id": "6623ef2b6f998a001b252753",
+   "name": "Phan Văn Hớn - Trần Văn Mười",
+   "lat": 10.8498285,
+   "lon": 106.5877032,
+   "score": 6,
+   "why": [
+    "official rain spot",
+    "reported: 30 Sep eve"
+   ]
+  },
+  {
+   "camera_id": "6623f1996f998a001b252805",
+   "name": "Mai Chí Thọ - Xa Lộ Hà Nội (3)",
+   "lat": 10.8091949,
+   "lon": 106.7560387,
+   "score": 6,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning",
+    "low (3.0m)"
+   ]
+  },
+  {
+   "camera_id": "662b54bb1afb9c00172d8dbb",
+   "name": "Phạm Văn Chiêu - Đường số 59",
+   "lat": 10.8502079,
+   "lon": 106.6526234,
+   "score": 6,
+   "why": [
+    "official rain spot",
+    "reported: 10 Sep eve; 30 Sep eve"
+   ]
+  },
+  {
+   "camera_id": "662a8b061afb9c00172d27d7",
+   "name": "Nguyễn Văn Linh - đường số 1",
+   "lat": 10.723273,
+   "lon": 106.6608739,
+   "score": 6,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)",
+    "low (2.0m)"
+   ]
+  },
+  {
+   "camera_id": "6623ee666f998a001b252726",
+   "name": "Quang Trung - Phan Huy Ích",
+   "lat": 10.8442965,
+   "lon": 106.6401243,
+   "score": 6,
+   "why": [
+    "official rain spot",
+    "reported: 10 Sep eve; 30 Sep eve"
+   ]
+  },
+  {
+   "camera_id": "5a606dbc8576340017d0662b",
+   "name": "Điện Biên Phủ - Nguyễn Hữu Cảnh",
+   "lat": 10.7978184,
+   "lon": 106.721127,
+   "score": 6,
+   "why": [
+    "official rain spot",
+    "very low (-1.0m)",
+    "dip (-1.0m vs 4.0m around)"
+   ]
+  },
+  {
+   "camera_id": "58175ac4edeb6c0012a2d5bb",
+   "name": "Mai Chí Thọ - Đồng Văn Cống 1",
+   "lat": 10.7878801,
+   "lon": 106.7496067,
+   "score": 6,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning",
+    "low (3.0m)"
+   ]
+  },
+  {
+   "camera_id": "662b5adc1afb9c00172d925b",
+   "name": "Trường Chinh - Phan Huy Ích 1",
+   "lat": 10.8235796,
+   "lon": 106.6292024,
+   "score": 6,
+   "why": [
+    "official rain spot",
+    "reported: 10 Sep eve; 30 Sep eve"
+   ]
+  },
+  {
+   "camera_id": "662b55111afb9c00172d8e2e",
+   "name": "Quang Trung - Phạm Văn Chiêu",
+   "lat": 10.8446443,
+   "lon": 106.6407251,
+   "score": 6,
+   "why": [
+    "official rain spot",
+    "reported: 10 Sep eve; 30 Sep eve"
+   ]
+  },
+  {
+   "camera_id": "5a6061868576340017d06611",
+   "name": "Quang Trung - Bà Triệu",
+   "lat": 10.8883495,
+   "lon": 106.5962809,
+   "score": 5,
+   "why": [
+    "reported: 10 Sep eve (Hoc Mon)",
+    "low (3.0m)",
+    "dip (3.0m vs 6.5m around)"
+   ]
+  },
+  {
+   "camera_id": "5a825ab55058170011f6ead2",
+   "name": "Nguyễn Văn Linh - Nguyễn Hữu Thọ (2)",
+   "lat": 10.7289864,
+   "lon": 106.7003131,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)"
+   ]
+  },
+  {
+   "camera_id": "585b2980c3f96200127dc502",
+   "name": "Huỳnh Tấn Phát - Lưu Trọng Lư 2",
+   "lat": 10.7551277,
+   "lon": 106.7279935,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "very low (1.0m)",
+    "dip (1.0m vs 4.0m around)"
+   ]
+  },
+  {
+   "camera_id": "56de42f611f398ec0c481282",
+   "name": "Mai Chí Thọ - Đồng Văn Cống 2",
+   "lat": 10.7876851,
+   "lon": 106.7499447,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning"
+   ]
+  },
+  {
+   "camera_id": "5abbb6d698d8fc001102dfc8",
+   "name": "Nguyễn Văn Linh - Nguyễn Lương Bằng (1)",
+   "lat": 10.7314425,
+   "lon": 106.7204511,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)"
+   ]
+  },
+  {
+   "camera_id": "587470c2b807da0011e33ce4",
+   "name": "Nguyễn Hữu Cảnh - Ngô Tất Tố (Cầu Thủ Thiêm 1)",
+   "lat": 10.7892028,
+   "lon": 106.7150974,
+   "score": 5,
+   "why": [
+    "official rain spot",
+    "low (3.0m)",
+    "dip (3.0m vs 8.0m around)"
+   ]
+  },
+  {
+   "camera_id": "5abbb77298d8fc001102dfce",
+   "name": "Nguyễn Văn Linh - Nguyễn Lương Bằng (2)",
+   "lat": 10.7315638,
+   "lon": 106.7203277,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)"
+   ]
+  },
+  {
+   "camera_id": "63b65ebebfd3d90017eaa3ae",
+   "name": "Nguyễn Hữu Cảnh - Ngô Tất Tố 2 (Dạ cầu Thủ Thiêm 1)",
+   "lat": 10.7891448,
+   "lon": 106.7164278,
+   "score": 5,
+   "why": [
+    "official rain spot",
+    "low (3.0m)",
+    "dip (3.0m vs 7.0m around)"
+   ]
+  },
+  {
+   "camera_id": "56de42f611f398ec0c481283",
+   "name": "Mai Chí Thọ - Trần Não 1",
+   "lat": 10.7757966,
+   "lon": 106.727618,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning"
+   ]
+  },
+  {
+   "camera_id": "56de42f611f398ec0c481280",
+   "name": "Mai Chí Thọ - Lương Định Của 2",
+   "lat": 10.792628,
+   "lon": 106.7514467,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning"
+   ]
+  },
+  {
+   "camera_id": "5a82628e5058170011f6eadb",
+   "name": "Nguyễn Văn Linh - Quốc lộ 50 (1)",
+   "lat": 10.7199366,
+   "lon": 106.655665,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)"
+   ]
+  },
+  {
+   "camera_id": "5a825b7d5058170011f6ead4",
+   "name": "Nguyễn Văn Linh - Nguyễn Hữu Thọ (3)",
+   "lat": 10.7282011,
+   "lon": 106.7004418,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)"
+   ]
+  },
+  {
+   "camera_id": "58175c81edeb6c0012a2d5c2",
+   "name": "Mai Chí Thọ - Trần Não 2",
+   "lat": 10.7757229,
+   "lon": 106.7273766,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning"
+   ]
+  },
+  {
+   "camera_id": "56de42f611f398ec0c48127e",
+   "name": "Mai Chí Thọ - Võ Nguyên Giáp (Cát Lái cầu B)",
+   "lat": 10.8062547,
+   "lon": 106.7540646,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning"
+   ]
+  },
+  {
+   "camera_id": "56de42f611f398ec0c48127d",
+   "name": "Mai Chí Thọ - Võ Nguyên Giáp (Cát Lái cầu A)",
+   "lat": 10.8049848,
+   "lon": 106.7527074,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning"
+   ]
+  },
+  {
+   "camera_id": "662a8ddd1afb9c00172d2a0f",
+   "name": "Nguyễn Văn Linh - cầu Tân Thuận 2",
+   "lat": 10.7521026,
+   "lon": 106.7250645,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)"
+   ]
+  },
+  {
+   "camera_id": "662a8e121afb9c00172d2a3f",
+   "name": "Huỳnh Tấn Phát - cầu Tân Thuận 1",
+   "lat": 10.7554228,
+   "lon": 106.7238683,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "very low (0.0m)",
+    "dip (0.0m vs 5.0m around)"
+   ]
+  },
+  {
+   "camera_id": "662a8eb41afb9c00172d2aba",
+   "name": "Nguyễn Văn Linh - Nguyễn Thị Thập 2",
+   "lat": 10.7379991,
+   "lon": 106.7218244,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)"
+   ]
+  },
+  {
+   "camera_id": "662a8e641afb9c00172d2a7e",
+   "name": "Nguyễn Văn Linh - Nguyễn Thị Thập 1",
+   "lat": 10.7379358,
+   "lon": 106.7212343,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "reported: 30 Sep morning (Pham Hung - Ong Lon, 30-40cm)"
+   ]
+  },
+  {
+   "camera_id": "662b50571afb9c00172d87df",
+   "name": "Quốc Lộ 50 - Bùi Minh Trực",
+   "lat": 10.7375142,
+   "lon": 106.656239,
+   "score": 5,
+   "why": [
+    "official tide street",
+    "very low (1.0m)",
+    "dip (1.0m vs 7.0m around)"
+   ]
+  }
+ ]
+}
