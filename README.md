@@ -63,6 +63,24 @@ satellite cloud tops decoded straight from Himawari-9's raw instrument files.
   with `pdftotext`): measured and forecast highs and lows for Phú An, Nhà Bè
   and Thủ Dầu Một, into `data/derived/tide_kttvnb.json`; measured extremes
   are also logged to `tide_observed.csv`, to score the forecast later.
+- **Rain shadow mode** (`app/services/rain_shadow.py`) -- experiment. After
+  each Gemma reading the annotator also embeds the frame
+  (gemini-embedding-2) and scores it with a ridge classifier trained on
+  gauge-labelled frames (`scripts/embedding_classifier.py --save`). Both
+  verdicts go to `data/derived/rain_shadow.csv`; nothing reaches the map.
+  `scripts/shadow_report.py` scores the disagreements against the gauges.
+  `RAIN_SHADOW=0` turns it off.
+- **`scripts/radar_poller.py`** -- every 10 min, archives the Nhà Bè radar
+  frames (HYMETNET keeps only ~2 h online) into `data/derived/radar_archive/`
+  and the strongest echo within 1/2/5 km of every camera into
+  `radar_cameras.csv`. Note the permanent ground clutter over the central city
+  (~400 cameras read >= 20 dBZ in dry weather); use each camera's excess over
+  its own median, not the raw reading.
+- **`scripts/fusion_train.py`** -- experiment. One learned classifier
+  (gradient-boosted trees) over Gemma's observations, the embedding score,
+  radar near the camera, the last completed gauge hour and time of day,
+  trained and tested against the gauges on a time split; compared with
+  Gemma's production rule.
 - **`scripts/flood_watch.py`** -- experiment. Sweeps the 52 cameras most
   likely to show street flooding (`data/metadata/flood_cameras.json`, chosen
   from the full camera list by the city's flood-spot lists, September 2026

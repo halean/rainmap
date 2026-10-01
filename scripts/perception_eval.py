@@ -154,11 +154,15 @@ def find_prev(path, frame_t):
     return best[0] if best else None
 
 
-def build_sample(per_class, seed):
+def build_sample(per_class, seed, until=None):
+    """`until` freezes the candidate pool: without it every run sees newer frames and gauge readings,
+    the shuffle moves, and the "same" seed draws a different sample."""
     series, coord = load_gauges()
     cams = [c for c in json.loads(RAIN_SAMPLE.read_text()) if c.get("lat") is not None]
     lo = min(t for s in series for t, _ in series[s])
     hi = max(t for s in series for t, _ in series[s])
+    if until is not None:
+        hi = min(hi, until)
 
     wet_frames, dry_frames = [], []
     for c in cams:

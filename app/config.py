@@ -21,6 +21,10 @@ IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
 SWEEP_INTERVAL_SEC = float(os.getenv("SWEEP_INTERVAL_SEC", "300"))
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+# A free-tier key for experiments (scripts/embedding_*.py): no charge, lower rate limits, and on the
+# free tier Google may use the requests to improve its products -- fine for public camera frames,
+# not for anything private. Production (the annotator) stays on GOOGLE_API_KEY.
+GOOGLE_API_FREE_KEY = os.getenv("GOOGLE_API_FREE_KEY", "")
 GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemma-3-27b-it")
 GOOGLE_API_TIMEOUT_SEC = float(os.getenv("GOOGLE_API_TIMEOUT_SEC", "90"))
 

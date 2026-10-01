@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.atomic_write import write_json_atomic
 from app.log_setup import get_logger
 from app.services.insights import InsightsService
+from app.services.rain_shadow import Shadow
 from app.services.recent import record_reading
 
 REPO = Path(__file__).resolve().parents[1]
@@ -844,6 +845,7 @@ def backoff_for(failures):
 
 def main():
     svc = InsightsService()
+    shadow = Shadow()
     state = load_json(STATE_PATH, {})
     # Transient pacing state, deliberately in memory only: a restart should start
     # clean rather than inherit a backoff from a quota event that has long passed.
@@ -1023,6 +1025,10 @@ def main():
                     )
 
                     append_history(rec)
+                    # Shadow mode (app/services/rain_shadow.py): a second opinion, queued for a
+                    # background worker and only logged; never on the map, never in the way.
+                    shadow.submit(cam_id, rec["location_text"], img_path, rec["captured_at"], verdict,
+                                  result if isinstance(result, dict) else {}, rec.get("water_since"))
                     # The per-camera recent index (app/services/recent.py):
                     # this process is its only writer, and this is the moment
                     # a reading exists. Never worth killing the loop over.
