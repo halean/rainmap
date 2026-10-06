@@ -1,5 +1,14 @@
 """Shadow mode: a second opinion on every frame Gemma reads -- logged, and with one narrow veto.
 
+THE DECIDER (since 6 Oct 2026, RAIN_DECIDER=classifier): the rain call itself is made by a classifier
+trained on hand labels (scripts/hand_label_eval.py --save -> data/derived/hand_label_model.npz) from
+the same embedding: rain iff its score > 0. Gemma still describes the scene and grades the intensity
+(Light / Medium) when the call is rain. On the hand-labelled frames of 4-6 Oct, scored by models that
+never saw those days, it caught more rain than Gemma + the veto (37 against 34 of 49) with fewer false
+pins (30 against 36). Each reading is also logged to data/derived/rain_decider.csv with the verdict the
+old path (Gemma + veto) would have published. RAIN_DECIDER=gemma restores that path; a frame the
+classifier cannot score (embedding failed, no model) falls back to it too.
+
 THE VETO (since 2 Oct 2026, 01:50 ICT): when Gemma calls rain only from water on the road -- nothing
 seen falling -- and this classifier scores the frame dry (below VETO, default 0: it leans dry at all), the
 reading is published as "No". That is the after-the-storm night error: on 1-2 Oct Gemma put Medium
@@ -49,6 +58,10 @@ ICT = timezone(timedelta(hours=7))
 FIELDS = ["scored_at", "camera_id", "location", "image", "captured_at", "gemma", "gemma_water",
           "gemma_falling", "gemma_behaviour", "water_since", "shadow_score", "shadow_rain", "agree", "final",
           "gemma_said"]
+HAND_MODEL_PATH = REPO / "data" / "derived" / "hand_label_model.npz"
+DECIDER_LOG = REPO / "data" / "derived" / "rain_decider.csv"
+DECIDER_FIELDS = ["captured_at", "camera_id", "location", "image", "gemma", "old_path", "clf_score", "published", "decider"]
+DECIDER = os.getenv("RAIN_DECIDER", "classifier").strip().lower()
 _veto = os.getenv("RAIN_SHADOW_VETO", "0").strip().lower()
 VETO = None if _veto in ("off", "none", "") else float(_veto)
 QUEUE_MAX = 200  # ~35 min of the annotator's output; past that something is wrong, so drop
@@ -75,6 +88,39 @@ class ShadowModel:
         return float(((x - self.m) / self.s) @ self.coef + self.intercept)
 
 
+class HandLabelModel:
+    """The hand-label classifier as plain arrays (scripts/hand_label_eval.py --save): the embedding,
+    sin/cos of the local hour and a night flag, standardised; rain iff the score > 0."""
+
+    def __init__(self, path: Path = HAND_MODEL_PATH):
+        z = np.load(path)
+        self.mean, self.scale, self.coef = z["mean"], z["scale"], z["coef"]
+        self.intercept = float(z["intercept"][0])
+        self.meta = json.loads(str(z["meta"]))
+
+    def score(self, embedding, captured: datetime) -> float:
+        local = captured.astimezone(ICT)
+        h = local.hour + local.minute / 60
+        x = np.concatenate([np.asarray(embedding, dtype=np.float64),
+                            [math.sin(2 * math.pi * h / 24), math.cos(2 * math.pi * h / 24),
+                             1.0 if (h < 6 or h >= 18) else 0.0]])
+        return float(((x - self.mean) / self.scale) @ self.coef + self.intercept)
+
+
+def classifier_decides(gemma_verdict: str, gemma_said: str, clf_score):
+    """(verdict, justification) when the classifier makes the call, or None to leave it to the old
+    path. Rain keeps Gemma's grade when Gemma also saw rain, else Light. When the classifier and Gemma
+    disagree, Gemma's caption would contradict the badge, so a plain line replaces it on a rain call;
+    a No keeps Gemma's own description of the scene, as the veto does."""
+    if DECIDER != "classifier" or clf_score is None:
+        return None
+    if clf_score > 0:
+        if gemma_verdict != "No":
+            return gemma_verdict, gemma_said
+        return "Light", "Rain is falling here, by the look of the scene as a whole."
+    return "No", gemma_said
+
+
 class Shadow:
     def __init__(self):
         self.enabled = os.getenv("RAIN_SHADOW", "1") != "0" and MODEL_PATH.exists()
@@ -90,12 +136,15 @@ class Shadow:
         self.paid_client = None if paid or not config.GOOGLE_API_KEY else genai.Client(api_key=config.GOOGLE_API_KEY)
         self.fallbacks = 0
         self.model = ShadowModel()
+        self.hand = HandLabelModel() if HAND_MODEL_PATH.exists() else None
         self.q = queue.Queue(maxsize=QUEUE_MAX)
         self.dropped = 0
         threading.Thread(target=self._run, name="rain-shadow", daemon=True).start()
         log.info("shadow mode on: %s key, model trained on %s frames (%s .. %s)",
                  "paid" if paid else "free", self.model.meta["frames"], self.model.meta["first"][:10],
                  self.model.meta["last"][:10])
+        log.info("rain decider: %s; hand-label model %s", DECIDER,
+                 f"trained on {self.hand.meta['labels']} labels at {self.hand.meta['trained_at']}" if self.hand else "missing")
 
     def score_frame(self, img_path: Path, captured_at: str | None):
         """(score, embedding) for a frame, or None if off or the call fails. Called from the
@@ -121,6 +170,28 @@ class Shadow:
         except Exception as e:
             log.warning("scoring %s failed: %s", img_path, str(e)[:600])
             return None
+
+    def clf_score(self, scored, captured_at: str | None):
+        """The hand-label classifier's score for a frame already embedded by score_frame, or None."""
+        if not self.enabled or self.hand is None or scored is None:
+            return None
+        try:
+            captured = datetime.fromisoformat(captured_at) if captured_at else datetime.now(timezone.utc)
+            return self.hand.score(scored[1], captured)
+        except Exception as e:
+            log.warning("hand-label scoring failed: %s", str(e)[:300])
+            return None
+
+    def log_decision(self, cam_id, location, img_path, captured_at, gemma, old_path, clf, published, decider):
+        """One row per reading: what each path would have published. Never in the annotator's way."""
+        try:
+            p = img_path if img_path.is_absolute() else REPO / img_path
+            self._append(DECIDER_LOG, DECIDER_FIELDS, {
+                "captured_at": captured_at, "camera_id": cam_id, "location": location,
+                "image": str(p.relative_to(REPO)), "gemma": gemma, "old_path": old_path,
+                "clf_score": "" if clf is None else round(clf, 4), "published": published, "decider": decider})
+        except Exception as e:
+            log.warning("[%s] decision log failed: %s", cam_id, str(e)[:300])
 
     @staticmethod
     def veto(verdict: str, result: dict, scored) -> bool:

@@ -97,5 +97,56 @@ class VetoTests(unittest.TestCase):
             self.assertFalse(rs.Shadow.veto("Medium", {"water": "standing water", "falling": "no"}, (-1.26, None)))
 
 
+class HandLabelModelTests(unittest.TestCase):
+    """The saved hand-label classifier scores with numpy exactly as scripts/hand_label_eval.py fits it:
+    standardise [embedding, sin hour, cos hour, night], dot the weights, add the intercept."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.path = Path(self.temp.name) / "hand.npz"
+        np.savez(self.path, mean=np.zeros(5), scale=np.full(5, 2.0), coef=np.array([1.0, -1.0, 0, 0, 3.0]),
+                 intercept=np.array([-0.5]), meta=np.array(json.dumps({"labels": 3, "trained_at": "x"})))
+
+    def test_score_formula_and_feature_order(self):
+        m = rs.HandLabelModel(self.path)
+        day = datetime(2026, 10, 6, 12, 0, tzinfo=ICT)     # noon: sin 0, cos -1, not night
+        self.assertAlmostEqual(m.score([4.0, 2.0], day), (4 - 2) / 2 - 0.5)
+        night = datetime(2026, 10, 6, 23, 0, tzinfo=ICT)   # the night flag carries weight 3 / scale 2
+        self.assertAlmostEqual(m.score([4.0, 2.0], night) - m.score([4.0, 2.0], datetime(2026, 10, 6, 17, 0, tzinfo=ICT)), 1.5)
+
+    def test_hour_is_local_time(self):
+        m = rs.HandLabelModel(self.path)
+        utc = datetime(2026, 10, 6, 5, 0, tzinfo=timezone.utc)   # 12:00 ICT
+        self.assertAlmostEqual(m.score([0, 0], utc), m.score([0, 0], datetime(2026, 10, 6, 12, 0, tzinfo=ICT)))
+
+
+class DeciderTests(unittest.TestCase):
+    def setUp(self):
+        p = patch.object(rs, "DECIDER", "classifier")
+        p.start()
+        self.addCleanup(p.stop)
+
+    def test_rain_keeps_gemmas_grade_and_words(self):
+        self.assertEqual(rs.classifier_decides("Medium", "Rain is pouring.", 0.8), ("Medium", "Rain is pouring."))
+
+    def test_rain_gemma_missed_is_light_with_a_plain_line(self):
+        """Gemma's 'the road is merely wet' would contradict a rain badge."""
+        verdict, words = rs.classifier_decides("No", "The road is wet but nothing is falling.", 0.4)
+        self.assertEqual(verdict, "Light")
+        self.assertNotIn("nothing is falling", words)
+
+    def test_dry_overrules_gemma_and_keeps_its_description(self):
+        self.assertEqual(rs.classifier_decides("Light", "Glossy road, riders in raincoats.", -0.2),
+                         ("No", "Glossy road, riders in raincoats."))
+
+    def test_no_score_leaves_the_old_path(self):
+        self.assertIsNone(rs.classifier_decides("Light", "x", None))
+
+    def test_off_switch(self):
+        with patch.object(rs, "DECIDER", "gemma"):
+            self.assertIsNone(rs.classifier_decides("No", "x", 2.0))
+
+
 if __name__ == "__main__":
     unittest.main()

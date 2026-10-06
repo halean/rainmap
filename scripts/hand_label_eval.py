@@ -23,6 +23,9 @@ day. Tested by camera: each camera's frames are scored by a model that never saw
 near-identical frames of one street cannot flatter it.
 
 "Can't tell" labels are left out of every score.
+
+--save fits the classifier on ALL hand labels and writes data/derived/hand_label_model.npz, which the
+annotator's shadow mode loads to make the rain call (app/services/rain_shadow.py, RAIN_DECIDER).
 """
 
 import base64
@@ -39,6 +42,10 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import GroupKFold
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 REPO = Path(__file__).resolve().parents[1]
 SET = REPO / "data" / "test_sets" / "20261003_rain7d"
@@ -155,5 +162,24 @@ def main():
              lambda r: None if r["gemma"] is None else (r["gemma"] and r["new"] >= 0))
 
 
+MODEL_OUT = REPO / "data" / "derived" / "hand_label_model.npz"
+
+
+def save_model(C=0.1):
+    """Fit on every hand label and save as plain arrays, so the annotator scores with numpy alone:
+    score = ((x - mean) / scale) @ coef + intercept, x = features() of one frame; rain iff score > 0."""
+    rows = [r for r in load() if r["label"] != "cannot_tell"]
+    y = np.array([r["label"] == "raining" for r in rows])
+    m = make_pipeline(StandardScaler(), LogisticRegression(C=C, max_iter=5000)).fit(features(rows), y)
+    sc, lr = m.named_steps["standardscaler"], m.named_steps["logisticregression"]
+    meta = {"trained_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "labels": len(rows),
+            "raining": int(y.sum()), "batches": sorted({r["batch"] for r in rows}), "C": C,
+            "embedding_model": "gemini-embedding-2",
+            "features": "embedding (3072) + sin/cos of the hour (ICT) + night flag (18:00-06:00 ICT)"}
+    np.savez(MODEL_OUT, mean=sc.mean_, scale=sc.scale_, coef=lr.coef_.ravel(), intercept=lr.intercept_,
+             meta=json.dumps(meta))
+    print(f"saved {MODEL_OUT.relative_to(REPO)}: {meta['labels']} labels ({meta['raining']} raining), batches {meta['batches']}")
+
+
 if __name__ == "__main__":
-    main()
+    save_model() if "--save" in sys.argv else main()

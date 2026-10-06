@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.atomic_write import write_json_atomic
 from app.log_setup import get_logger
 from app.services.insights import InsightsService
-from app.services.rain_shadow import Shadow
+from app.services.rain_shadow import Shadow, classifier_decides
 from app.services.recent import record_reading
 
 REPO = Path(__file__).resolve().parents[1]
@@ -1009,6 +1009,17 @@ def main():
                                  cam_id, verdict, scored[0])
                         verdict = "No"
                         justification = str(result.get("justification", "")).strip() or justification
+                    # The rain call itself (app/services/rain_shadow.py, RAIN_DECIDER): the hand-label
+                    # classifier decides rain / no rain; Gemma grades it and describes the scene. What
+                    # the old path (Gemma + veto) would have published is logged beside it.
+                    old_path = verdict
+                    clf = shadow.clf_score(scored, captured_at_from(img_path))
+                    decided = classifier_decides(gemma_verdict, str(result.get("justification", "")).strip()
+                                                 if isinstance(result, dict) else justification, clf)
+                    if decided:
+                        verdict, justification = decided[0], decided[1] or justification
+                    shadow.log_decision(cam_id, rec["location_text"], img_path, captured_at_from(img_path),
+                                        gemma_verdict, old_path, clf, verdict, "classifier" if decided else "gemma")
                     rec["rain"] = verdict
                     # Track the water level and when it last changed, so the next
                     # pass can tell "still soaked" from "soaked for 40 minutes".
