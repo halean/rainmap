@@ -1,5 +1,5 @@
 {
- "_about": "Cameras most likely to show street flooding, for scripts/flood_watch.py. Chosen on 2026-10-01 from the full camera list: +3 on Sở Xây dựng's list of rain flood spots, +2 on its tidal flood streets, +3 named in a September 2026 press report of flooding, +2 at <=1 m / +1 at <=3 m SRTM ground height, +1 sitting >=3 m below the cameras within 2.5 km; score >= 5 and online (cam_status UP) at selection.",
+ "_about": "Cameras most likely to show street flooding, for scripts/flood_watch.py. Chosen on 2026-10-01 from the full camera list: +3 on Sở Xây dựng's list of rain flood spots, +2 on its tidal flood streets, +3 named in a September 2026 press report of flooding, +2 at <=1 m / +1 at <=3 m SRTM ground height, +1 sitting >=3 m below the cameras within 2.5 km; score >= 5 and online (cam_status UP) at selection. Cameras with score null were added by hand, not chosen by that scoring; their 'why' says what for.",
  "cameras": [
   {
    "camera_id": "585b2baec3f96200127dc508",
@@ -608,6 +608,166 @@
     "official tide street",
     "very low (1.0m)",
     "dip (1.0m vs 7.0m around)"
+   ]
+  },
+  {
+   "camera_id": "5a60604f8576340017d0660b",
+   "name": "Nguyễn Thái Sơn - Nguyễn Văn Nghi 2",
+   "lat": 10.8243173,
+   "lon": 106.6863763,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-02: covers Chợ Gò Vấp (110 m); high ground (~7 m), so any flood here is rain on the drains, not tide"
+   ]
+  },
+  {
+   "camera_id": "58d7c20ac1e33c00112b321c",
+   "name": "Phạm Văn Đồng - Phan Văn Trị 2",
+   "lat": 10.8207659,
+   "lon": 106.6948092,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-02: lowest ground near Chợ Gò Vấp (~3.3 m, 0.9 km), sloping down toward Bình Thạnh; a 0.4 m hollow"
+   ]
+  },
+  {
+   "camera_id": "5d8cd653766c88001718894c",
+   "name": "Kha Vạn Cân - Võ Văn Ngân",
+   "lat": 10.8509770648006,
+   "lon": 106.75500869751,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: within 500 m of Sở Xây dựng 'Ngập thường xuyên' hotspots (VnExpress 159-point list, data/metadata/vne_flood_points_159.json): Tô Ngọc Vân (Thủ Đức, rain + tide, 28 m); Đặng Thị Rành (Thủ Đức, rain + tide, 156 m); Dương Văn Cam (Thủ Đức, rain + tide, 226 m); Tâm Tâm Xã (Thủ Đức, rain + tide, 263 m); Kha Vạn Cân (Thủ Đức, rain + tide, 492 m)"
+   ]
+  },
+  {
+   "camera_id": "662b50c11afb9c00172d8843",
+   "name": "An Dương Vương - Đường số 7",
+   "lat": 10.7517441974476,
+   "lon": 106.624084711075,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: within 500 m of Sở Xây dựng 'Ngập thường xuyên' hotspots (VnExpress 159-point list, data/metadata/vne_flood_points_159.json): An Dương Vương (Phú Lâm, rain, 44 m)"
+   ]
+  },
+  {
+   "camera_id": "5d9ddf0f766c880017188c9e",
+   "name": "Nút giao Hàng Xanh 6 (Cầu Điện Biên Phủ - Hàng Xanh)",
+   "lat": 10.8007429428369,
+   "lon": 106.709132194519,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: within 500 m of Sở Xây dựng 'Ngập thường xuyên' hotspots (VnExpress 159-point list, data/metadata/vne_flood_points_159.json): Đinh Bộ Lĩnh (Thạnh Mỹ Tây, rain, 63 m); Bạch Đằng (Thạnh Mỹ Tây, rain, 339 m)"
+   ]
+  },
+  {
+   "camera_id": "5d9ddec9766c880017188c9c",
+   "name": "Nút giao Hàng Xanh 5 (Hàng Xanh - Bạch Đằng)",
+   "lat": 10.8021551350728,
+   "lon": 106.711503267288,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: within 500 m of Sở Xây dựng 'Ngập thường xuyên' hotspots (VnExpress 159-point list, data/metadata/vne_flood_points_159.json): Bạch Đằng (Thạnh Mỹ Tây, rain, 75 m); Đinh Bộ Lĩnh (Thạnh Mỹ Tây, rain, 261 m)"
+   ]
+  },
+  {
+   "camera_id": "662a88521afb9c00172d2592",
+   "name": "Kinh Dương Vương - Hồ Học Lãm",
+   "lat": 10.7281852870275,
+   "lon": 106.607261896133,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: within 500 m of Sở Xây dựng 'Ngập thường xuyên' hotspots (VnExpress 159-point list, data/metadata/vne_flood_points_159.json): Hồ Học Lãm (An Lạc, rain, 323 m)"
+   ]
+  },
+  {
+   "camera_id": "587c782db807da0011e33d3b",
+   "name": "Võ Nguyên Giáp - Thảo Điền",
+   "lat": 10.8010116814233,
+   "lon": 106.738277077675,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: within 500 m of Sở Xây dựng 'Ngập thường xuyên' hotspots (VnExpress 159-point list, data/metadata/vne_flood_points_159.json): Thảo Điền (An Khánh, rain + tide, 374 m)"
+   ]
+  },
+  {
+   "camera_id": "631813ebc9eae60017a196b0",
+   "name": "Cầu Sài Gòn 8 (Thủ Đức)",
+   "lat": 10.7995520591487,
+   "lon": 106.731228232384,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: within 500 m of Sở Xây dựng 'Ngập thường xuyên' hotspots (VnExpress 159-point list, data/metadata/vne_flood_points_159.json): Quốc Hương (An Khánh, rain + tide, 419 m)"
+   ]
+  },
+  {
+   "camera_id": "662b843d1afb9c00172dd02d",
+   "name": "Lê Thánh Tôn - Đồng Khởi",
+   "lat": 10.7771984022141,
+   "lon": 106.701825857162,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: central District 1, 350 m from Nguyễn Huệ; VnExpress reported Lê Lai, Lê Lợi and Lê Thánh Tôn flooded around noon on 6 Oct, when no flood-watch camera covered District 1"
+   ]
+  },
+  {
+   "camera_id": "649da77ea6068200171a6dd4",
+   "name": "Tôn Đức Thắng - Công trường Mê Linh",
+   "lat": 10.775301268578,
+   "lon": 106.70676112175,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: central District 1, 367 m from Nguyễn Huệ; VnExpress reported Lê Lai, Lê Lợi and Lê Thánh Tôn flooded around noon on 6 Oct, when no flood-watch camera covered District 1"
+   ]
+  },
+  {
+   "camera_id": "5deb576d1dc17d7c5515ad13",
+   "name": "Pasteur - Lê Thánh Tôn",
+   "lat": 10.775708,
+   "lon": 106.700359,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: central District 1, 369 m from Nguyễn Huệ; VnExpress reported Lê Lai, Lê Lợi and Lê Thánh Tôn flooded around noon on 6 Oct, when no flood-watch camera covered District 1"
+   ]
+  },
+  {
+   "camera_id": "662b85031afb9c00172dd0dc",
+   "name": "Lê Lợi - Phan Bội Châu",
+   "lat": 10.772307988975,
+   "lon": 106.698939800262,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: central District 1, 554 m from Nguyễn Huệ; VnExpress reported Lê Lai, Lê Lợi and Lê Thánh Tôn flooded around noon on 6 Oct, when no flood-watch camera covered District 1"
+   ]
+  },
+  {
+   "camera_id": "65e0552f6b18080018db6647",
+   "name": "Lê Lai - Phan Chu Trinh",
+   "lat": 10.7717072215258,
+   "lon": 106.697888374329,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: central District 1, 687 m from Nguyễn Huệ; VnExpress reported Lê Lai, Lê Lợi and Lê Thánh Tôn flooded around noon on 6 Oct, when no flood-watch camera covered District 1"
+   ]
+  },
+  {
+   "camera_id": "649da72ca6068200171a6dbb",
+   "name": "Tôn Đức Thắng - Hàm Nghi",
+   "lat": 10.7710748334425,
+   "lon": 106.70635342598,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: ~160 m past the river end of Nguyễn Huệ (no camera is on Nguyễn Huệ itself), the low end near Bến Bạch Đằng where Nguyễn Huệ and Hàm Nghi drain; central streets flooded around noon on 6 Oct (VnExpress)"
+   ]
+  },
+  {
+   "camera_id": "5deb576d1dc17d7c5515ad14",
+   "name": "Lý Tự Trọng - Đồng Khởi",
+   "lat": 10.7778940148849,
+   "lon": 106.701037287712,
+   "score": null,
+   "why": [
+    "added by hand on 2026-10-06: ~150 m past the City Hall end of Nguyễn Huệ (no camera is on Nguyễn Huệ itself), on Đồng Khởi; central streets flooded around noon on 6 Oct (VnExpress)"
    ]
   }
  ]

@@ -363,6 +363,11 @@ def prune_recent(recent):
 PERMANENT_BLACKLIST = {
     "5deb576d1dc17d7c5515ad20": "Hong Bang - Ngo Quyen 2: turned away from the junction; since 27 Sep "
                                 "it looks into a breadfruit tree and its own pole",
+    "662b51a41afb9c00172d8926": "Le Van Quoi - Ma Lo: lens covered in droplets and smear; Gemma reads "
+                                "them as rain falling and called Light on every frame from 2 Oct",
+    "681889ec6dfb4b0018f8f6cb": "Nguyen Cuu Phu - Tran Dai Nghia: large droplets on the lens; Gemma "
+                                "called Light/Medium on 30 of 56 frames on 5 Oct while describing a "
+                                "matte, dry road",
 }
 
 
@@ -728,6 +733,11 @@ def main():
         # nothing picks them back up until BLOCKLIST_TTL_SEC releases them, and
         # commit() carries that through sample_cameras.json, the fetch CSV,
         # rain_sample.json and the annotator state in a single pass.
+        # A camera put on the permanent blacklist while in the sample goes out the same way.
+        blacklisted = [c["camera_id"] for c in cameras if c["camera_id"] in PERMANENT_BLACKLIST]
+        if blacklisted:
+            log.warning("replacing blacklisted cameras: %s", blacklisted)
+            dead_this_round.extend(blacklisted)
         if stalled_this_round:
             log.warning("replacing frozen feeds (>= %d identical frames): %s",
                         STALL_FRAMES, stalled_this_round)
