@@ -63,13 +63,16 @@ satellite cloud tops decoded straight from Himawari-9's raw instrument files.
   with `pdftotext`): measured and forecast highs and lows for Phú An, Nhà Bè
   and Thủ Dầu Một, into `data/derived/tide_kttvnb.json`; measured extremes
   are also logged to `tide_observed.csv`, to score the forecast later.
-- **Rain shadow mode** (`app/services/rain_shadow.py`) -- experiment. After
-  each Gemma reading the annotator also embeds the frame
-  (gemini-embedding-2) and scores it with a ridge classifier trained on
-  gauge-labelled frames (`scripts/embedding_classifier.py --save`). Both
-  verdicts go to `data/derived/rain_shadow.csv`; nothing reaches the map.
-  `scripts/shadow_report.py` scores the disagreements against the gauges.
-  `RAIN_SHADOW=0` turns it off.
+- **Rain shadow mode and the rain call** (`app/services/rain_shadow.py`).
+  Before each reading is published the annotator embeds the frame
+  (gemini-embedding-2). Since 6 Oct 2026 a classifier trained on hand
+  labels (`scripts/hand_label_eval.py --save`) makes the rain / no-rain
+  call from that embedding, and Gemma grades the rain and writes the
+  caption; `RAIN_DECIDER=gemma` returns to Gemma's own call with the
+  embedding veto. Readings are logged to `data/derived/rain_shadow.csv`
+  and `rain_decider.csv`; `RAIN_SHADOW=0` turns it all off. How the
+  readers were tested, and the hand labels, collectors and evaluation
+  scripts behind that choice, are in [RAIN_LAB.md](RAIN_LAB.md).
 - **`scripts/radar_poller.py`** -- every 10 min, archives the Nhà Bè radar
   frames (HYMETNET keeps only ~2 h online) into `data/derived/radar_archive/`
   and the strongest echo within 1/2/5 km of every camera into
