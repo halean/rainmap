@@ -955,6 +955,10 @@ def main():
                 captured = captured_at_from(img_path)
                 result = annotate(svc, img_path, captured, prev_path,
                                   prev=prior_state(rec, captured), camera_id=cam["camera_id"])
+                # The embedding score, before the verdict is published, for the shadow veto
+                # (app/services/rain_shadow.py). ~0.6 s; None when off or the call fails.
+                if isinstance(result, dict):
+                    result["_scored"] = shadow.score_frame(img_path, captured)
                 return item, result, time.monotonic() - started, None
             except Exception as e:
                 wait = quota_retry_after(e)
@@ -996,6 +1000,15 @@ def main():
                     else:
                         verdict = result.get("rain", rec.get("rain", "No"))
                         justification = result.get("justification", "")
+                    gemma_verdict = verdict
+                    scored = result.pop("_scored", None) if isinstance(result, dict) else None
+                    if shadow.veto(verdict, result, scored):
+                        # Water on the road but nothing falling, and the image classifier is clearly
+                        # dry: leftover water, not rain. Gemma's own description of the scene stays.
+                        log.info("[%s] veto: gemma %s from water alone, image classifier dry (%.2f) -> No",
+                                 cam_id, verdict, scored[0])
+                        verdict = "No"
+                        justification = str(result.get("justification", "")).strip() or justification
                     rec["rain"] = verdict
                     # Track the water level and when it last changed, so the next
                     # pass can tell "still soaked" from "soaked for 40 minutes".
@@ -1027,8 +1040,9 @@ def main():
                     append_history(rec)
                     # Shadow mode (app/services/rain_shadow.py): a second opinion, queued for a
                     # background worker and only logged; never on the map, never in the way.
-                    shadow.submit(cam_id, rec["location_text"], img_path, rec["captured_at"], verdict,
-                                  result if isinstance(result, dict) else {}, rec.get("water_since"))
+                    shadow.submit(cam_id, rec["location_text"], img_path, rec["captured_at"], gemma_verdict,
+                                  result if isinstance(result, dict) else {}, rec.get("water_since"),
+                                  scored=scored, final=verdict)
                     # The per-camera recent index (app/services/recent.py):
                     # this process is its only writer, and this is the moment
                     # a reading exists. Never worth killing the loop over.

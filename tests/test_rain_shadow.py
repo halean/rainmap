@@ -66,5 +66,36 @@ class GuaranteeTests(unittest.TestCase):
         self.assertEqual(s.dropped, 1)
 
 
+class VetoTests(unittest.TestCase):
+    """Only rain from water alone, only when the classifier scores below VETO (patched to -0.3 here;
+    the default is 0)."""
+
+    def setUp(self):
+        p = patch.object(rs, "VETO", -0.3)
+        p.start()
+        self.addCleanup(p.stop)
+
+    def test_leftover_water_with_a_dry_classifier_is_vetoed(self):
+        """1-2 Oct: Medium from 'standing water', nothing falling, classifier -1.26."""
+        self.assertTrue(rs.Shadow.veto("Medium", {"water": "standing water", "falling": "no"}, (-1.26, None)))
+
+    def test_rain_seen_falling_is_never_vetoed(self):
+        self.assertFalse(rs.Shadow.veto("Medium", {"water": "soaked", "falling": "yes"}, (-2.0, None)))
+
+    def test_a_borderline_classifier_does_not_veto(self):
+        self.assertFalse(rs.Shadow.veto("Light", {"water": "soaked", "falling": "no"}, (-0.2, None)))
+
+    def test_no_score_no_veto(self):
+        """An embedding call that failed leaves Gemma's call as it was."""
+        self.assertFalse(rs.Shadow.veto("Light", {"water": "soaked", "falling": "no"}, None))
+
+    def test_a_dry_reading_is_left_alone(self):
+        self.assertFalse(rs.Shadow.veto("No", {"water": "wet", "falling": "no"}, (-1.0, None)))
+
+    def test_off_switch(self):
+        with patch.object(rs, "VETO", None):
+            self.assertFalse(rs.Shadow.veto("Medium", {"water": "standing water", "falling": "no"}, (-1.26, None)))
+
+
 if __name__ == "__main__":
     unittest.main()
