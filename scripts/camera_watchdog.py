@@ -368,6 +368,9 @@ PERMANENT_BLACKLIST = {
     "681889ec6dfb4b0018f8f6cb": "Nguyen Cuu Phu - Tran Dai Nghia: large droplets on the lens; Gemma "
                                 "called Light/Medium on 30 of 56 frames on 5 Oct while describing a "
                                 "matte, dry road",
+    "589d0bceb3bf7600110283d6": "Cau Sai Gon 2 (da cau): looks at the river under the bridge, no road "
+                                "in view; ripples on the water read as rain (luna said raining on 40 "
+                                "of 57 readings on 7 Oct). Blocked by hand on 8 Oct",
 }
 
 
