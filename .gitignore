@@ -37,3 +37,6 @@ NOTES.md
 # the exception -- the city's full camera list, an input nothing regenerates.
 data/derived/*
 !data/derived/camera_locations.json
+
+# WeatherNext 3 runs pulled by weathernext3/poller.py (~3 MB a day); data, not versioned.
+weathernext3/runs/
