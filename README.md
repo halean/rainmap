@@ -63,14 +63,18 @@ satellite cloud tops decoded straight from Himawari-9's raw instrument files.
   with `pdftotext`): measured and forecast highs and lows for Phú An, Nhà Bè
   and Thủ Dầu Một, into `data/derived/tide_kttvnb.json`; measured extremes
   are also logged to `tide_observed.csv`, to score the forecast later.
-- **Rain shadow mode and the rain call** (`app/services/rain_shadow.py`).
-  Before each reading is published the annotator embeds the frame
-  (gemini-embedding-2). Since 6 Oct 2026 a classifier trained on hand
-  labels (`scripts/hand_label_eval.py --save`) makes the rain / no-rain
-  call from that embedding, and Gemma grades the rain and writes the
-  caption; `RAIN_DECIDER=gemma` returns to Gemma's own call with the
-  embedding veto. Readings are logged to `data/derived/rain_shadow.csv`
-  and `rain_decider.csv`; `RAIN_SHADOW=0` turns it all off. How the
+- **Rain shadow mode and the rain call** (`app/services/rain_shadow.py`,
+  `app/services/rain_luna.py`). Before each reading is published the
+  annotator embeds the frame (gemini-embedding-2) and, beside Gemma's
+  call, asks gpt-6-luna whether rain is falling. Since 6 Oct 2026 luna
+  makes the rain / no-rain call, but its rain is published only when
+  Gemma or the hand-label classifier (`scripts/hand_label_eval.py
+  --save`, scored on that embedding) also sees rain; a frame luna cannot
+  answer falls to the classifier. Gemma grades the rain and writes the
+  caption. `RAIN_DECIDER=classifier` makes the classifier decide, and
+  `RAIN_DECIDER=gemma` returns to Gemma's own call with the embedding
+  veto. Readings are logged to `data/derived/rain_shadow.csv` and
+  `rain_decider.csv`; `RAIN_SHADOW=0` turns it all off. How the
   readers were tested, and the hand labels, collectors and evaluation
   scripts behind that choice, are in [RAIN_LAB.md](RAIN_LAB.md).
 - **`scripts/radar_poller.py`** -- every 10 min, archives the Nhà Bè radar
