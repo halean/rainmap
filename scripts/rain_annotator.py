@@ -14,7 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.atomic_write import write_json_atomic
 from app.log_setup import get_logger
 from app.services.insights import InsightsService
-from app.services.rain_shadow import Shadow, classifier_decides
+from app.services.rain_luna import Luna, luna_decides
+from app.services.rain_shadow import DECIDER, Shadow, classifier_decides
 from app.services.recent import record_reading
 
 REPO = Path(__file__).resolve().parents[1]
@@ -846,6 +847,7 @@ def backoff_for(failures):
 def main():
     svc = InsightsService()
     shadow = Shadow()
+    luna = Luna() if DECIDER == "luna" else None
     state = load_json(STATE_PATH, {})
     # Transient pacing state, deliberately in memory only: a restart should start
     # clean rather than inherit a backoff from a quota event that has long passed.
@@ -953,12 +955,17 @@ def main():
             started = time.monotonic()
             try:
                 captured = captured_at_from(img_path)
+                # luna's call (app/services/rain_luna.py) runs beside Gemma's; its answer is
+                # collected after, so the two overlap.
+                luna_fut = luna.start(img_path, rec.get("location_text") or cam.get("display_name") or cam.get("title", "")) \
+                    if DECIDER == "luna" else None
                 result = annotate(svc, img_path, captured, prev_path,
                                   prev=prior_state(rec, captured), camera_id=cam["camera_id"])
                 # The embedding score, before the verdict is published, for the shadow veto
                 # (app/services/rain_shadow.py). ~0.6 s; None when off or the call fails.
                 if isinstance(result, dict):
                     result["_scored"] = shadow.score_frame(img_path, captured)
+                    result["_luna"] = luna.answer(luna_fut) if luna else None
                 return item, result, time.monotonic() - started, None
             except Exception as e:
                 wait = quota_retry_after(e)
@@ -1009,17 +1016,25 @@ def main():
                                  cam_id, verdict, scored[0])
                         verdict = "No"
                         justification = str(result.get("justification", "")).strip() or justification
-                    # The rain call itself (app/services/rain_shadow.py, RAIN_DECIDER): the hand-label
-                    # classifier decides rain / no rain; Gemma grades it and describes the scene. What
-                    # the old path (Gemma + veto) would have published is logged beside it.
+                    # The rain call itself (RAIN_DECIDER): luna (app/services/rain_luna.py) decides rain /
+                    # no rain, then the hand-label classifier for a frame luna could not answer, then the
+                    # old path (Gemma + veto). Gemma grades the rain and describes the scene. Every
+                    # reader's answer is logged beside what was published (data/derived/rain_decider.csv).
                     old_path = verdict
                     clf = shadow.clf_score(scored, captured_at_from(img_path))
-                    decided = classifier_decides(gemma_verdict, str(result.get("justification", "")).strip()
-                                                 if isinstance(result, dict) else justification, clf)
+                    luna_ans = result.pop("_luna", None) if isinstance(result, dict) else None
+                    gemma_said = str(result.get("justification", "")).strip() if isinstance(result, dict) else justification
+                    decider = "gemma"
+                    decided = luna_decides(gemma_verdict, gemma_said, luna_ans, clf) if DECIDER == "luna" else None
+                    if decided:
+                        decider = "luna"
+                    else:
+                        decided = classifier_decides(gemma_verdict, gemma_said, clf)
+                        decider = "classifier" if decided else "gemma"
                     if decided:
                         verdict, justification = decided[0], decided[1] or justification
                     shadow.log_decision(cam_id, rec["location_text"], img_path, captured_at_from(img_path),
-                                        gemma_verdict, old_path, clf, verdict, "classifier" if decided else "gemma")
+                                        gemma_verdict, old_path, clf, verdict, decider, luna=luna_ans)
                     rec["rain"] = verdict
                     # Track the water level and when it last changed, so the next
                     # pass can tell "still soaked" from "soaked for 40 minutes".

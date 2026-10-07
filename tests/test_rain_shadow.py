@@ -13,6 +13,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import app.services.rain_shadow as rs
+from app.services.rain_luna import luna_decides
 
 ICT = timezone(timedelta(hours=7))
 
@@ -121,6 +122,43 @@ class HandLabelModelTests(unittest.TestCase):
         self.assertAlmostEqual(m.score([0, 0], utc), m.score([0, 0], datetime(2026, 10, 6, 12, 0, tzinfo=ICT)))
 
 
+class ReloadTests(unittest.TestCase):
+    """A retrained model is picked up by the running annotator; a broken file leaves the old one."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.path = Path(self.temp.name) / "hand.npz"
+        self.save(labels=3)
+        for p in (patch.object(rs, "HAND_MODEL_PATH", self.path), patch.object(rs, "HAND_MODEL_CHECK_SEC", 0),
+                  patch.object(rs, "log")):
+            p.start()
+            self.addCleanup(p.stop)
+        self.s = rs.Shadow.__new__(rs.Shadow)
+        self.s.hand, self.s.hand_mtime, self.s.hand_checked = rs.HandLabelModel(self.path), self.path.stat().st_mtime, 0
+
+    def save(self, labels, path=None):
+        np.savez(path or self.path, mean=np.zeros(5), scale=np.ones(5), coef=np.zeros(5), intercept=np.array([0.0]),
+                 meta=np.array(json.dumps({"labels": labels, "trained_at": "x"})))
+
+    def touch_later(self):
+        import os
+        st = self.path.stat()
+        os.utime(self.path, (st.st_atime, st.st_mtime + 10))
+
+    def test_a_new_file_is_loaded(self):
+        self.save(labels=9)
+        self.touch_later()
+        self.s.reload_hand_model()
+        self.assertEqual(self.s.hand.meta["labels"], 9)
+
+    def test_a_broken_file_keeps_the_old_model(self):
+        self.path.write_bytes(b"not a model")
+        self.touch_later()
+        self.s.reload_hand_model()
+        self.assertEqual(self.s.hand.meta["labels"], 3)
+
+
 class DeciderTests(unittest.TestCase):
     def setUp(self):
         p = patch.object(rs, "DECIDER", "classifier")
@@ -146,6 +184,39 @@ class DeciderTests(unittest.TestCase):
     def test_off_switch(self):
         with patch.object(rs, "DECIDER", "gemma"):
             self.assertIsNone(rs.classifier_decides("No", "x", 2.0))
+
+
+class LunaDeciderTests(unittest.TestCase):
+    def test_rain_keeps_gemmas_grade_and_words(self):
+        self.assertEqual(luna_decides("Medium", "Rain is pouring.", {"rain_now": "raining", "intensity": "light"}),
+                         ("Medium", "Rain is pouring."))
+
+    def test_rain_gemma_missed_takes_lunas_grade_and_a_plain_line(self):
+        """The classifier seconds it."""
+        verdict, words = luna_decides("No", "The road is wet but nothing is falling.",
+                                      {"rain_now": "raining", "intensity": "moderate"}, 0.3)
+        self.assertEqual(verdict, "Medium")
+        self.assertNotIn("nothing is falling", words)
+
+    def test_rain_no_other_reader_sees_is_not_published(self):
+        """Quốc Lộ 22 - Võ Văn Điều, 6 Oct 01:55 ICT: a dry, clear road; Gemma No, classifier -16."""
+        self.assertEqual(luna_decides("No", "A dry road at night.", {"rain_now": "raining", "intensity": "light"}, -16.0),
+                         ("No", "A dry road at night."))
+        self.assertEqual(luna_decides("No", "x", {"rain_now": "raining", "intensity": "light"}, None)[0], "No")
+
+    def test_wet_or_dry_is_no_with_gemmas_description(self):
+        for said in ("wet_not_raining", "dry"):
+            self.assertEqual(luna_decides("Light", "Glossy road.", {"rain_now": said, "intensity": "none"}),
+                             ("No", "Glossy road."))
+
+    def test_no_answer_or_cannot_tell_passes_on(self):
+        self.assertIsNone(luna_decides("Light", "x", None))
+        self.assertIsNone(luna_decides("Light", "x", {"rain_now": "cannot_tell", "intensity": "none"}))
+
+    def test_the_classifier_still_answers_under_the_luna_decider(self):
+        """It is luna's fallback, so DECIDER=luna must not switch it off."""
+        with patch.object(rs, "DECIDER", "luna"):
+            self.assertEqual(rs.classifier_decides("No", "x", 0.5)[0], "Light")
 
 
 if __name__ == "__main__":

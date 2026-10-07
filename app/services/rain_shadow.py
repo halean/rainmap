@@ -42,6 +42,7 @@ import math
 import os
 import queue
 import threading
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -59,9 +60,13 @@ FIELDS = ["scored_at", "camera_id", "location", "image", "captured_at", "gemma",
           "gemma_falling", "gemma_behaviour", "water_since", "shadow_score", "shadow_rain", "agree", "final",
           "gemma_said"]
 HAND_MODEL_PATH = REPO / "data" / "derived" / "hand_label_model.npz"
+HAND_MODEL_CHECK_SEC = 60
 DECIDER_LOG = REPO / "data" / "derived" / "rain_decider.csv"
-DECIDER_FIELDS = ["captured_at", "camera_id", "location", "image", "gemma", "old_path", "clf_score", "published", "decider"]
-DECIDER = os.getenv("RAIN_DECIDER", "classifier").strip().lower()
+DECIDER_FIELDS = ["captured_at", "camera_id", "location", "image", "gemma", "old_path", "clf_score", "luna",
+                  "luna_intensity", "luna_confidence", "luna_tier", "luna_secs", "published", "decider", "luna_evidence"]
+# luna (app/services/rain_luna.py) from 6 Oct 2026, a trial of a few days; the classifier and then the
+# old path take a frame luna cannot answer.
+DECIDER = os.getenv("RAIN_DECIDER", "luna").strip().lower()
 _veto = os.getenv("RAIN_SHADOW_VETO", "0").strip().lower()
 VETO = None if _veto in ("off", "none", "") else float(_veto)
 QUEUE_MAX = 200  # ~35 min of the annotator's output; past that something is wrong, so drop
@@ -112,7 +117,7 @@ def classifier_decides(gemma_verdict: str, gemma_said: str, clf_score):
     path. Rain keeps Gemma's grade when Gemma also saw rain, else Light. When the classifier and Gemma
     disagree, Gemma's caption would contradict the badge, so a plain line replaces it on a rain call;
     a No keeps Gemma's own description of the scene, as the veto does."""
-    if DECIDER != "classifier" or clf_score is None:
+    if DECIDER not in ("classifier", "luna") or clf_score is None:
         return None
     if clf_score > 0:
         if gemma_verdict != "No":
@@ -137,6 +142,8 @@ class Shadow:
         self.fallbacks = 0
         self.model = ShadowModel()
         self.hand = HandLabelModel() if HAND_MODEL_PATH.exists() else None
+        self.hand_mtime = HAND_MODEL_PATH.stat().st_mtime if self.hand else None
+        self.hand_checked = time.monotonic()
         self.q = queue.Queue(maxsize=QUEUE_MAX)
         self.dropped = 0
         threading.Thread(target=self._run, name="rain-shadow", daemon=True).start()
@@ -171,8 +178,27 @@ class Shadow:
             log.warning("scoring %s failed: %s", img_path, str(e)[:600])
             return None
 
+    def reload_hand_model(self):
+        """Pick up a retrained model (hand_label_eval.py --save) without a restart: look at the file's
+        mtime at most once a minute, and keep the old model if the new file will not load."""
+        now = time.monotonic()
+        if now - self.hand_checked < HAND_MODEL_CHECK_SEC:
+            return
+        self.hand_checked = now
+        try:
+            mtime = HAND_MODEL_PATH.stat().st_mtime
+            if mtime == self.hand_mtime:
+                return
+            self.hand, self.hand_mtime = HandLabelModel(HAND_MODEL_PATH), mtime
+            log.info("hand-label model reloaded: trained on %s labels at %s",
+                     self.hand.meta["labels"], self.hand.meta["trained_at"])
+        except Exception as e:
+            log.warning("hand-label model not reloaded, keeping the old one: %s", str(e)[:300])
+
     def clf_score(self, scored, captured_at: str | None):
         """The hand-label classifier's score for a frame already embedded by score_frame, or None."""
+        if self.enabled:
+            self.reload_hand_model()
         if not self.enabled or self.hand is None or scored is None:
             return None
         try:
@@ -182,14 +208,18 @@ class Shadow:
             log.warning("hand-label scoring failed: %s", str(e)[:300])
             return None
 
-    def log_decision(self, cam_id, location, img_path, captured_at, gemma, old_path, clf, published, decider):
+    def log_decision(self, cam_id, location, img_path, captured_at, gemma, old_path, clf, published, decider, luna=None):
         """One row per reading: what each path would have published. Never in the annotator's way."""
         try:
             p = img_path if img_path.is_absolute() else REPO / img_path
             self._append(DECIDER_LOG, DECIDER_FIELDS, {
                 "captured_at": captured_at, "camera_id": cam_id, "location": location,
                 "image": str(p.relative_to(REPO)), "gemma": gemma, "old_path": old_path,
-                "clf_score": "" if clf is None else round(clf, 4), "published": published, "decider": decider})
+                "clf_score": "" if clf is None else round(clf, 4), "luna": (luna or {}).get("rain_now", ""),
+                "luna_intensity": (luna or {}).get("intensity", ""),
+                "luna_confidence": (luna or {}).get("confidence", ""), "luna_evidence": (luna or {}).get("evidence", ""),
+                "luna_tier": (luna or {}).get("tier", ""),
+                "luna_secs": (luna or {}).get("secs", ""), "published": published, "decider": decider})
         except Exception as e:
             log.warning("[%s] decision log failed: %s", cam_id, str(e)[:300])
 

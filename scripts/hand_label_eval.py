@@ -176,8 +176,12 @@ def save_model(C=0.1):
             "raining": int(y.sum()), "batches": sorted({r["batch"] for r in rows}), "C": C,
             "embedding_model": "gemini-embedding-2",
             "features": "embedding (3072) + sin/cos of the hour (ICT) + night flag (18:00-06:00 ICT)"}
-    np.savez(MODEL_OUT, mean=sc.mean_, scale=sc.scale_, coef=lr.coef_.ravel(), intercept=lr.intercept_,
+    # Write then rename: the running annotator reloads this file when it changes, and must never
+    # see it half written.
+    tmp = MODEL_OUT.with_name(MODEL_OUT.stem + ".tmp.npz")
+    np.savez(tmp, mean=sc.mean_, scale=sc.scale_, coef=lr.coef_.ravel(), intercept=lr.intercept_,
              meta=json.dumps(meta))
+    tmp.replace(MODEL_OUT)
     print(f"saved {MODEL_OUT.relative_to(REPO)}: {meta['labels']} labels ({meta['raining']} raining), batches {meta['batches']}")
 
 
