@@ -22,6 +22,7 @@ State as of 6 Oct 2026. Times are UTC unless marked VN (UTC+7).
 | `data/derived/hymetnet_rain_cameras.csv`, `hymetnet_rain/` | `hymetnet_rain_poller.py` | page every 5 min (`HYMETNET_RAIN_POLL_SEC=300`), frames when the run changes | 5 Oct 22:43 | HYMETNET's hourly rain map at every camera: 6 measured hours and the +1..+6 h nowcast, per run |
 | `data/derived/hymetnet_rain_measured.csv` | one-off backfill | hourly | 4 Oct 00:00 to 5 Oct ~21:00 | measured hours only; earlier hours were already gone |
 | `data/derived/vne_forecast_points.csv`, `vne_forecast/` | `vne_forecast_logger.py` | 15 min | 5 Oct 13:37 | VnExpress's copy of HYMETNET's district-level heavy-rain points |
+| `weathernext3/runs/<init>.csv` | `weathernext3/poller.py` (BigQuery) | new run hourly, polled every 20 min | runs from 1 Oct 00:00 (backfilled) | Google DeepMind WeatherNext 3 ensemble rain (mm/h, p10-p90 + mean; IMERG-calibrated; experimental) on the 0.1 deg grid over HCMC, 1-48 h ahead; runs appear ~7.5 h late; ~65-120 MB billed per run, free tier |
 | `data/flood_watch/`, `flood_reads.csv`, `flood_events.csv` | `flood_watch.py` | 68 cameras, one every 10 s; every 60 s under watch | 1 Oct | see `data/metadata/flood_cameras.json` for why each camera is there |
 
 Two of these can never be recovered if missed:
@@ -52,6 +53,9 @@ The labels point at frames in `data/raw/`, which is not in git (12 GB).
 | 4 | 50 | 4-6 Oct | map vs classifier disagreements; radar echo but both dry; both rain but no echo |
 | 5 | 50 | 4-6 Oct | camera dry but >= 40% of neighbours raining; both rain; map vs classifier |
 | 6 | 50 | 4-6 Oct | radar echo + map dry; map rain + no echo; map rain + echo; classifier-only rain |
+| 7 | 50 | 5-6 Oct | old path rain / classifier dry and the reverse; both rain; both dry, neighbours raining |
+| 8 | 50 | 3-6 Oct | both rain; classifier rain / old path dry and the reverse; Gemma rain vetoed; both dry, neighbours raining |
+| 9 | 50 | 7 Oct storm | the luna trial: luna rain blocked by the second-reader rule; luna rain after the storm; old path rain / luna not; classifier-only rain; all dry at the storm's peak; all rain |
 
 Every batch over-samples hard frames on purpose, so a score on a batch is accuracy on hard cases,
 not on an ordinary hour. Frames from cameras on the watchdog's `PERMANENT_BLACKLIST` are left out of
@@ -124,10 +128,48 @@ heavy-rain points sit where it was raining at issue time (56-83%), not where it 
 | + nearby cameras | 77% | 38/49 | 38/60 |
 | + radar | 74-75% | 30-37/49 | |
 
+**gpt-6-luna as a reader** (`scripts/hand_label_llm.py`, flex tier). Zero-shot it agreed with the labels on
+75% of 485 frames, few-shot (24 examples, 8x the tokens) 77%: the examples are not worth it. Alone it
+over-calls rain at night; published only when Gemma or the classifier also sees rain it is the best reader
+so far. Batch 9 (7 Oct storm, 49 frames, 11 raining):
+
+| Reader | Agrees | Rain caught | Pins that were rain |
+|---|---|---|---|
+| published (luna + a second reader) | 42/49 | 7/11 | 7/10 |
+| old path (Gemma + veto) | 36/49 | 7/11 | 7/16 |
+| classifier | 33/49 | 8/11 | 8/21 |
+| luna alone | 29/49 | 8/11 | 8/25 |
+
+All 12 luna rain calls the rule blocked were wet or dry roads; where the old path said rain and luna did not,
+luna was right 8 of 10; classifier-only rain was wet road 6 of 6. Light rain just after a storm is still
+read badly by everyone (3 of 7 of luna's post-storm calls were rain).
+
+**WeatherNext 3** (`weathernext3/`, Google DeepMind's ensemble through BigQuery). Runs from two days out put
+the 7 Oct storm's peak at 17-19h; the cameras saw it arrive at 17h and peak at 19h. Over 1-7 Oct its
+day-ahead city rain picks out rainy hours with AUC 0.77, no better than the average rain for that hour of
+day (0.78): so far it knows that evening storms are likely, not when or where. Score it per area after more storms.
+
 **Conclusion.** In this city the cameras are the only source that says whether it is raining on a
 street right now. Everything else is late (gauges, the measured map), coarse, or sees rain aloft (radar).
 
 ## The live rain call (since 6 Oct 2026, 12:48 UTC)
+
+**Since 6 Oct 2026, 18:56 UTC: gpt-6-luna decides**, kept after batch 9 (`RAIN_DECIDER=luna`, the
+default now; `app/services/rain_luna.py`). Zero-shot, flex tier, the same prompt and previous-frame rule
+as scored in `scripts/hand_label_llm.py` (75% on 485 labelled frames, 80% on batch 8). The call runs
+beside Gemma's, so a reading takes no longer (17.5 s median, against 17.9 s before). A flex refusal is
+retried on the standard tier; a frame luna cannot answer within 40 s, or answers cannot_tell, falls to the
+classifier described below, then the old path. From 19:10 UTC luna's rain is published only when Gemma or
+the classifier (score > 0) also sees rain: alone it pinned a dry, clear road (Quốc Lộ 22 - Võ Văn Điều,
+01:55 ICT, Gemma No, classifier -16); on the labels the second reader cuts false pins 45 -> 34 and misses
+2 more of 137 rain frames. Rain keeps Gemma's grade when Gemma also saw rain, else
+luna's (light / moderate / heavy -> Light / Medium / Heavy). `rain_decider.csv` logs luna's answer,
+tier and time beside the classifier score and the old path; the log before the trial is
+`rain_decider.20261006T185642.csv`, its first 13 minutes (luna alone) `rain_decider.20261006T190953.csv`;
+the log now also keeps luna's confidence and one-line evidence. About $1 a day. Back to the classifier: restart the annotator with
+`RAIN_DECIDER=classifier`.
+
+Before the trial:
 
 The hand-label classifier makes the call (`RAIN_DECIDER=classifier`, the default;
 `app/services/rain_shadow.py`): rain iff its score > 0. Gemma still grades the rain (Light / Medium)
@@ -137,15 +179,15 @@ to the old path (Gemma + veto). On batches 4-6, each scored by a model trained o
 batches, this caught 37 of 49 rain frames with 30 false pins, against 34 and 36 for Gemma + veto.
 
 - Model: `data/derived/hand_label_model.npz`, written by `scripts/hand_label_eval.py --save` from all
-  hand labels (409 usable, 134 raining, batches 1-6). Not in git; rebuilt from the committed labels.
-  Retrain after each labelled batch, then restart the annotator.
+  hand labels (558 usable, 185 raining, batches 1-9). Not in git; rebuilt from the committed labels.
+  Retrain after each labelled batch; the running annotator picks up the new file within a minute
+  (`hand-label model reloaded` in `logs/rain_shadow.log`), and keeps the old model if the file is broken.
 - Comparison: `data/derived/rain_decider.csv` logs the old path's verdict beside every published one.
 - Switch back: restart the annotator with `RAIN_DECIDER=gemma`.
 
 ## Open questions
 
-- Does the classifier hold up in a real storm? Compare the two paths in `rain_decider.csv`, and draw
-  a labelling batch from the readings where they differ.
+- Light rain in the hour after a storm: no reader gets it reliably.
 - Does a narrow radar rule (no echo cancels a single reader's rain call) keep its precision without
   losing rain?
 - How does the nowcast do in a real storm (rerun `nowcast_eval.py`)?
@@ -155,7 +197,7 @@ batches, this caught 37 of 49 rain frames with 30 false pins, against 34 and 36 
 
 - Settings that live only in a process's launch environment (check `/proc/<pid>/environ` before a
   restart): `flood_watch.py` with `FLOOD_DAILY_READ_CAP=4000` (storm day, 6 Oct; default 1500),
-  `hymetnet_rain_poller.py` with `HYMETNET_RAIN_POLL_SEC=300`. The annotator runs with defaults
+  `hymetnet_rain_poller.py` with `HYMETNET_RAIN_POLL_SEC=300`. `weathernext3/poller.py` runs with defaults and stops itself if a query bills over 1 GB (`logs/weathernext.log`). The annotator runs with defaults
   (`RAIN_DECIDER=classifier`).
 - Restart a poller by finding its PID in one command
   (`ps -eo pid,args | grep "[.]venv/bin/python -u scripts/<name>.py" | grep -v "bash -c"`) and killing
