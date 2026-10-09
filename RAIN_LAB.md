@@ -56,6 +56,8 @@ The labels point at frames in `data/raw/`, which is not in git (12 GB).
 | 7 | 50 | 5-6 Oct | old path rain / classifier dry and the reverse; both rain; both dry, neighbours raining |
 | 8 | 50 | 3-6 Oct | both rain; classifier rain / old path dry and the reverse; Gemma rain vetoed; both dry, neighbours raining |
 | 9 | 50 | 7 Oct storm | the luna trial: luna rain blocked by the second-reader rule; luna rain after the storm; old path rain / luna not; classifier-only rain; all dry at the storm's peak; all rain |
+| 10 | 50 | 8 Oct storm and after | night rain blocked by the night rule; night and evening rain published; luna rain with no second reader; old path rain / luna not; all dry in rain hours; daytime rain calls |
+| 11 | 50 | 9 Oct storm | Gemma rain / luna wet; storm rain published; all dry during the storm; luna alone at night; night-rule calls; classifier-only rain; storm edges |
 
 Every batch over-samples hard frames on purpose, so a score on a batch is accuracy on hard cases,
 not on an ordinary hour. Frames from cameras on the watchdog's `PERMANENT_BLACKLIST` are left out of
@@ -149,6 +151,28 @@ the 7 Oct storm's peak at 17-19h; the cameras saw it arrive at 17h and peak at 1
 day-ahead city rain picks out rainy hours with AUC 0.77, no better than the average rain for that hour of
 day (0.78): so far it knows that evening storms are likely, not when or where. Score it per area after more storms.
 
+**Batches 9-11 pooled** (149 frames, 50 raining; each batch weighted to hard cases):
+
+| Rule | Agrees | Rain caught | False pins |
+|---|---|---|---|
+| live: luna + a second reader, stricter 22-05 | 77% | 24/50 | 9 |
+| the same without the night rule | 75% | 31/50 | 18 |
+| 2 of 3 (luna, Gemma + veto, classifier) | 72% | 33/50 | 25 |
+| Gemma + veto | 70% | 39/50 | 34 |
+| Decisions API p > 0.35 + a second reader | 77% | 25/50 | 9 |
+
+The live rule's rain pins are right (24 of 33) but it misses about half the rain; no rule tried does better
+on both. luna alone at night was wrong 26 of 26 times. Where Gemma says rain and luna says wet, luna was
+right 9 of 14 (batch 11).
+
+**OpenAI's Decisions API** (`hand_label_llm.py decide`): gpt-6-luna returning a probability instead of
+text, billed for input only. ~0.23 s and ~640 tokens a frame (two images), about 40% cheaper than the flex
+chat call. As accurate as the chat call, not more: AUC 0.83 (classifier 0.79), but probabilities run low
+(raining frames median 0.38 as a yes/no question, 0.68 as the chat reader's four answers), and the order of
+the answers changes 22% of picks.
+
+**Nhà Bè radar** on 531 labelled frames: AUC 0.71, but no echo threshold beats calling every frame dry.
+
 **Conclusion.** In this city the cameras are the only source that says whether it is raining on a
 street right now. Everything else is late (gauges, the measured map), coarse, or sees rain aloft (radar).
 
@@ -162,7 +186,8 @@ retried on the standard tier; a frame luna cannot answer within 40 s, or answers
 classifier described below, then the old path. From 19:10 UTC luna's rain is published only when Gemma or
 the classifier (score > 0) also sees rain: alone it pinned a dry, clear road (Quốc Lộ 22 - Võ Văn Điều,
 01:55 ICT, Gemma No, classifier -16); on the labels the second reader cuts false pins 45 -> 34 and misses
-2 more of 137 rain frames. Rain keeps Gemma's grade when Gemma also saw rain, else
+2 more of 137 rain frames. From 8 Oct, 04:46 ICT, late at night (22:00-05:00 ICT) the rain also needs Gemma, with the
+classifier not strongly dry (> -3): Gemma over-calls the same wet roads luna does then. Rain keeps Gemma's grade when Gemma also saw rain, else
 luna's (light / moderate / heavy -> Light / Medium / Heavy). `rain_decider.csv` logs luna's answer,
 tier and time beside the classifier score and the old path; the log before the trial is
 `rain_decider.20261006T185642.csv`, its first 13 minutes (luna alone) `rain_decider.20261006T190953.csv`;
@@ -179,7 +204,7 @@ to the old path (Gemma + veto). On batches 4-6, each scored by a model trained o
 batches, this caught 37 of 49 rain frames with 30 false pins, against 34 and 36 for Gemma + veto.
 
 - Model: `data/derived/hand_label_model.npz`, written by `scripts/hand_label_eval.py --save` from all
-  hand labels (558 usable, 185 raining, batches 1-9). Not in git; rebuilt from the committed labels.
+  hand labels (658 usable, 224 raining, batches 1-11). Not in git; rebuilt from the committed labels.
   Retrain after each labelled batch; the running annotator picks up the new file within a minute
   (`hand-label model reloaded` in `logs/rain_shadow.log`), and keeps the old model if the file is broken.
 - Comparison: `data/derived/rain_decider.csv` logs the old path's verdict beside every published one.
