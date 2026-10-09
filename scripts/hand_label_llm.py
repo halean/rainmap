@@ -6,6 +6,7 @@ Run: .venv/bin/python scripts/hand_label_llm.py submit  [--model gpt-6-luna]
      .venv/bin/python scripts/hand_label_llm.py report  [--model gpt-6-luna]
      .venv/bin/python scripts/hand_label_llm.py flex    [--model gpt-6-luna] [--zero-shot]   flex tier
      .venv/bin/python scripts/hand_label_llm.py report  --model gpt-6-luna+fewshot
+     .venv/bin/python scripts/hand_label_llm.py decide   the Decisions API's rain probability
      needs OPENAI_API_KEY in .env
 
 Every hand-labelled frame (data/test_sets/20261003_rain7d) goes to the model through OpenAI's Batch API
@@ -328,15 +329,109 @@ def probe(model: str):
         print(f"batch ended {b.status}")
 
 
+# The Decisions API (POST /v1/decisions, public beta from 6 Oct 2026): gpt-6-luna answers a predicate with a
+# probability instead of prose, billed for input tokens only ($0.10 / 1M). The frame is shown exactly as to
+# the chat reader (previous frame, camera, local time); the question is the same rain definition.
+DECIDE_TAG = "decisions:gpt-6-luna"
+# The chat reader's own question as a choice: its four answers with their definitions, the hard-cases
+# paragraph, and the context sentence word for word. choice_rev lists the answers in reverse, because
+# early users report the order shifts the probabilities.
+CHOICES = [
+    {"value": "raining", "description": "rain is falling now, at any intensity."},
+    {"value": "wet_not_raining", "description": "the street is wet but rain is not falling now (it has stopped)."},
+    {"value": "dry", "description": "the street is dry and nothing is falling."},
+    {"value": "cannot_tell", "description": "the image does not allow a judgment (too dark, lens blocked, frozen or broken frame)."},
+]
+RAIN_QUESTION = (
+    "Is rain falling at this street at the moment of the last frame? "
+    "Things that make this hard, in both directions: water drops on the camera's lens or housing can stay "
+    "long after rain stops, and can also be the only visible sign of light rain at night; roads stay wet "
+    "and reflective for an hour or more after rain; headlights and street lamps make dry roads glare at "
+    "night; light rain is often visible only as streaks against lights, splashes in puddles, spray from "
+    "tyres, or people under umbrellas and in raincoats. Weigh what the image actually shows.")
+VARIANTS = {"predicate": DECIDE_TAG, "choice": "decisions-choice:gpt-6-luna", "choice_rev": "decisions-choice-rev:gpt-6-luna"}
+RAIN_PREDICATE = (
+    "Rain is falling at this street at the moment of the last frame, at any intensity. "
+    "Things that make this hard, in both directions: water drops on the camera's lens or housing can stay "
+    "long after rain stops, and can also be the only visible sign of light rain at night; roads stay wet "
+    "and reflective for an hour or more after rain; headlights and street lamps make dry roads glare at "
+    "night; light rain is often visible only as streaks against lights, splashes in puddles, spray from "
+    "tyres, or people under umbrellas and in raincoats. Weigh what the image actually shows.")
+
+
+def decision_body(v: dict, variant: str = "predicate") -> dict:
+    t = frame_time(v["image"]) + ICT
+    prev = prev_of(v["image"])
+    note = f" The first image is the same camera {prev[1]} min earlier, for comparison." if prev else ""
+    loc = v.get("location") or v.get("where") or "an intersection"
+    if variant == "predicate":
+        text = (f"Frames from a public traffic camera at {loc}, Ho Chi Minh City, Vietnam. The last image is the "
+                f"frame to judge, taken at {t.strftime('%H:%M on %d %b')} local time ({phase(t.hour)}).{note}")
+    else:   # the chat prompt's opening, word for word
+        text = PROMPT.split("\n\nIs rain")[0].format(location=loc, local=t.strftime("%H:%M on %d %b"),
+                                                      phase=phase(t.hour), prev_note=note.replace(" The first", "\nThe first"))
+    content = [{"type": "input_text", "text": text}]
+    for path in ([prev[0]] if prev else []) + [REPO / v["image"]]:
+        b = base64.b64encode(Path(path).read_bytes()).decode()
+        content.append({"type": "input_image", "image_url": f"data:image/jpeg;base64,{b}"})
+    if variant == "predicate":
+        q = {"type": "predicate", "name": "rain_now", "instructions": RAIN_PREDICATE}
+    else:
+        q = {"type": "choice", "name": "rain_now", "instructions": RAIN_QUESTION,
+             "choices": CHOICES[::-1] if variant == "choice_rev" else CHOICES}
+    return {"model": "gpt-6-luna", "input": [{"role": "user", "content": content}], "questions": [q]}
+
+
+def decide(variant: str = "predicate", workers: int = 4):
+    """Every labelled frame through the Decisions API; answers cached as they arrive."""
+    tag = VARIANTS[variant]
+    from concurrent.futures import ThreadPoolExecutor
+    import threading
+    key = json.loads((SET / "hand_labels_key.json").read_text())
+    items = {i["id"]: i for i in json.loads((SET / "hand_labels_items.json").read_text())}
+    cache = load_cache()
+    todo = [r["id"] for r in load() if r["label"] != "cannot_tell" and (tag, r["id"]) not in cache]
+    print(f"{tag}: {len(todo)} frames to ask", flush=True)
+    c = client().with_options(timeout=120, max_retries=2)
+    lock, done = threading.Lock(), [0]
+
+    def one(fid):
+        body = decision_body({**key[fid], "location": items.get(fid, {}).get("where")}, variant)
+        for attempt in range(4):
+            try:
+                t0 = time.monotonic()
+                r = c.post("/decisions", body=body, cast_to=object)
+                a = r["answers"][0]
+                ans = {"probability": a["probability"]} if variant == "predicate" else \
+                    {"choice": a["choice"], "probabilities": a["probabilities"], "confidence": a.get("confidence")}
+                row = {"model": tag, "id": fid, "answer": ans,
+                       "in": r["usage"]["input_tokens"], "out": 0, "secs": round(time.monotonic() - t0, 2)}
+                with lock, CACHE.open("a") as f:
+                    f.write(json.dumps(row) + "\n")
+                    done[0] += 1
+                    if done[0] % 50 == 0:
+                        print(f"  {done[0]}/{len(todo)}", flush=True)
+                return
+            except Exception as e:
+                print(f"  {fid}: {str(e)[:150]} -- retry", flush=True)
+                time.sleep(10 * (attempt + 1))
+        print(f"  {fid}: gave up", flush=True)
+
+    with ThreadPoolExecutor(workers) as pool:
+        list(pool.map(one, todo))
+    print(f"{tag}: {done[0]} answered", flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("step", choices=["submit", "collect", "report", "probe", "flex"])
+    ap.add_argument("step", choices=["submit", "collect", "report", "probe", "flex", "decide"])
     ap.add_argument("--model", default="gpt-6-luna")
     ap.add_argument("--wait", action="store_true")
     ap.add_argument("--zero-shot", action="store_true", help="flex: no examples in the prompt")
+    ap.add_argument("--variant", default="predicate", choices=list(VARIANTS), help="decide: question type")
     a = ap.parse_args()
     {"submit": lambda: submit(a.model), "collect": lambda: collect(a.wait), "report": lambda: report(a.model),
-     "probe": lambda: probe(a.model), "flex": lambda: flex(a.model, fewshot=not a.zero_shot)}[a.step]()
+     "probe": lambda: probe(a.model), "flex": lambda: flex(a.model, fewshot=not a.zero_shot), "decide": lambda: decide(a.variant)}[a.step]()
 
 
 if __name__ == "__main__":
