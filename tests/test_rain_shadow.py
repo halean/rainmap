@@ -204,6 +204,28 @@ class LunaDeciderTests(unittest.TestCase):
                          ("No", "A dry road at night."))
         self.assertEqual(luna_decides("No", "x", {"rain_now": "raining", "intensity": "light"}, None)[0], "No")
 
+    def test_at_night_rain_needs_gemma_and_a_classifier_not_strongly_dry(self):
+        """8 Oct, 04:33 ICT, QL1 - KCN Vĩnh Lộc: a drying road; luna and Gemma Light, classifier -12.9."""
+        rain = {"rain_now": "raining", "intensity": "light"}
+        night = datetime(2026, 10, 8, 4, 33, tzinfo=ICT)
+        self.assertEqual(luna_decides("Light", "Wet road.", rain, -12.9, night), ("No", "Wet road."))
+        self.assertEqual(luna_decides("Light", "Rain.", rain, -2.0, night), ("Light", "Rain."))
+        self.assertEqual(luna_decides("No", "x", rain, 2.0, night)[0], "No")     # the classifier alone is not enough
+
+    def test_by_day_either_reader_seconds_it(self):
+        rain = {"rain_now": "raining", "intensity": "light"}
+        noon = datetime(2026, 10, 8, 12, 0, tzinfo=ICT)
+        self.assertEqual(luna_decides("Light", "Rain.", rain, -12.9, noon), ("Light", "Rain."))
+        self.assertEqual(luna_decides("No", "x", rain, 0.5, noon)[0], "Light")
+
+    def test_night_follows_vietnam_time(self):
+        """21:30 UTC is 04:30 ICT, still night; 22:30 UTC is 05:30 ICT, day; 13:00 UTC is 20:00 ICT, not
+        yet night (night is 22:00-05:00 ICT)."""
+        rain = {"rain_now": "raining", "intensity": "light"}
+        self.assertEqual(luna_decides("No", "x", rain, 1.0, datetime(2026, 10, 7, 21, 30, tzinfo=timezone.utc))[0], "No")
+        self.assertEqual(luna_decides("No", "x", rain, 1.0, datetime(2026, 10, 7, 22, 30, tzinfo=timezone.utc))[0], "Light")
+        self.assertEqual(luna_decides("No", "x", rain, 1.0, datetime(2026, 10, 7, 13, 0, tzinfo=timezone.utc))[0], "Light")
+
     def test_wet_or_dry_is_no_with_gemmas_description(self):
         for said in ("wet_not_raining", "dry"):
             self.assertEqual(luna_decides("Light", "Glossy road.", {"rain_now": said, "intensity": "none"}),

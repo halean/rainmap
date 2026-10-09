@@ -1025,7 +1025,9 @@ def main():
                     luna_ans = result.pop("_luna", None) if isinstance(result, dict) else None
                     gemma_said = str(result.get("justification", "")).strip() if isinstance(result, dict) else justification
                     decider = "gemma"
-                    decided = luna_decides(gemma_verdict, gemma_said, luna_ans, clf) if DECIDER == "luna" else None
+                    captured = captured_at_from(img_path)
+                    decided = luna_decides(gemma_verdict, gemma_said, luna_ans, clf,
+                                           datetime.fromisoformat(captured) if captured else None) if DECIDER == "luna" else None
                     if decided:
                         decider = "luna"
                     else:

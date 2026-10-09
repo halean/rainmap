@@ -18,6 +18,7 @@ Off: RAIN_DECIDER=classifier (or gemma) at the annotator's launch.
 import json
 import os
 import time
+from datetime import datetime, timedelta, timezone
 from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 
@@ -31,6 +32,8 @@ WORKERS = int(os.getenv("LUNA_WORKERS", "4"))
 
 # luna's intensity -> the map's levels
 LEVEL = {"light": "Light", "moderate": "Medium", "heavy": "Heavy"}
+ICT = timezone(timedelta(hours=7))
+NIGHT_CLF_FLOOR = -3.0   # at night the classifier must not be more strongly dry than this
 
 log = get_logger("rain_luna")
 
@@ -83,7 +86,8 @@ class Luna:
             return None
 
 
-def luna_decides(gemma_verdict: str, gemma_said: str, ans: dict | None, clf_score=None):
+def luna_decides(gemma_verdict: str, gemma_said: str, ans: dict | None, clf_score=None,
+                 captured: datetime | None = None):
     """(verdict, justification) when luna makes the call, or None to leave it to the next reader.
 
     luna's rain is published only when Gemma or the hand-label classifier (score > 0) also sees rain.
@@ -91,14 +95,29 @@ def luna_decides(gemma_verdict: str, gemma_said: str, ans: dict | None, clf_scor
     classifier -16). On the hand labels the second reader cuts false pins 45 -> 34 (35 -> 25 at night)
     and misses 2 more of 137 rain frames.
 
+    Late at night (22:00-05:00 ICT, the owner's choice: evening storms keep the rule above) Gemma
+    over-calls the same wet, glary roads luna does, so the two agreeing is weak evidence: from 8 Oct
+    rain then needs Gemma AND a classifier score above NIGHT_CLF_FLOOR (-3). It would have cleared the
+    wet-road pins at 04:30 ICT after the 7 Oct storm. On the hand labels' 174 frames in those hours it
+    cuts false pins 15 -> 8 and catches 11 of 42 rain frames instead of 17; over all 487 frames, false
+    pins 37 -> 30, rain caught 92 -> 86. With no classifier score Gemma alone seconds it.
+
     Rain keeps Gemma's grade when Gemma also saw rain, else luna's own grade; Gemma's caption is
     kept when it agrees, as with the classifier, and a plain line replaces it when it would
     contradict the badge."""
     if ans is None or ans.get("rain_now") not in ("raining", "wet_not_raining", "dry"):
         return None
-    seconded = gemma_verdict != "No" or (clf_score is not None and clf_score > 0)
+    if captured is not None and is_night(captured):
+        seconded = gemma_verdict != "No" and (clf_score is None or clf_score > NIGHT_CLF_FLOOR)
+    else:
+        seconded = gemma_verdict != "No" or (clf_score is not None and clf_score > 0)
     if ans["rain_now"] == "raining" and seconded:
         if gemma_verdict != "No":
             return gemma_verdict, gemma_said
         return LEVEL.get(ans.get("intensity"), "Light"), "Rain is falling here, by the look of the scene."
     return "No", gemma_said
+
+
+def is_night(captured: datetime) -> bool:
+    h = captured.astimezone(ICT).hour
+    return h < 5 or h >= 22
