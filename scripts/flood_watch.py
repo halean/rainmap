@@ -16,7 +16,9 @@ What it does, in one loop:
 - A read that sees flooding puts that camera under watch: fetched every FLOOD_WATCH_INTERVAL_SEC
   and read every time, rain or not, since standing water outlasts the rain that made it. The
   watch ends after FLOOD_CLEAR_READS reads in a row with the lanes clear of water (or
-  FLOOD_WATCH_MAX_HOURS), and the camera goes back to the ordinary sweep.
+  FLOOD_WATCH_MAX_HOURS), and the camera goes back to the ordinary sweep. A watched camera that
+  gives no new frame (frozen or offline) for FLOOD_WATCH_STALE_MIN ends its watch too, dated to
+  its last new frame, so a flood is never kept open by a camera that stopped looking.
 
 The model is asked only what it can see -- how deep the water on the road is, in steps defined
 by what it covers -- and the code decides what counts as a flood (FLOOD_DEPTHS). Same split as
@@ -24,7 +26,7 @@ the rain annotator's perception path, for the same reason: the threshold can be 
 spending a call.
 
 Outputs (all operational, not versioned):
-  data/flood_watch/frames/<camera>/<YYYYMMDD>/<HHMMSS>[_read].jpg   frames; unread ones are pruned
+  data/flood_watch/frames/<camera>/<YYYYMMDD>/<HHMMSS>[_read].jpg   frames, all kept (FLOOD_KEEP_UNREAD_HOURS)
   data/derived/flood_reads.csv     one row per model read
   data/derived/flood_events.csv    one row per flood, written when it ends
   data/derived/flood_watch_state.json   per-camera mode and latest read, survives restarts;
@@ -66,19 +68,23 @@ SWEEP_SPACING_SEC = float(os.getenv("FLOOD_SWEEP_SPACING_SEC", "10"))
 WATCH_INTERVAL_SEC = float(os.getenv("FLOOD_WATCH_INTERVAL_SEC", "60"))
 CLEAR_READS = int(os.getenv("FLOOD_CLEAR_READS", "3"))
 WATCH_MAX_HOURS = float(os.getenv("FLOOD_WATCH_MAX_HOURS", "6"))
+# 8 Oct 2026: Mai Chí Thọ - Đồng Văn Cống 2 gave no new frame for 82 min after a flooded read, and
+# the event ran 86 min on one doubtful frame. A watch now ends this long after the last new frame.
+WATCH_STALE_MIN = float(os.getenv("FLOOD_WATCH_STALE_MIN", "10"))
 
-# "Rain around": the rain map's cameras are spaced 3-4 km apart, so 6 km takes in the two to
-# five nearest. A reading older than 30 minutes is a different weather situation. With fewer
-# than two fresh neighbours there is no evidence either way, and no read.
-NEIGHBOUR_KM = float(os.getenv("FLOOD_NEIGHBOUR_KM", "6"))
-NEIGHBOUR_MAX = int(os.getenv("FLOOD_NEIGHBOUR_MAX", "5"))
-NEIGHBOUR_MIN = int(os.getenv("FLOOD_NEIGHBOUR_MIN", "2"))
-NEIGHBOUR_FRESH_MIN = float(os.getenv("FLOOD_NEIGHBOUR_FRESH_MIN", "30"))
+# "Rain around" lives in app/services/floods.py, shared with the rain map's flood alerts, so the
+# map's warnings and this watch's reads always agree on what "raining around a camera" means.
+from app.services.floods import (NEIGHBOUR_FRESH_MIN, NEIGHBOUR_KM, NEIGHBOUR_MAX,  # noqa: E402,F401
+                                 NEIGHBOUR_MIN, km, rain_around)
 
 # The annotator budgets 10,000 of a 14,000/day quota on the same key; this stays inside the rest.
 DAILY_READ_CAP = int(os.getenv("FLOOD_DAILY_READ_CAP", "1500"))
 READ_WORKERS = int(os.getenv("FLOOD_READ_WORKERS", "2"))
-KEEP_UNREAD_HOURS = float(os.getenv("FLOOD_KEEP_UNREAD_HOURS", "2"))
+# Every frame is kept by default (since 6 Oct 2026): unread frames are labelling material later, and the
+# site keeps no history. ~8,000 frames / ~360 MB a day at 68 cameras. Set a number of hours to prune
+# unread frames older than that again.
+_keep = os.getenv("FLOOD_KEEP_UNREAD_HOURS", "off").strip().lower()
+KEEP_UNREAD_HOURS = None if _keep in ("off", "none", "", "forever") else float(_keep)
 
 FETCH_TIMEOUT_SEC = 25
 OFFLINE_THRESHOLD = 5 * 1024  # the site's offline placeholder is smaller than any real frame
@@ -162,44 +168,6 @@ def is_flooding(read: dict) -> bool:
     return read["usable"] and read["depth"] in FLOOD_DEPTHS
 
 
-def km(lat1, lon1, lat2, lon2) -> float:
-    dy = (lat2 - lat1) * 111.0
-    dx = (lon2 - lon1) * 111.0 * math.cos(math.radians((lat1 + lat2) / 2))
-    return math.hypot(dx, dy)
-
-
-def _reading_time(rec: dict) -> datetime | None:
-    for key in ("captured_at", "updated_at"):
-        try:
-            return datetime.fromisoformat(rec[key])
-        except (KeyError, TypeError, ValueError):
-            continue
-    return None
-
-
-def rain_around(cam: dict, sample: list[dict], now: datetime) -> dict:
-    """What the rain map's nearest cameras say right now.
-
-    rain is True only on a majority of at least NEIGHBOUR_MIN fresh readings. A stale or
-    missing reading is not a 'No' -- it is no evidence -- so it is left out of the count
-    rather than allowed to outvote the cameras that do see rain.
-    """
-    near = sorted(
-        ((km(cam["lat"], cam["lon"], s["lat"], s["lon"]), s) for s in sample
-         if s.get("lat") is not None and s.get("lon") is not None),
-        key=lambda pair: pair[0],
-    )
-    near = [s for d, s in near if d <= NEIGHBOUR_KM][:NEIGHBOUR_MAX]
-    fresh = [s for s in near
-             if (t := _reading_time(s)) and now - t <= timedelta(minutes=NEIGHBOUR_FRESH_MIN)]
-    yes = [s for s in fresh if str(s.get("rain", "No")) != "No"]
-    return {
-        "fresh": len(fresh),
-        "yes": len(yes),
-        "rain": len(fresh) >= NEIGHBOUR_MIN and 2 * len(yes) > len(fresh),
-    }
-
-
 def new_camera_state() -> dict:
     return {"mode": SWEEP, "watch_since": None, "clear_streak": 0, "peak": None,
             "reads": 0, "first_frame": None, "last_md5": None, "last_fetch": 0.0, "last_read": None}
@@ -218,7 +186,7 @@ def apply_read(st: dict, read: dict, frame: str, now: datetime) -> str | None:
         if st["peak"] is None or DEPTHS.index(read["depth"]) > DEPTHS.index(st["peak"]):
             st["peak"] = read["depth"]
         if st["mode"] != WATCH:
-            st.update(mode=WATCH, watch_since=now.isoformat(), reads=1, first_frame=frame)
+            st.update(mode=WATCH, watch_since=now.isoformat(), reads=1, first_frame=frame, last_new_frame=now.isoformat())
             return "start"
         st["reads"] += 1
         return None
@@ -237,6 +205,15 @@ def watch_expired(st: dict, now: datetime) -> bool:
     if st["mode"] != WATCH or not st["watch_since"]:
         return False
     return now - datetime.fromisoformat(st["watch_since"]) > timedelta(hours=WATCH_MAX_HOURS)
+
+
+def watch_stale(st: dict, now: datetime) -> datetime | None:
+    """When a watched camera last gave a new frame, if that is over WATCH_STALE_MIN ago; else None.
+    State saved before this field existed falls back to when the watch began."""
+    if st["mode"] != WATCH or not st["watch_since"]:
+        return None
+    last = datetime.fromisoformat(st.get("last_new_frame") or st["watch_since"])
+    return last if now - last > timedelta(minutes=WATCH_STALE_MIN) else None
 
 
 def close_watch(st: dict, cam: dict, now: datetime, reason: str) -> dict:
@@ -427,10 +404,17 @@ class Watcher:
                 continue
             status, frame = self.fetch(cid)
             if status == LIVE:
+                st["last_new_frame"] = now.isoformat()
                 self.submit(cid, frame, "watch", None)
+            elif (last := watch_stale(st, now)) is not None:
+                row = close_watch(st, self.by_id[cid], last, f"no new frame for {WATCH_STALE_MIN:g} min ({status})")
+                append_csv(EVENTS_PATH, EVENT_FIELDS, row)
+                log.warning("watch on %s ended: no new frame since %s (%s); event dated to the last frame",
+                            self.by_id[cid]["name"], last.astimezone(ICT).strftime("%H:%M"), status)
+                self.save()
 
     def prune(self):
-        if not FRAMES_ROOT.exists():
+        if KEEP_UNREAD_HOURS is None or not FRAMES_ROOT.exists():
             return
         old = frames_to_prune(FRAMES_ROOT, time.time(), KEEP_UNREAD_HOURS)
         pending = {str(f) for _, f, _, _ in self.pending.values()}

@@ -67,6 +67,37 @@ class LiveFloodTests(unittest.TestCase):
         got = floods.live_floods(Path(self.temp.name) / "missing.json", self.cams, now=NOW)
         self.assertEqual((got["floods"], got["collector"], got["watched_cameras"]), ([], "missing", 3))
 
+    # -- flood alerts: rain around a flood-prone spot while the river is high --------------------
+    def alerts_with(self, level, rain="Medium", watching=False):
+        sample = [{"lat": 10.80 + d, "lon": 106.71, "rain": rain, "captured_at": (NOW - timedelta(minutes=5)).isoformat()}
+                  for d in (0.005, 0.01, 0.015)]
+        rs = Path(self.temp.name) / "sample.json"
+        rs.write_text(json.dumps(sample))
+        self.state.write_text(json.dumps({"cameras": {"a": watch(5, last_min=1)} if watching else {}}))
+        tide = lambda now: {"available": level is not None, "level_m": level, "trend": "rising", "next_high": None}
+        return floods.live_floods(self.state, self.cams, now=NOW, tide_fn=tide, rain_sample_path=rs)
+
+    def test_rain_on_a_high_river_warns(self):
+        got = self.alerts_with(1.45)
+        self.assertTrue(got["tide"]["high"])
+        self.assertIn("a", [a["camera_id"] for a in got["alerts"]])  # Ung Van Khiem, 10.80 N, with rain around it
+
+    def test_rain_on_a_low_river_does_not(self):
+        got = self.alerts_with(0.9)
+        self.assertFalse(got["tide"]["high"])
+        self.assertEqual(got["alerts"], [])
+
+    def test_a_high_river_without_rain_does_not(self):
+        self.assertEqual(self.alerts_with(1.6, rain="No")["alerts"], [])
+
+    def test_a_flood_already_seen_is_not_also_a_warning(self):
+        got = self.alerts_with(1.45, watching=True)
+        self.assertNotIn("a", [a["camera_id"] for a in got["alerts"]])
+        self.assertEqual([f["camera_id"] for f in got["floods"]], ["a"])
+
+    def test_no_river_level_no_warnings(self):
+        self.assertEqual(self.alerts_with(None)["alerts"], [])
+
     def test_route(self):
         from fastapi.testclient import TestClient
         from app.main import app

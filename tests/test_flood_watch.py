@@ -123,6 +123,31 @@ class WatchStateTests(unittest.TestCase):
         self.assertFalse(fw.watch_expired(self.st, NOW + timedelta(hours=fw.WATCH_MAX_HOURS - 0.1)))
         self.assertTrue(fw.watch_expired(self.st, NOW + timedelta(hours=fw.WATCH_MAX_HOURS + 0.1)))
 
+    def test_a_watch_goes_stale_without_new_frames(self):
+        """Mai Chí Thọ - Đồng Văn Cống 2, 8 Oct: no new frame for 82 min after a flooded read."""
+        self.step("flooded")
+        self.assertIsNone(fw.watch_stale(self.st, NOW + timedelta(minutes=fw.WATCH_STALE_MIN - 1)))
+        self.assertEqual(fw.watch_stale(self.st, NOW + timedelta(minutes=fw.WATCH_STALE_MIN + 1)), NOW)
+
+    def test_a_new_frame_keeps_the_watch_fresh(self):
+        self.step("flooded")
+        self.st["last_new_frame"] = (NOW + timedelta(minutes=8)).isoformat()
+        self.assertIsNone(fw.watch_stale(self.st, NOW + timedelta(minutes=fw.WATCH_STALE_MIN + 1)))
+
+    def test_a_stale_close_is_dated_to_the_last_frame(self):
+        self.step("flooded")
+        last = fw.watch_stale(self.st, NOW + timedelta(minutes=82))
+        row = fw.close_watch(self.st, CAM, last, "no new frame")
+        self.assertEqual(row["minutes"], 0)
+
+    def test_state_saved_before_the_field_existed_falls_back_to_the_watch_start(self):
+        self.step("flooded")
+        del self.st["last_new_frame"]
+        self.assertEqual(fw.watch_stale(self.st, NOW + timedelta(minutes=fw.WATCH_STALE_MIN + 1)), NOW)
+
+    def test_no_staleness_outside_a_watch(self):
+        self.assertIsNone(fw.watch_stale(self.st, NOW + timedelta(hours=5)))
+
 
 class PruneTests(unittest.TestCase):
     def test_only_old_unread_frames_go(self):

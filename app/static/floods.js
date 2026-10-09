@@ -22,6 +22,13 @@
     .popup-card .flood-facts { font-size: 12px; margin: 6px 0; line-height: 1.45; }
     .popup-card .flood-facts b { font-weight: 600; }
     .popup-card .exp-note { font-size: 10.5px; color: var(--muted); font-style: italic; margin-top: 5px; }
+    .flood-warn { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.45)); }
+    .flood-banner { position: absolute; z-index: 800; left: 50%; bottom: 28px; transform: translateX(-50%);
+                    max-width: calc(100% - 120px); background: #b45309; color: #fff; font-size: 13px; font-weight: 600;
+                    padding: 6px 12px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: none;
+                    text-align: center; pointer-events: none; }
+    .popup-card .badge.warn { background: #b45309; }
+    .legend-box .tide-line { font-size: 11.5px; margin: 2px 0 4px; }
     .legend-box .sw.flood { border: 0; border-radius: 0; background: none; width: 14px; height: 18px; display: inline-flex; }
   `;
   document.head.appendChild(style);
@@ -54,16 +61,26 @@
   panel.innerHTML = `
     <label class="toggle-row"><input type="checkbox" id="floodToggle" checked> Street flooding (experimental)</label>
     <div id="floodOptions" style="max-width:230px">
+      <div class="tide-line" id="floodTide"></div>
+      <div class="row"><span class="sw flood warn-sw"></span>Flood possible: rain here on a high river</div>
       <div class="row"><span class="sw flood" data-stale="0"></span>Flooded now</div>
       <div class="row"><span class="sw flood" data-stale="1"></span>Flooded when last seen; no new frame</div>
-      <div class="note">52 flood-prone cameras, read by Gemma when the cameras around them report rain. Shown while water lies deep enough on the lanes for vehicles to push a wake, until three reads in a row find them clear.</div>
+      <div class="note">Flood-prone cameras, read by Gemma when the cameras around them report rain. Shown while water lies deep enough on the lanes for vehicles to push a wake, until three reads in a row find them clear.</div>
       <div id="floodStatus" class="note" role="status"></div>
     </div>`;
   // First after the rain key, not appended at the end: a flood is the most urgent thing on the
   // map, and at the bottom of a long legend it sat below the fold on a 1366x768 laptop.
   legendBoxEl.insertBefore(panel, legendBoxEl.querySelector(".toggle-row"));
   L.DomEvent.disableScrollPropagation(panel);
-  panel.querySelectorAll(".sw.flood").forEach(el => { el.innerHTML = dropSvg(el.dataset.stale === "1", 14); });
+  // A warning triangle with a wave in it: a caution sign, not yet a flood.
+  const warnSvg = (w = 26) => `<svg class="flood-warn" width="${w}" height="${w}" viewBox="0 0 26 26">
+      <path d="M13 2 L25 23 H1 Z" fill="#f59e0b" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M6.5 18 q1.6 -1.6 3.2 0 t3.2 0 t3.2 0 t3.2 0" fill="none" stroke="#7c2d12" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M13 8.5 V13.5" stroke="#7c2d12" stroke-width="2" stroke-linecap="round"/></svg>`;
+  panel.querySelectorAll(".sw.flood").forEach(el => {
+    el.innerHTML = el.classList.contains("warn-sw") ? warnSvg(15) : dropSvg(el.dataset.stale === "1", 14); });
+  const banner = L.DomUtil.create("div", "flood-banner", map.getContainer());
+  const tideLine = panel.querySelector("#floodTide");
   const toggle = panel.querySelector("#floodToggle");
   const status = panel.querySelector("#floodStatus");
   let requestId = 0;
@@ -105,6 +122,31 @@
       L.marker([f.lat, f.lon], {pane: "floodPane", icon, title: `Flooding: ${f.name}`, riseOnHover: true})
         .bindPopup(() => popupFor(f), {maxWidth: 300}).addTo(layer);
     }
+    const t = data.tide || {};
+    if (t.available && t.level_m != null) {
+      const nh = t.next_high;
+      tideLine.innerHTML = `Saigon River (Phú An): <b>${t.level_m >= 0 ? "+" : ""}${t.level_m.toFixed(2)} m</b> ` +
+        `${t.trend === "rising" ? "\u2197" : "\u2198"}` +
+        (nh ? ` &middot; next high ${nh.h.toFixed(2)} m at ${clock(nh.t)}` : "") +
+        (t.high ? ` &middot; <b>high</b> (&ge; ${t.alert_level_m} m)` : "");
+    } else {
+      tideLine.textContent = "River level unavailable.";
+    }
+    const alerts = data.alerts || [];
+    for (const a of alerts) {
+      const icon = L.divIcon({className: "", html: warnSvg(), iconSize: [26, 26], iconAnchor: [13, 24], popupAnchor: [0, -22]});
+      const pop = `<div class="popup-card"><div class="district">Flood possible</div><div class="loc">${esc(a.name)}</div>` +
+        `<span class="badge warn">Rain on a high river</span><div class="flood-facts">` +
+        `Raining at ${a.rain_yes} of ${a.rain_fresh} nearby rain-map cameras<br>` +
+        `Saigon River at <b>${t.level_m.toFixed(2)} m</b> (warning from ${t.alert_level_m} m): drains here empty into it</div>` +
+        `<div class="exp-note">A warning, not a sighting: the flood watch is reading this camera and will show a flood if it sees one.</div></div>`;
+      L.marker([a.lat, a.lon], {pane: "floodPane", icon, title: `Flood possible: ${a.name}`, riseOnHover: true})
+        .bindPopup(pop, {maxWidth: 280}).addTo(layer);
+    }
+    banner.textContent = alerts.length
+      ? `Rain on a high tide (${t.level_m.toFixed(2)} m): flooding possible at ${alerts.length} spot${alerts.length === 1 ? "" : "s"}`
+      : "";
+    banner.style.display = alerts.length && toggle.checked ? "block" : "none";
     const live = data.floods.filter(f => !f.stale).length, stale = data.floods.length - live;
     if (data.collector === "missing") {
       status.textContent = "Flood watch is not running -- no state file yet.";
@@ -133,7 +175,7 @@
   toggle.addEventListener("change", () => {
     panel.querySelector("#floodOptions").style.display = toggle.checked ? "" : "none";
     if (toggle.checked) { layer.addTo(map); refresh(); }
-    else { ++requestId; map.removeLayer(layer); }
+    else { ++requestId; map.removeLayer(layer); banner.style.display = "none"; }
   });
   layer.addTo(map);
   refresh();
