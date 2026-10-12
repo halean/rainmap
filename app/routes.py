@@ -132,7 +132,14 @@ def register_routes(
     def rain_map_data() -> list[dict]:
         if not RAIN_SAMPLE_PATH.exists():
             return []
-        return json.loads(RAIN_SAMPLE_PATH.read_text())
+        points = json.loads(RAIN_SAMPLE_PATH.read_text())
+        # Camera-specific notes (data/metadata/camera_notes.json), e.g. "floods at high tide", with a live
+        # line while a high tide's window is open -- see app/services/floods.py, camera_notes.
+        notes = floods.camera_notes()
+        for p in points:
+            if p.get("camera_id") in notes:
+                p.update(notes[p["camera_id"]])
+        return points
 
     @app.get("/api/rain-map/rain-history")
     def rain_history(camera_id: str, limit: int = HISTORY_PER_CAMERA) -> list[dict]:
@@ -159,6 +166,15 @@ def register_routes(
         see app/services/floods.py. An experiment: 52 flood-prone cameras, read by the
         vision model only when nearby rain-map cameras report rain."""
         return floods.live_floods()
+
+    @app.get("/api/rain-map/flood-cameras/{camera_id}/frames")
+    def flood_camera_frames(camera_id: str, n: int = Query(6, ge=1, le=24)) -> dict:
+        """A flood-watch camera's newest saved frames, newest first, each with the vision read it got --
+        for the risk map's popups. Only cameras in the flood watch; frames are served under /media."""
+        got = floods.camera_frames(camera_id, n)
+        if got is None:
+            raise HTTPException(status_code=404, detail="not a flood-watch camera")
+        return got
 
     @app.get("/api/rain-map/metro/timetable")
     def metro_timetable() -> dict:

@@ -43,6 +43,15 @@ def _extremes(station: dict) -> list[tuple[datetime, float, str]]:
     return sorted(by_time.values())
 
 
+def station_highs(path: Path = TIDE_PATH, station: str = "nha_be") -> list[dict]:
+    """A station's high tides in the bulletin, measured where there is a measurement, else forecast:
+    [{"t": datetime, "h": metres, "source": "observed" | "forecast"}]. Empty without a bulletin."""
+    data = _load(path)
+    if not data or station not in data.get("stations", {}):
+        return []
+    return [{"t": t, "h": h, "source": s} for t, h, k, s in _extremes(data["stations"][station]) if k == "high"]
+
+
 def level_at(ext, t: datetime) -> float | None:
     for (t0, h0, *_), (t1, h1, *_) in zip(ext, ext[1:]):
         if t0 <= t <= t1:

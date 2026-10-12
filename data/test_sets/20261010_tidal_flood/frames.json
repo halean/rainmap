@@ -1,0 +1,19 @@
+{
+ "_about": "Tidal flooding on 10 Oct 2026, confirmed by the owner from these frames: water on District 7 streets in sunshine around the 16:30 ICT high tide (Phú An forecast 1.60 m, alert III), no rain nearby before ~17:05. Flood watch read none of them (it reads only when the rain map sees rain around). Frames live in data/flood_watch/frames (not in git).",
+ "label": "tidal_flood",
+ "frames": [
+  "data/flood_watch/frames/662a8eb41afb9c00172d2aba/20261010/080715.jpg",
+  "data/flood_watch/frames/662a8eb41afb9c00172d2aba/20261010/081924.jpg",
+  "data/flood_watch/frames/662a8eb41afb9c00172d2aba/20261010/083132.jpg",
+  "data/flood_watch/frames/662a8eb41afb9c00172d2aba/20261010/084343.jpg",
+  "data/flood_watch/frames/662a8eb41afb9c00172d2aba/20261010/085556.jpg",
+  "data/flood_watch/frames/662a8eb41afb9c00172d2aba/20261010/091015.jpg",
+  "data/flood_watch/frames/662a8eb41afb9c00172d2aba/20261010/092228.jpg",
+  "data/flood_watch/frames/662a8eb41afb9c00172d2aba/20261010/093432.jpg",
+  "data/flood_watch/frames/662a8eb41afb9c00172d2aba/20261010/094644.jpg",
+  "data/flood_watch/frames/662a8eb41afb9c00172d2aba/20261010/095856.jpg",
+  "data/flood_watch/frames/662a8e641afb9c00172d2a7e/20261010/093442.jpg",
+  "data/flood_watch/frames/5abbb6d698d8fc001102dfc8/20261010/093214.jpg",
+  "data/flood_watch/frames/5abbb77298d8fc001102dfce/20261010/093235.jpg"
+ ]
+}

@@ -12,7 +12,9 @@ What it does, in one loop:
 - Reads a frame with the vision model only when it has rain around it: a majority of the
   nearest rain-map cameras (data/derived/rain_sample.json) currently reporting rain. Flooding
   without rain nearby is possible -- a high tide -- but reading every frame of every lap would
-  cost ~8,000 calls a day for frames that are nearly all dry.
+  cost ~8,000 calls a day for frames that are nearly all dry. So the tide streets are also read,
+  rain or not, inside a high tide's window (app/services/floods.py, tide_window): ~750 reads a
+  day on king-tide days, none otherwise.
 - A read that sees flooding puts that camera under watch: fetched every FLOOD_WATCH_INTERVAL_SEC
   and read every time, rain or not, since standing water outlasts the rain that made it. The
   watch ends after FLOOD_CLEAR_READS reads in a row with the lanes clear of water (or
@@ -75,7 +77,8 @@ WATCH_STALE_MIN = float(os.getenv("FLOOD_WATCH_STALE_MIN", "10"))
 # "Rain around" lives in app/services/floods.py, shared with the rain map's flood alerts, so the
 # map's warnings and this watch's reads always agree on what "raining around a camera" means.
 from app.services.floods import (NEIGHBOUR_FRESH_MIN, NEIGHBOUR_KM, NEIGHBOUR_MAX,  # noqa: E402,F401
-                                 NEIGHBOUR_MIN, km, rain_around)
+                                 NEIGHBOUR_MIN, TIDE_ONLY_STATION, is_tide_street, km, rain_around, tide_window)
+from app.services.tide import station_highs  # noqa: E402
 
 # The annotator budgets 10,000 of a 14,000/day quota on the same key; this stays inside the rest.
 DAILY_READ_CAP = int(os.getenv("FLOOD_DAILY_READ_CAP", "1500"))
@@ -100,6 +103,11 @@ FLOOD_DEPTHS = {"flooded", "deep"}
 # waves) and 16:42 'shallow sheet' while bikes were still kicking wakes across the whole
 # junction, so counting a sheet as clear would drop a flood that is still there.
 CLEAR_DEPTHS = {"none", "edge puddles"}
+# Tidal water is a sunlit sheet: on 10 Oct 2026 Gemma read Nguyễn Thị Thập 2 as 'shallow sheet' four times and
+# 'flooded' only twice across a two-hour tidal flood. So on a tide street inside a tide window, this many
+# 'shallow sheet'-or-deeper reads in a row open a watch too.
+TIDAL_SHEET_READS = int(os.getenv("FLOOD_TIDAL_SHEET_READS", "2"))
+SHEET_DEPTHS = {"shallow sheet", "flooded", "deep"}
 
 LIVE, OFFLINE, UNREACHABLE, SAME = "live", "offline", "unreachable", "same"
 SWEEP, WATCH = "sweep", "watch"
@@ -129,6 +137,12 @@ FLOOD_PROMPT = (
     "stalled or pushed vehicles, people wading.\n\n"
     "At night, judge depth from wakes, kerbs and wheels, not from how bright the reflections "
     "are -- a wet road under street lights looks like a mirror at any depth.\n\n"
+    # 10 Oct 2026: on 13 owner-confirmed tidal-flood frames this paragraph took the sheet-or-deeper reads
+    # from 7 to 12, with 0 of 30 dry and 1 of 15 wet-after-rain frames read as water.
+    "By day, water can also come from a high tide or backed-up drains on a dry, sunny day, with nothing "
+    "falling. Sunlit standing water looks glossy too: if water lies across the lanes in sheets or pools -- with "
+    "ripples, spray, wakes, or vehicles and buildings reflected in it as in a mirror -- it is 'shallow sheet' or "
+    "deeper, not 'none', even if the rest of the scene looks dry.\n\n"
     "Also say whether the road can be judged at all ('usable'): 'no' if the lens is fogged or "
     "smeared so the road surface cannot be seen, the frame is black or frozen-looking, or the "
     "road is out of view.\n\n"
@@ -173,14 +187,21 @@ def new_camera_state() -> dict:
             "reads": 0, "first_frame": None, "last_md5": None, "last_fetch": 0.0, "last_read": None}
 
 
-def apply_read(st: dict, read: dict, frame: str, now: datetime) -> str | None:
+def apply_read(st: dict, read: dict, frame: str, now: datetime, tidal: bool = False) -> str | None:
     """Advance one camera's watch state with a read. Returns 'start', 'end' or None.
 
     An unusable frame -- fogged lens, black frame -- says nothing about the water, so it
-    neither starts a watch nor counts toward ending one.
+    neither starts a watch nor counts toward ending one. tidal: the camera is a tide street inside a
+    tide window, where TIDAL_SHEET_READS sheet-or-deeper reads in a row also start a watch.
     """
     if not read["usable"]:
         return None
+    st["sheet_streak"] = st.get("sheet_streak", 0) + 1 if read["depth"] in SHEET_DEPTHS else 0
+    if tidal and st["mode"] != WATCH and st["sheet_streak"] >= TIDAL_SHEET_READS:
+        st["clear_streak"] = 0
+        st["peak"] = read["depth"] if st["peak"] is None or DEPTHS.index(read["depth"]) > DEPTHS.index(st["peak"]) else st["peak"]
+        st.update(mode=WATCH, watch_since=now.isoformat(), reads=1, first_frame=frame, last_new_frame=now.isoformat())
+        return "start"
     if is_flooding(read):
         st["clear_streak"] = 0
         if st["peak"] is None or DEPTHS.index(read["depth"]) > DEPTHS.index(st["peak"]):
@@ -355,7 +376,8 @@ class Watcher:
                 continue
             kept = frame.with_name(frame.stem + "_read.jpg")
             frame.rename(kept)
-            event = apply_read(st, read, shown(kept), now)
+            tidal = is_tide_street(cam) and tide_window(station_highs(station=TIDE_ONLY_STATION), now) is not None
+            event = apply_read(st, read, shown(kept), now, tidal)
             ended = close_watch(st, cam, now, f"{CLEAR_READS} clear reads") if event == "end" else None
             # The map's flood layer (app/services/floods.py) reads this, so it never has to scan
             # flood_reads.csv, which grows with every read.
@@ -384,9 +406,14 @@ class Watcher:
         status, frame = self.fetch(cid)
         if status != LIVE:
             return
-        rain = rain_around(self.by_id[cid], load_json(RAIN_SAMPLE_PATH, []), datetime.now(timezone.utc))
+        now = datetime.now(timezone.utc)
+        rain = rain_around(self.by_id[cid], load_json(RAIN_SAMPLE_PATH, []), now)
         if rain["rain"]:
             self.submit(cid, frame, "rain around", rain)
+        elif is_tide_street(self.by_id[cid]) and tide_window(station_highs(station=TIDE_ONLY_STATION), now):
+            # Tidal floods come on dry days (10 Oct 2026: District 7 under water in sunshine at a 1.65 m
+            # Nhà Bè high), so around a high enough tide the tide streets are read whatever the rain.
+            self.submit(cid, frame, "high tide", rain)
 
     def watch_due(self):
         for cid, st in self.cams.items():

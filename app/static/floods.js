@@ -90,6 +90,9 @@
   const duration = (min) => min < 60 ? `${min} min` : `${Math.floor(min / 60)} h ${min % 60} min`;
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 
+  // Like a rain-map camera popup: the frame with its own read, and ‹ › back through the camera's saved
+  // frames (/api/rain-map/flood-cameras/<id>/frames), newest = n / n. Opens on the latest read at once,
+  // then swaps in the frame list when it arrives.
   function popupFor(f) {
     const el = document.createElement("div");
     el.className = "popup-card";
@@ -102,14 +105,50 @@
       <div class="flood-facts">
         Flooding since <b>${clock(f.since)}</b> (${duration(f.minutes)})<br>
         Deepest seen: <b>${esc(f.peak_depth)}</b><br>
-        Latest read ${clock(latest.read_at)}: <b>${esc(latest.depth)}</b>${latest.usable ? "" : " (road not visible)"}
+        <span class="frame-read"></span>
       </div>
-      ${latest.justification ? `<div class="just">${esc(latest.justification)}</div>` : ""}
-      ${latest.image_url ? `<img src="${latest.image_url}" alt="${esc(f.name)}">` : ""}
+      <div class="just"></div>
+      <div class="frame-slider">
+        <img class="frame-img" alt="${esc(f.name)}">
+        <div class="frame-nav">
+          <button class="frame-prev" title="Older frame">&#8249;</button>
+          <span class="frame-counter"></span>
+          <button class="frame-next" title="Newer frame">&#8250;</button>
+        </div>
+        <div class="frame-caption"></div>
+      </div>
       <div class="exp-note">Experimental: read from the city's traffic camera by a vision model; one read is a guess, a watch is several.</div>`;
-    const img = el.querySelector("img");
-    if (img) img.addEventListener("click", () =>
-      openLightbox(latest.image_url, `${f.name} · flooding · ${clock(latest.read_at)} ICT`));
+    let frames = latest.image_url ? [{url: latest.image_url, captured_at: latest.read_at,
+                                      read: {depth: latest.depth, justification: latest.justification}}] : [];
+    let idx = 0;
+    const img = el.querySelector(".frame-img");
+    const render = () => {
+      const n = frames.length, fr = frames[idx];
+      el.querySelector(".frame-slider").style.display = n ? "" : "none";
+      if (!n) return;
+      el.querySelector(".frame-read").innerHTML = fr.read
+        ? `Read ${clock(fr.captured_at)}: <b>${esc(fr.read.depth)}</b>` : `Frame ${clock(fr.captured_at)}: not read`;
+      el.querySelector(".just").textContent = fr.read ? (fr.read.justification || "") : "";
+      img.dataset.retried = ""; img.src = fr.url;
+      el.querySelector(".frame-counter").textContent = `${n - idx} / ${n}`;
+      el.querySelector(".frame-caption").textContent = new Date(fr.captured_at).toLocaleString();
+      el.querySelector(".frame-nav").classList.toggle("show", n > 1);
+      el.querySelector(".frame-prev").disabled = idx >= n - 1;
+      el.querySelector(".frame-next").disabled = idx <= 0;
+    };
+    el.querySelector(".frame-prev").addEventListener("click", () => { if (idx < frames.length - 1) { idx++; render(); } });
+    el.querySelector(".frame-next").addEventListener("click", () => { if (idx > 0) { idx--; render(); } });
+    img.addEventListener("click", () => frames[idx] &&
+      openLightbox(img.src, `${f.name} · ${clock(frames[idx].captured_at)} ICT`));
+    // The flood watch renames a frame to <name>_read.jpg once it reads it; fall back to that name once.
+    img.addEventListener("error", () => {
+      if (!img.dataset.retried && /\d\.jpg$/.test(img.src)) { img.dataset.retried = "1"; img.src = img.src.replace(/\.jpg$/, "_read.jpg"); }
+    });
+    render();
+    fetch(`/api/rain-map/flood-cameras/${encodeURIComponent(f.camera_id)}/frames?n=12`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d && d.frames.length) { frames = d.frames; idx = 0; render(); } })
+      .catch(() => {});
     return el;
   }
 
@@ -133,20 +172,33 @@
       tideLine.textContent = "River level unavailable.";
     }
     const alerts = data.alerts || [];
+    const tw = t.tide_window;   // a high tide at Nhà Bè high enough to flood the tide streets, rain or not
     for (const a of alerts) {
       const icon = L.divIcon({className: "", html: warnSvg(), iconSize: [26, 26], iconAnchor: [13, 24], popupAnchor: [0, -22]});
+      const reasons = a.reasons || ["rain"];
+      const badge = "Rain on a high river";
+      const facts = [];
+      if (reasons.includes("rain")) facts.push(`Raining at ${a.rain_yes} of ${a.rain_fresh} nearby rain-map cameras<br>` +
+        `Saigon River at <b>${t.level_m.toFixed(2)} m</b> (warning from ${t.alert_level_m} m): drains here empty into it`);
       const pop = `<div class="popup-card"><div class="district">Flood possible</div><div class="loc">${esc(a.name)}</div>` +
-        `<span class="badge warn">Rain on a high river</span><div class="flood-facts">` +
-        `Raining at ${a.rain_yes} of ${a.rain_fresh} nearby rain-map cameras<br>` +
-        `Saigon River at <b>${t.level_m.toFixed(2)} m</b> (warning from ${t.alert_level_m} m): drains here empty into it</div>` +
-        `<div class="exp-note">A warning, not a sighting: the flood watch is reading this camera and will show a flood if it sees one.</div></div>`;
+        `<span class="badge warn">${badge}</span><div class="flood-facts">${facts.join("<br>")}</div>` +
+        `<div class="exp-note">A warning, not a sighting: it comes from the weather and the tide, not from this camera's picture.</div></div>`;
       L.marker([a.lat, a.lon], {pane: "floodPane", icon, title: `Flood possible: ${a.name}`, riseOnHover: true})
         .bindPopup(pop, {maxWidth: 280}).addTo(layer);
     }
-    banner.textContent = alerts.length
-      ? `Rain on a high tide (${t.level_m.toFixed(2)} m): flooding possible at ${alerts.length} spot${alerts.length === 1 ? "" : "s"}`
-      : "";
-    banner.style.display = alerts.length && toggle.checked ? "block" : "none";
+    const nRain = alerts.filter(a => (a.reasons || ["rain"]).includes("rain")).length;
+    const parts = [];
+    if (tw) {
+      // Around a high enough tide the flood watch reads every tide street; report what it saw, not a guess.
+      const v = tw.vision || {read: 0, water: [], tide_streets: 0};
+      const seen = v.water.length
+        ? `water on ${v.water.length}: ${v.water.slice(0, 3).map(w => w.name.replace(/\s*\(.*?\)\s*/g, "")).join(", ")}${v.water.length > 3 ? "\u2026" : ""}`
+        : (v.read ? "no water seen" : "no reads yet");
+      parts.push(`High tide at ${tw.station} (${tw.high_m.toFixed(2)} m, ${clock(tw.high_at)}): ${v.read} of ${v.tide_streets} tide streets read, ${seen}`);
+    }
+    if (nRain) parts.push(`Rain on a high river (${t.level_m.toFixed(2)} m): flooding possible at ${nRain} spot${nRain === 1 ? "" : "s"}`);
+    banner.textContent = parts.join(" \u00b7 ");
+    banner.style.display = banner.textContent && toggle.checked ? "block" : "none";
     const live = data.floods.filter(f => !f.stale).length, stale = data.floods.length - live;
     if (data.collector === "missing") {
       status.textContent = "Flood watch is not running -- no state file yet.";

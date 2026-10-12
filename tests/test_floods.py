@@ -14,6 +14,8 @@ CAMS = {"cameras": [
     {"camera_id": "a", "name": "Ung Van Khiem", "lat": 10.80, "lon": 106.71},
     {"camera_id": "b", "name": "Mai Chi Tho", "lat": 10.78, "lon": 106.72},
     {"camera_id": "c", "name": "Quang Trung", "lat": 10.84, "lon": 106.66},
+    {"camera_id": "d", "name": "Nguyen Van Linh - Nguyen Thi Thap 2", "lat": 10.74, "lon": 106.70,
+     "why": ["official tide street"]},
 ]}
 
 
@@ -65,17 +67,18 @@ class LiveFloodTests(unittest.TestCase):
 
     def test_no_state_file_says_so(self):
         got = floods.live_floods(Path(self.temp.name) / "missing.json", self.cams, now=NOW)
-        self.assertEqual((got["floods"], got["collector"], got["watched_cameras"]), ([], "missing", 3))
+        self.assertEqual((got["floods"], got["collector"], got["watched_cameras"]), ([], "missing", 4))
 
     # -- flood alerts: rain around a flood-prone spot while the river is high --------------------
-    def alerts_with(self, level, rain="Medium", watching=False):
+    def alerts_with(self, level, rain="Medium", watching=False, highs=()):
         sample = [{"lat": 10.80 + d, "lon": 106.71, "rain": rain, "captured_at": (NOW - timedelta(minutes=5)).isoformat()}
                   for d in (0.005, 0.01, 0.015)]
         rs = Path(self.temp.name) / "sample.json"
         rs.write_text(json.dumps(sample))
         self.state.write_text(json.dumps({"cameras": {"a": watch(5, last_min=1)} if watching else {}}))
         tide = lambda now: {"available": level is not None, "level_m": level, "trend": "rising", "next_high": None}
-        return floods.live_floods(self.state, self.cams, now=NOW, tide_fn=tide, rain_sample_path=rs)
+        return floods.live_floods(self.state, self.cams, now=NOW, tide_fn=tide, rain_sample_path=rs,
+                                  highs_fn=lambda: list(highs))
 
     def test_rain_on_a_high_river_warns(self):
         got = self.alerts_with(1.45)
@@ -94,6 +97,76 @@ class LiveFloodTests(unittest.TestCase):
         got = self.alerts_with(1.45, watching=True)
         self.assertNotIn("a", [a["camera_id"] for a in got["alerts"]])
         self.assertEqual([f["camera_id"] for f in got["floods"]], ["a"])
+
+    # -- tide window: the flood watch reads the tide streets; the map reports what it saw -----------
+    def high(self, minutes_from_now, h):
+        return {"t": NOW + timedelta(minutes=minutes_from_now), "h": h, "source": "forecast"}
+
+    def tide_run(self, highs, reads=None):
+        """reads: {camera_id: (minutes ago, depth)} written as the flood watch's last reads."""
+        cams = {cid: {"mode": "sweep", "last_read": {"read_at": (NOW - timedelta(minutes=m)).isoformat(),
+                                                     "depth": d, "usable": True}}
+                for cid, (m, d) in (reads or {}).items()}
+        self.state.write_text(json.dumps({"cameras": cams}))
+        tide = lambda now: {"available": True, "level_m": 0.9, "trend": "rising", "next_high": None}
+        rs = Path(self.temp.name) / "sample.json"
+        rs.write_text("[]")
+        return floods.live_floods(self.state, self.cams, now=NOW, tide_fn=tide, rain_sample_path=rs,
+                                  highs_fn=lambda: list(highs))
+
+    def test_a_high_tide_reports_what_the_tide_street_reads_saw(self):
+        """10 Oct: Nguyễn Thị Thập 2 under water in sunshine around a 1.65 m Nhà Bè high."""
+        got = self.tide_run([self.high(30, 1.65)], {"d": (5, "flooded")})
+        tw = got["tide"]["tide_window"]
+        self.assertEqual(tw["high_m"], 1.65)
+        self.assertEqual((tw["vision"]["tide_streets"], tw["vision"]["read"]), (1, 1))
+        self.assertEqual([w["camera_id"] for w in tw["vision"]["water"]], ["d"])
+
+    def test_no_warning_without_a_sighting(self):
+        """The tide alone puts nothing on the map; only what a camera shows does."""
+        got = self.tide_run([self.high(0, 1.7)], {"d": (5, "none")})
+        self.assertEqual(got["alerts"], [])
+        self.assertEqual(got["tide"]["tide_window"]["vision"]["water"], [])
+
+    def test_reads_from_before_the_window_do_not_count(self):
+        got = self.tide_run([self.high(0, 1.7)], {"d": (floods.TIDE_BEFORE_MIN + 5, "flooded")})
+        self.assertEqual(got["tide"]["tide_window"]["vision"]["read"], 0)
+
+    def test_a_lower_high_tide_opens_no_window(self):
+        """9 Oct: a 1.52 m Nhà Bè high left the junction dry."""
+        self.assertIsNone(self.tide_run([self.high(0, 1.52)])["tide"]["tide_window"])
+
+    def test_the_window_opens_before_the_high_and_closes_after(self):
+        before, after = floods.TIDE_BEFORE_MIN, floods.TIDE_AFTER_MIN
+        self.assertIsNotNone(floods.tide_window([self.high(before - 1, 1.7)], NOW))
+        self.assertIsNone(floods.tide_window([self.high(before + 1, 1.7)], NOW))
+        self.assertIsNotNone(floods.tide_window([self.high(-(after - 1), 1.7)], NOW))
+        self.assertIsNone(floods.tide_window([self.high(-(after + 1), 1.7)], NOW))
+
+    # -- a camera's recent frames for the risk map's popups --------------------------------------
+    def frames_setup(self):
+        root = Path(self.temp.name) / "frames"
+        for day, names in (("20261009", ["235900.jpg"]), ("20261010", ["093200_read.jpg", "093300.jpg"])):
+            (root / "d" / day).mkdir(parents=True, exist_ok=True)
+            for n in names:
+                (root / "d" / day / n).write_bytes(b"x")
+        reads = Path(self.temp.name) / "reads.csv"
+        frame = str(root / "d" / "20261010" / "093200_read.jpg")
+        reads.write_text("read_at,camera_id,name,reason,frame,usable,depth,wakes,stalled,flooding,mode_after,rain_fresh,rain_yes,justification\n"
+                         f"2026-10-10T09:32:00+00:00,d,x,high tide,{frame},True,shallow sheet,False,False,False,sweep,,,A thin sheet.\n")
+        return root, reads
+
+    def test_frames_come_newest_first_with_their_reads(self):
+        root, reads = self.frames_setup()
+        got = floods.camera_frames("d", 6, self.cams, root, reads)
+        self.assertEqual([f["captured_at"][:16] for f in got["frames"]], ["2026-10-10T09:33", "2026-10-10T09:32", "2026-10-09T23:59"])
+        self.assertIsNone(got["frames"][0]["read"])
+        self.assertEqual(got["frames"][1]["read"]["depth"], "shallow sheet")
+        self.assertEqual(got["why"], ["official tide street"])
+
+    def test_frames_only_for_flood_watch_cameras(self):
+        root, reads = self.frames_setup()
+        self.assertIsNone(floods.camera_frames("../d", 6, self.cams, root, reads))
 
     def test_no_river_level_no_warnings(self):
         self.assertEqual(self.alerts_with(None)["alerts"], [])

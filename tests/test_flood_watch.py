@@ -123,6 +123,21 @@ class WatchStateTests(unittest.TestCase):
         self.assertFalse(fw.watch_expired(self.st, NOW + timedelta(hours=fw.WATCH_MAX_HOURS - 0.1)))
         self.assertTrue(fw.watch_expired(self.st, NOW + timedelta(hours=fw.WATCH_MAX_HOURS + 0.1)))
 
+    def test_tidal_sheets_in_a_row_start_a_watch(self):
+        """10 Oct, Nguyễn Thị Thập 2 at high tide: none, sheet, sheet -> a watch from the second sheet."""
+        tidal = lambda d, m: fw.apply_read(self.st, read(d), "f.jpg", NOW + timedelta(minutes=m), tidal=True)
+        self.assertEqual([tidal("none", 0), tidal("shallow sheet", 12), tidal("shallow sheet", 24)], [None, None, "start"])
+        self.assertEqual((self.st["mode"], self.st["peak"]), (fw.WATCH, "shallow sheet"))
+
+    def test_sheets_outside_a_tide_window_do_not(self):
+        """Rain-made sheets keep the old rule: only 'flooded' or deeper starts a watch."""
+        self.assertEqual([self.step("shallow sheet") for _ in range(4)], [None] * 4)
+        self.assertEqual(self.st["mode"], fw.SWEEP)
+
+    def test_a_dry_read_breaks_the_tidal_streak(self):
+        tidal = lambda d: fw.apply_read(self.st, read(d), "f.jpg", NOW, tidal=True)
+        self.assertEqual([tidal("shallow sheet"), tidal("none"), tidal("shallow sheet")], [None, None, None])
+
     def test_a_watch_goes_stale_without_new_frames(self):
         """Mai Chí Thọ - Đồng Văn Cống 2, 8 Oct: no new frame for 82 min after a flooded read."""
         self.step("flooded")

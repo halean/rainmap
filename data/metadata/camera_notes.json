@@ -1,0 +1,9 @@
+{
+ "_about": "Camera-specific notes shown in the rain map's popup (app/routes.py, /api/rain-map). 'tide': true also shows a highlighted line while a high tide's window is open (app/services/floods.py, tide_window), because the water on the road may then be tidal, not rain.",
+ "notes": {
+  "63bd1e95bfd3d90017ec3cd5": {
+   "note": "At high tide this junction can flood, rain or not: seen on 11 Oct 2026 at the 03:30 high tide (Nhà Bè 1.75 m forecast), with vehicles pushing bow waves on a dry night.",
+   "tide": true
+  }
+ }
+}
