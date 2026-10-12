@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.services import tide
-from scripts.tide_poller import next_poll, parse_bulletin
+from scripts.tide_poller import BULLETIN_RE, next_poll, parse_bulletin
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kttvnb_tide_20261001.txt"  # bulletin 274/2026
 ICT = timezone(timedelta(hours=7))
@@ -42,6 +42,18 @@ class ParseTests(unittest.TestCase):
         days = [e["t"][:10] for e in self.p["stations"]["phu_an"]["forecast"]]
         self.assertEqual(days.count("2026-10-05"), 3)
         self.assertEqual(days.count("2026-10-01"), 4)
+
+
+class BulletinLinkTests(unittest.TestCase):
+    """The HCMC bulletin goes out under two titles; 8-9 Oct 2026 used the second and were missed."""
+
+    def test_both_titles_are_found_and_others_are_not(self):
+        html = "".join(f'<a href="/index.php/thong-tin-kttv/thuy-van/100-thong-tin-kttv/thuy-van/{slug}">x</a>' for slug in (
+            "29315-ba-n-tin-da-ba-o-tha-y-v-n-tphcm-ra-nga-y-10-10-2026",
+            "29301-ba-n-tin-da-ba-o-tha-y-v-n-ha-n-nga-n-khu-va-c-tp-ha-cha-minh-ra-nga-y-09-10-2026",
+            "29302-tin-tria-u-c-a-ng-tra-n-sa-ng-sa-i-ga-n-ra-nga-y-09-10-2026",
+            "29303-ba-n-tin-da-ba-o-ha-i-v-n-va-ng-bia-n-tp-ha-cha-minh-10-nga-y-ta-i-nga-y-09-10-2026"))
+        self.assertEqual([f[1] for f in BULLETIN_RE.findall(html)], ["29315", "29301"])
 
 
 class ScheduleTests(unittest.TestCase):

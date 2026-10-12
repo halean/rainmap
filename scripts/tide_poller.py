@@ -27,10 +27,12 @@ import subprocess
 import sys
 import tempfile
 import time
+import warnings
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
+import urllib3
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -53,8 +55,11 @@ GIVE_UP_ICT = (14, 0)
 TIMEOUT_SEC = 60
 ICT = timezone(timedelta(hours=7))
 
-# The slug of "Ban tin du bao thuy van TPHCM ra ngay DD-MM-YYYY" as the site writes it.
-BULLETIN_RE = re.compile(r'href="([^"]*/(\d{4,7})-ba-n-tin-da-ba-o-tha-y-v-n-tphcm-ra-nga-y-(\d{1,2})-(\d{1,2})-(\d{4}))"')
+# The slug of "Ban tin du bao thuy van TPHCM ra ngay DD-MM-YYYY" as the site writes it. The same
+# bulletin (same PDF, HCMC_TVHN_<date>.pdf) is sometimes titled "Ban tin du bao thuy van han ngan khu vuc
+# TP Ho Chi Minh ra ngay ..." -- 8 and 9 Oct 2026 -- and was missed until both titles were accepted.
+BULLETIN_RE = re.compile(r'href="([^"]*/(\d{4,7})-ba-n-tin-da-ba-o-tha-y-v-n-'
+                         r'(?:tphcm|ha-n-nga-n-khu-va-c-tp-ha-cha-minh)-ra-nga-y-(\d{1,2})-(\d{1,2})-(\d{4}))"')
 PDF_RE = re.compile(r'(https?://kttvnb\.vn/attachments/article/\d+/[^"\s]+\.pdf)')
 STATIONS = {"Phú An": "phu_an", "Nhà Bè": "nha_be", "Thủ Dầu Một": "thu_dau_mot"}
 TOKEN_RE = re.compile(r"-?\d+\.\d+|ct|\*")
@@ -146,14 +151,29 @@ def parse_bulletin(text: str) -> dict:
     }
 
 
+def get(session: requests.Session, url: str) -> requests.Response:
+    """GET, falling back to an unverified connection when the site's certificate fails to verify.
+    kttvnb.vn's certificate expired on 9 Oct 2026; the bulletins are public, so the cost of trusting
+    an unverified answer is at worst a wrong tide forecast, against no forecast at all. Every fallback
+    is logged, so the log shows when the site renews it."""
+    try:
+        return session.get(url, timeout=TIMEOUT_SEC)
+    except requests.exceptions.SSLError as e:
+        log.warning("certificate check failed for %s (%s); fetching unverified", url.split("/")[2],
+                    str(e).split("certificate verify failed: ")[-1].split(" (_ssl")[0][:60])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", urllib3.exceptions.InsecureRequestWarning)
+            return session.get(url, timeout=TIMEOUT_SEC, verify=False)
+
+
 def latest_bulletin_url(session: requests.Session) -> tuple[str, str]:
-    html = session.get(SECTION_URL, timeout=TIMEOUT_SEC).text
+    html = get(session, SECTION_URL).text
     found = BULLETIN_RE.findall(html)
     if not found:
         raise ValueError("no bulletin link on the section page -- the slug may have changed")
     href, art_id, d, m, y = max(found, key=lambda f: int(f[1]))  # highest article id = newest
     page = SITE + href if href.startswith("/") else href
-    pdf = PDF_RE.search(session.get(page, timeout=TIMEOUT_SEC).text)
+    pdf = PDF_RE.search(get(session, page).text)
     if not pdf:
         raise ValueError(f"no PDF attached to {page}")
     return page, pdf.group(1)
@@ -162,7 +182,7 @@ def latest_bulletin_url(session: requests.Session) -> tuple[str, str]:
 def pdf_text(session: requests.Session, url: str) -> str:
     with tempfile.TemporaryDirectory() as d:
         p = Path(d) / "b.pdf"
-        p.write_bytes(session.get(url, timeout=TIMEOUT_SEC).content)
+        p.write_bytes(get(session, url).content)
         return subprocess.run(["pdftotext", "-layout", str(p), "-"], check=True, capture_output=True,
                               text=True, timeout=60).stdout
 
